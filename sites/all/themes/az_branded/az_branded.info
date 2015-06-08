@@ -1,0 +1,64 @@
+name = AZ Branded
+description = A theme based on 'Bootstrap' for Arizona Government Agencies
+core = 7.x
+base theme = az_gov
+screenshot = 'screenshot.png'
+
+dependencies[] = jquery_update
+
+regions[page_top] = 'Page Top'
+regions[page_bottom] = 'Page Bottom'
+regions[user_first] = 'User Bar First'
+regions[user_second] = 'User Bar Second'
+regions[branding] = 'Branding'
+regions[menu] = 'Menu'
+regions[header_first] = 'Header First'
+regions[header_second] = 'Header Second'
+regions[preface_first] = 'Preface'
+regions[preface_second] = 'Preface Second'
+regions[preface_third] = 'Preface Third'
+regions[help] = 'Help'
+regions[sidebar_first] = 'Sidebar First'
+regions[content] = 'Content'
+regions[sidebar_second] = 'Sidebar Second'
+regions[postscript_first] = 'Postscript'
+regions[postscript_second] = 'Postscript Second'
+regions[postscript_third] = 'Postscript Third'
+regions[postscript_fourth] = 'Postscript Fourth'
+regions[footer_first] = 'Footer First'
+regions[footer_second] = 'Footer Second'
+
+
+stylesheets[all][] = css/colors.css
+stylesheets[all][] = css/branded-global.css
+stylesheets[all][] = css/branded-nodes.css
+;stylesheets[(min-width:600px)][] = css/branded-600.css
+;stylesheets[(min-width:960px)][] = css/branded-960.css
+stylesheets[(min-width:768px)][] = css/branded-min-768.css
+stylesheets[(min-width:920px)][] = css/branded-min-720.css
+stylesheets[(min-width:1240px)][] = css/branded-min-1240.css
+
+settings[bootstrap_breadcrumb_home] = 1
+settings[bootstrap_region_well-branding] = ''
+settings[bootstrap_region_well-branding] = ''
+settings[bootstrap_region_well-menu] = ''
+settings[bootstrap_region_well-header_first] = ''
+settings[bootstrap_region_well-header_second] = ''
+settings[bootstrap_region_well-preface_first] = ''
+settings[bootstrap_region_well-preface_second] = ''
+settings[bootstrap_region_well-preface_third] = ''
+settings[bootstrap_region_well-sidebar_first] = ''
+settings[bootstrap_region_well-content] = ''
+settings[bootstrap_region_well-sidebar_second] = ''
+settings[bootstrap_region_well-postscript_first] = ''
+settings[bootstrap_region_well-postscript_second] = ''
+settings[bootstrap_region_well-postscript_third] = ''
+settings[bootstrap_region_well-postscript_fourth] = ''
+settings[bootstrap_region_well-footer_first] = ''
+settings[bootstrap_region_well-footer_second] = ''
+
+settings[menu_block_placement][preface_first] = 1
+settings[menu_block_placement][sidebar_first] = 1
+settings[menu_block_placement][content] = 1
+settings[menu_block_placement][sidebar_second] = 1
+settings[menu_block_placement][postscript_first] = 1

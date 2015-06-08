@@ -1,0 +1,18 @@
+.enews-list {
+  float: left;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid #808080;
+}
+
+.enews-list:first-child {
+  float: left;
+  margin-left: 0;
+  padding-left: 0;
+  border-left: none;
+}
+
+.enews-buttons {
+  width: 100%;
+  display: inline-block;
+}

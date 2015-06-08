@@ -1,0 +1,84 @@
+diff --git a/quicktabs.classes.inc b/quicktabs.classes.inc
+index 56c2569..4042d04 100644
+--- a/quicktabs.classes.inc
++++ b/quicktabs.classes.inc
+@@ -75,7 +75,9 @@ class QuickSet {
+         $qs = new self($name, $contents, $settings);
+       }
+       catch (InvalidQuickSetException $e) {
+-        watchdog('Quicktabs', $e->getMessage());
++        if(variable_get('quicktabs_logging', 0)) {
++          watchdog('Quicktabs', $e->getMessage());
++        }
+         return NULL;
+       }
+       return new $class($qs);
+diff --git a/quicktabs.module b/quicktabs.module
+index 182a89c..379082b 100644
+--- a/quicktabs.module
++++ b/quicktabs.module
+@@ -177,7 +177,7 @@ function quicktabs_block_view($delta = '') {
+  *  array would be array(array('title' => 'custom', 'contents' => array('#markup' =>
+  *  t('Some markup'), 'weight' => 5));
+  *
+- * @return A render array that can be used as block content in hook_block_view 
++ * @return A render array that can be used as block content in hook_block_view
+  *  (see quicktabs_block_view()), but can also just be added to the page array
+  *  during hook_page_alter, or output anywhere else where it's sure to get
+  *  passed through drupal_render().
+@@ -221,10 +221,10 @@ function quicktabs_build_quicktabs($name, $settings = array(), $custom_tabs = ar
+     if ($item['type'] != 'prerendered') {
+       ctools_plugin_load_class('quicktabs', 'contents', $item['type'], 'handler');
+     }
+-  
++
+     // Add item's weight to our weights array so that we can then sort by weight.
+     $weight[$key] = $item['weight'];
+-    
++
+     // Make sure we're not going to try to load the same QuickSet instance
+     // inside itself.
+     if ($item['type'] == 'qtabs' && $item['machine_name'] == $name) {
+@@ -267,7 +267,7 @@ function quicktabs_ajax($name, $index, $type) {
+   array_unshift($variable_args, $name);
+ 
+   $data = QuickSet::ajaxRenderContent($type, $variable_args);
+-  
++
+   $commands = array();
+   $tabpage_id = 'quicktabs-tabpage-'. $name .'-' . $index;
+   $commands[] = ajax_command_append('#quicktabs-container-'. $name, '<div id="' . $tabpage_id .'" class="quicktabs-tabpage">'. $data .'</div>');
+@@ -379,7 +379,7 @@ function quicktabs_i18n_string_info() {
+ }
+ 
+ function quicktabs_translate($name, $string, $langcode = NULL, $textgroup = 'quicktabs') {
+-  return function_exists('i18n_string') ? i18n_string($textgroup . ':' . $name, $string, array('langcode' => $langcode)) : $string; 
++  return function_exists('i18n_string') ? i18n_string($textgroup . ':' . $name, $string, array('langcode' => $langcode)) : $string;
+ }
+ 
+ /**
+@@ -658,7 +658,7 @@ function theme_qt_quicktabs($variables) {
+   $element = $variables['element'];
+   $output = '<div '. drupal_attributes($element['#options']['attributes']) .'>';
+   $output .= drupal_render($element['tabs']);
+-  
++
+   $output .= drupal_render($element['container']);
+ 
+   $output .= '</div>';
+@@ -681,3 +681,14 @@ function theme_qt_accordion($variables) {
+   $output .= '</div>';
+   return $output;
+ }
++
++/**
++ *  Implements hook_form_FORM_ID_alter().
++ */
++function quicktabs_form_system_logging_settings_alter(&$form, &$form_state, $form_id) {
++  $form['quicktabs_logging'] = array(
++    '#type' => 'checkbox',
++    '#title' => t('Log all messages for quicktabs including "No Contents To Display".'),
++    '#default_value' => variable_get('quicktabs_logging', 0),
++  );
++}
+\ No newline at end of file

@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * Implements hook_requirements().
+ */
+function az_gov_sliver_requirements($phase) {
+  $requirements = array();
+  if ($phase == "runtime") {
+    //$library_path = az_gov_sliver_get_library_file();
+    $requirements['az_gov_sliver'] = array(
+      'title' => t('AZ.Gov Sliver script'),
+      'value' => t('Enabled'),
+    );    
+    // If the included copy of Az.Gov has been removed or renamed report an error.
+    // At this point the module cannot function properly.
+    //if (!file_exists($library_path)) {
+    //  $requirements['az_gov_sliver']['value'] = t('Respond.js is not correctly installed');
+    //  $requirements['az_gov_sliver']['severity'] = REQUIREMENT_ERROR;
+    //  $requirements['az_gov_sliver']['description'] = t('Please install <a href="https://raw.github.com/scottjehl/Respond/master/respond.min.js">Respond.js</a> in the repsondjs folder under /lib');
+    //}
+  }
+  return $requirements;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function az_gov_sliver_uninstall() {
+//  variable_del('az_gov_sliver_scope');
+//  variable_del('az_gov_sliver_quiet');
+}

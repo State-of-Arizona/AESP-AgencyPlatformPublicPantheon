@@ -1,0 +1,44 @@
+.sub-password {
+  position: absolute;
+  z-index: 50;
+  left: -170px;
+  width: 150px;
+  height: 90px;
+  border-radius: 20px;
+  background: none repeat scroll 0 0 #fff;
+  text-align: center;
+  box-shadow: 0 6px 7px -1px rgba(0, 0, 0, 0.5);
+  line-height: 90px;
+  overflow: visible !important;
+}
+
+.sub-password.right {
+  left: inherit;
+  right: -170px;
+}
+
+.sub-password span {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+  padding: 10px;
+}
+
+.sub-password span:after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid #4679bd;
+  position: absolute;
+  right: -15px;
+  top: 30px;
+}
+
+.sub-password.right span:after {
+  border-left: none;
+  border-right: 15px solid #4679bd;
+  right: inherit;
+  left: -15px;
+}

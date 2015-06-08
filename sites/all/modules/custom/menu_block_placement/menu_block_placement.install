@@ -1,0 +1,51 @@
+<?php
+/**
+ * @file
+ *  Install file for menu block placement
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function menu_block_placement_field_schema($field) {
+  $schema = array();
+    $schema['columns']['mlid'] = array(
+      'description' => 'The menu link ID (mlid) of the selected menu item.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'default' => '',
+    );
+
+  if (isset($field['settings']['default_selects']['region']) && $field['settings']['default_selects']['region']) {
+    $schema['columns']['region'] = array(
+      'description' => 'The desired region for the item',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'default' => '',
+    );
+  }
+  if (isset($field['settings']['default_selects']['individ']) && $field['settings']['default_selects']['individ']) {
+    $schema['columns']['individual_pages'] = array(
+      'description' => 'Whether the item will be only for the selected menu link item.',
+      'type' => 'int',
+      'default' => 0,
+    );
+  }
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function menu_block_placement_install() {
+  _mbp_regions_set();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function menu_block_placement_uninstall() {
+  variable_del('mbp_regions');
+}

@@ -1,0 +1,37 @@
+<?php
+/**
+ * @file
+ * Sets & deletes a variable of existing fields from MBP.
+ */
+
+
+/**
+ * Sets the variable for the module using any existing fields of the MBP type.
+ *
+ * Implements hook_install().
+ */
+function mbp_defaults_install() {
+  $fields = field_info_fields();
+  $mbp_fields = array();
+  foreach ($fields as $field) {
+    if ($field['type'] == 'menu_block_placement_reference') {
+      $mbp_fields[$field['id']] = $field['field_name'];
+    }
+  }
+
+  variable_set('mbp_defaults', $mbp_fields);
+
+  db_update('system')
+    ->fields(array('weight' => 5))
+    ->condition('name', 'mbp_defaults', '=')
+    ->execute();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function mbp_defaults_uninstall() {
+  variable_del('mbp_defaults');
+  variable_del('mbp_defaults_contextual');
+  variable_del('mbp_defaults_style');
+}

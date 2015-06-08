@@ -1,0 +1,43 @@
+.region-menu li.menu-li-home {
+  > a {
+    height: 38px;
+  }
+}
+
+#preface-group .mbp-defaults-row {
+  margin-bottom: 10px;
+}
+
+#content {
+  &.col-sm-5 > div {
+    margin: 0 5px;
+  }
+  &.col-sm-9 > div {
+    margin: 0 0 0 5px;
+  }
+  &.col-sm-8 > div {
+    margin: 0 5px 0 0;
+  }
+}
+
+#sidebar-first {
+  border-right: none;
+  > div {
+    margin: 0 5px 0 0;
+  }
+}
+
+#sidebar-second {
+  border-left: none;
+  > div {
+    margin: 0 0 0 5px;
+  }
+}
+
+#footer-first-contact {
+  display: flex;
+}
+
+#footer-branding {
+  margin: 10px 8px;
+}

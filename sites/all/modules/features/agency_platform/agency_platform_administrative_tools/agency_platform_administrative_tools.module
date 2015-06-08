@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Agency Platform Administrative Tools feature.
+ */
+
+include_once 'agency_platform_administrative_tools.features.inc';

@@ -1,0 +1,102 @@
+diff --git a/css_injector.install b/css_injector.install
+index 631ba12..ebf7cf0 100644
+--- a/css_injector.install
++++ b/css_injector.install
+@@ -54,6 +54,10 @@ function css_injector_schema() {
+         'length' => '255',
+         'description' => 'Media type for the stylesheet, e.g., all, print, screen.',
+       ),
++      'rule_themes' => array(
++        'description' => 'Themes that CSS rule will be applied to',
++        'type' => 'text',
++        'not null' => TRUE),
+       'preprocess' => array(
+         'description' => 'Boolean indicating whether the injection should be aggregated.',
+         'type' => 'int',
+@@ -186,6 +190,7 @@ function css_injector_update_7202(&$sandbox) {
+ 	// 	admin_description
+ 	// 	css
+ 	// 	media
++  //  theme
+ 	// 	preprocess
+ 	// 	inline
+ 	// 	page_visibility
+diff --git a/css_injector.module b/css_injector.module
+index 299ff5b..cfe7650 100644
+--- a/css_injector.module
++++ b/css_injector.module
+@@ -139,6 +139,11 @@ function css_injector_init() {
+     if (!isset($rule->crid) ) {
+       continue;
+     }
++    global $theme;
++    $themes = unserialize($rule->rule_themes);
++    if(!empty($themes) && !in_array($theme, $themes)){
++      continue;
++    }
+  
+     // check if the rule is disabled in the ctools UI, if so skip it
+     if (isset($rule->disabled) && $rule->disabled == TRUE) {
+diff --git a/plugins/export_ui/css_injector_ctools_export_ui.inc b/plugins/export_ui/css_injector_ctools_export_ui.inc
+index bf1d7fc..02be2a3 100644
+--- a/plugins/export_ui/css_injector_ctools_export_ui.inc
++++ b/plugins/export_ui/css_injector_ctools_export_ui.inc
+@@ -54,11 +54,11 @@ function css_injector_ctools_export_ui_form(&$form, &$form_state) {
+     '#default_value' => $rule->css,
+     '#required' => TRUE,
+   );
+-  
+-  
++
++
+   // all drupal_add_css options should be settings
+   // https://api.drupal.org/api/drupal/includes%21common.inc/function/drupal_add_css/7
+-  
++
+   // advanced options fieldset
+   $form['advanced'] = array(
+     '#type' => 'fieldset',
+@@ -77,6 +77,21 @@ function css_injector_ctools_export_ui_form(&$form, &$form_state) {
+     ),
+     '#default_value' => $rule->media,
+   );
++  $themes = array();
++  foreach(list_themes() as $key=>$theme){
++    if($theme->status) {
++      $themes[$key] = $theme->info['name'];
++    }
++  }
++
++  $form['advanced']['rule_themes'] = array(
++    '#type' => 'select',
++    '#title' => 'Theme',
++    '#description' => t('Which themes is the CSS used.'),
++    '#options' => $themes,
++    '#multiple' => TRUE,
++    '#default_value' => unserialize($rule->rule_themes),
++  );
+   $form['advanced']['preprocess'] = array(
+     '#type' => 'checkbox',
+     '#title' => t('Preprocess CSS'),
+@@ -141,6 +156,15 @@ function css_injector_ctools_export_ui_form_validate($form, &$form_state) {
+   if (preg_match('/[^A-Za-z0-9_\-\ ]+/', $form_state['values']['name'])) {
+     form_set_error('name', t('Illegal characters found in the friendly name, please remove them.'));
+   }
++
++  $existing = db_select('css_injector_rule','c')
++    ->fields('c')
++    ->condition('name', $form_state['values']['name'])
++    ->execute()
++    ->fetchAssoc();
++  if(!empty($existing)){
++    form_set_error('name', t('Injector already exists with that name'));
++  }
+ }
+ 
+ /**
+@@ -148,4 +172,5 @@ function css_injector_ctools_export_ui_form_validate($form, &$form_state) {
+  */
+ function css_injector_ctools_export_ui_form_submit($form, &$form_state) {
+   // not used
++  $form_state['values']['rule_themes'] = serialize($form_state['values']['rule_themes']);
+ }

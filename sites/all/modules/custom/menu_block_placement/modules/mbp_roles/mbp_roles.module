@@ -1,0 +1,209 @@
+<?php
+/**
+ * @file
+ * Restricts users from linking a node to any menu item.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function mbp_roles_menu() {
+  return array(
+    'admin/config/content/mbp/roles' => array(
+      'title' => 'Menu Blocks Placement Roles Configuration',
+      'description' => 'Choose which menu items to allow to each role.',
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('mbp_roles_admin'),
+      'access arguments' => array('administer permissions'),
+    ),
+  );
+}
+
+
+/**
+ * @return mixed
+ * Module Configuration Page
+ */
+function mbp_roles_admin() {
+  $settings = variable_get('mbp_roles');
+
+  $form = array();
+  $roles = user_roles(TRUE);
+  $fields = field_info_fields();
+  $menus = array();
+  foreach ($fields as $name => $field) {
+    if ($field['type'] == 'menu_block_placement_reference') {
+      foreach ($field['settings']['default_menus'] as $menu) {
+        if ($menu && !in_array($menu, $menus)) {
+          $menus[$menu] = $menu;
+        }
+      }
+    }
+  }
+
+  $options = _menu_block_placement_menu_items(NULL, $menus);
+
+  $form['roles'] = array(
+    '#type' => 'vertical_tabs',
+  );
+  foreach ($roles as $role_id => $role) {
+    $permission = user_role_permissions(array($role_id => $role));
+    if (isset($permission[$role_id]['bypass node access']) && $permission[$role_id]['bypass node access']) {
+      $bypass_node_access = 1;
+    }
+    else {
+      $bypass_node_access = 0;
+    }
+
+    if (!$bypass_node_access) {
+      $all_role = isset($settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]) ? $settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]['all'] : 0;
+      $menus_roll = isset($settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]) ? $settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]['menus'] : array();
+
+
+      $form[$role . '_set'] = array(
+        '#type' => 'fieldset',
+        '#title' => $role,
+        '#group' => 'roles',
+      );
+      $form[$role . '_set'][preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role)) . '_all'] = array(
+        '#title' => t('Allow all menu items'),
+        '#type' => 'checkbox',
+        '#default_value' => $all_role,
+        '#size' => '15',
+      );
+
+      $form[$role . '_set'][preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))] = array(
+        '#type' => 'select',
+        '#title' => t('Menu Items for ' . $role),
+        '#multiple' => TRUE,
+        '#options' => $options,
+        '#default_value' => $menus_roll,
+        '#states' => array(
+          'visible' => array(
+            ':input[name="' . preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role)) . '_all"]' => array('checked' => FALSE),
+          )
+        ),
+      );
+    }
+    else {
+      drupal_set_message(check_plain(t("'$role' role has the permission to bypass node access therefore is not applicable.")), 'warning');
+    }
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save',
+  );
+
+  return $form;
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ *
+ * Saves settings for all roles into one variable
+ */
+function mbp_roles_admin_submit($form, &$form_state) {
+  $roles = user_roles(TRUE);
+  $settings = array();
+  foreach ($roles as $role_id => $role) {
+    $permission = user_role_permissions(array($role_id => $role));
+    if (isset($permission[$role_id]['bypass node access']) && $permission[$role_id]['bypass node access']) {
+      $bypass_node_access = 1;
+    }
+    else {
+      $bypass_node_access = 0;
+    }
+    if (!$bypass_node_access) {
+      $var = preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role));
+      $all = $form[$role . '_set'][preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role)) . '_all']['#value'];
+      $menus = $form[$role . '_set'][preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]['#value'];
+      $settings[$var]['all'] = $all;
+      $settings[$var]['menus'] = $menus;
+    }
+  }
+
+  variable_set('mbp_roles', $settings);
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function mbp_roles_form_alter(&$form, &$form_state, $form_id) {
+  $settings = variable_get('mbp_roles');
+  $all_pages = FALSE;
+  $menu_items = array();
+
+  if (isset($form['#entity_type']) && $form['#entity_type'] == 'node') {
+    $user = $GLOBALS['user'];
+    $current_user = user_load($user->uid);
+    if (!user_access('bypass node access')) {
+      foreach ($current_user->roles as $role) {
+        if (isset($settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]) && $settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]['all']) {
+          $all_pages = TRUE;
+        }
+        else {
+          $role_menus = isset($settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]) ? $settings[preg_replace("/[^A-Za-z0-9]/", '_', strtolower($role))]['menus'] : array();
+          $menu_items = array_merge($menu_items, $role_menus);
+        }
+      }
+
+
+      if (!$all_pages) {
+        if (isset($form_state['mbp_fields'])) {
+          foreach ($form_state['mbp_fields'] as $field_name) {
+            $lang = $form[$field_name]['#language'];
+            foreach ($form[$field_name][$lang][0]['mlid']['#options'] as $menu_name => $menu) {
+
+              foreach ($menu as $mlid => $mlid_label) {
+                $link = menu_link_load($mlid);
+                foreach ($link as &$value) {
+                  if (is_array($value)) {
+                    $value = '';
+                  }
+                }
+
+                $intersect = array_intersect($link, $menu_items);
+                if (empty($intersect)) {
+                  unset($form[$field_name][$lang][0]['mlid']['#options'][$menu_name][$mlid]);
+                }
+              }
+              if (empty($form[$field_name][$lang][0]['mlid']['#options'][$menu_name])) {
+                unset($form[$field_name][$lang][0]['mlid']['#options'][$menu_name]);
+              }
+            }
+          }
+        }
+
+
+        $node_parents = isset($form['menu']) ? $form['menu']['link']['parent']['#options'] : array();
+        $menus = array();
+        foreach ($node_parents as $mlid_name => $label) {
+          $mlid = substr($mlid_name, strpos($mlid_name, ':') + 1);
+          if ($mlid != '0') {
+
+            $link = menu_link_load($mlid);
+            $links_menu = menu_load($link['menu_name']);
+            $links_menu = $links_menu['title'];
+            if (is_array($link)) {
+              foreach ($link as &$value) {
+                if (is_array($value)) {
+                  $value = '';
+                }
+              }
+
+
+              $intersect = array_intersect($link, $menu_items);
+              if (!empty($intersect)) {
+                $menus[$links_menu][$mlid_name] = $label;
+              }
+            }
+          }
+        }
+        $form['menu']['link']['parent']['#options'] = $menus;
+      }
+    }
+  }
+}

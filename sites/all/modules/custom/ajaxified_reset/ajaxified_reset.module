@@ -1,0 +1,20 @@
+<?php
+/**
+ * Implements hook_form_alter().
+ */
+function ajaxified_reset_form_views_exposed_form_alter(&$form, &$form_state) {
+  // ------------------------------------------------------------
+  // Add an own reset button to all views exposed forms. The reason behind is,
+  // that the default Drupal reset button doesn't play nice with AJAX
+  // and jumps back to the front page because of URL problems. So it's unusable for us.
+  //
+  // Add class to make it better selectable in JS and CSS
+  $form['submit']['#attributes'] = array('class' => array('my-views-filter-submit'));
+  $submit_btn_id = $form['submit']['#id'];
+  if (!empty($submit_btn_id) && !empty($form['reset'])) {
+    // Add own reset button
+    $form['submit']['#suffix'] = '<input type="button" onclick="javascript:jQuery(this.form).clearForm();jQuery(this.form).find(\'#' . $submit_btn_id . '\').trigger(\'click\');return false;" class="form-submit btn btn-primary" value="'  . $form['reset']['#value'].'"/>';
+    // Remove the original RESET button.
+    unset($form['reset']);
+  }
+}

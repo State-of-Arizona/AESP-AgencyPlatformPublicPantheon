@@ -1,0 +1,32 @@
+.aet_insert_field {
+	
+}
+
+.aet_insert_field>.form-item {
+	padding-top: 0;
+}
+
+.aet_insert_field>.form-item,.aet_insert_field>.form-submit {
+	float: left;
+	margin-left: 1%;
+	margin-top: 0;
+}
+
+.aet_insert_field>.form-item:first-child {
+	margin-left: 0;
+}
+
+[dir=rtl] .aet_insert_field>.form-item,[dir=rtl] .aet_insert_field>.form-submit
+	{
+	float: right;
+	margin-left: 0;
+	margin-right: 1%;
+}
+
+[dir=rtl] .aet_insert_field>.form-item:first-child {
+	margin-right: 0;
+}
+
+.aet_insert_field>.form-submit {
+	margin-bottom: 0;
+}

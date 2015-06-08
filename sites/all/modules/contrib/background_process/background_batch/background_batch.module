@@ -1,0 +1,377 @@
+<?php
+/**
+ * @file
+ * This module adds background processing to Drupals batch API
+ *
+ * @todo Add option to stop a running batch job.
+ */
+
+/**
+ * Default value for delay (in microseconds).
+ */
+define('BACKGROUND_BATCH_DELAY', 1000000);
+
+/**
+ * Default value for process lifespan (in miliseconds).
+ */
+define('BACKGROUND_BATCH_PROCESS_LIFESPAN', 10000);
+
+/**
+ * Default value wether ETA information should be shown.
+ */
+define('BACKGROUND_BATCH_PROCESS_ETA', TRUE);
+
+/**
+ * Implements hook_menu().
+ */
+function background_batch_menu() {
+  $items = array();
+  $items['admin/config/system/batch/settings'] = array(
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'title' => 'Settings',
+    'weight' => 1,
+  );
+  $items['admin/config/system/batch'] = array(
+    'title' => 'Batch',
+    'description' => 'Administer batch jobs',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('background_batch_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'background_batch.pages.inc',
+  );
+  $items['admin/config/system/batch/overview'] = array(
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'Overview',
+    'description' => 'Batch job overview',
+    'page callback' => 'background_batch_overview_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'background_batch.pages.inc',
+    'weight' => 3,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function background_batch_menu_alter(&$items) {
+  $items['batch'] = array(
+    'page callback' => 'background_batch_page',
+    'access callback' => TRUE,
+    'theme callback' => '_system_batch_theme',
+    'type' => MENU_CALLBACK,
+    'file' => 'background_batch.pages.inc',
+    'module' => 'background_batch',
+  );
+}
+
+/**
+ * Implements hook_batch_alter().
+ * Steal the operation and hook into context data.
+ */
+function background_batch_batch_alter(&$batch) {
+  if ($batch['progressive'] && $batch['url'] == 'batch') {
+    foreach ($batch['sets'] as &$set) {
+      if (!empty($set['operations'])) {
+        foreach ($set['operations'] as &$operation) {
+          $operation = array('_background_batch_operation', array($operation));
+        }
+      }
+    }
+    $batch['timestamp'] = microtime(TRUE);
+  }
+  // In order to make this batch session independend we save the owner UID.
+  global $user;
+  $batch['uid'] = $user->uid;
+}
+
+/**
+ * Implements hook_library().
+ */
+function background_batch_library() {
+  $libraries = array();
+
+  $libraries['background-process.batch'] = array(
+    'title' => 'Background batch API',
+    'version' => '1.0.0',
+    'js' => array(
+      drupal_get_path('module', 'background_batch') . '/js/batch.js' => array('group' => JS_DEFAULT, 'cache' => FALSE),
+    ),
+    'dependencies' => array(
+      array('background_batch', 'background-process.progress'),
+    ),
+  );
+  $libraries['background-process.progress'] = array(
+    'title' => 'Background batch progress',
+    'version' => VERSION,
+    'js' => array(
+      drupal_get_path('module', 'background_batch') . '/js/progress.js' => array('group' => JS_DEFAULT, 'cache' => FALSE),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Run a batch operation with "listening" context.
+ * @param $operation
+ *   Batch operation definition.
+ * @param &$context
+ *   Context for the batch operation.
+ */
+function _background_batch_operation($operation, &$context) {
+  // Steal context and trap finished variable
+  $fine_progress = !empty($context['sandbox']['background_batch_fine_progress']);
+  if ($fine_progress) {
+    $batch_context = new BackgroundBatchContext($context);
+  }
+  else {
+    $batch_context = $context;
+  }
+
+  // Call the original operation
+  $operation[1][] = &$batch_context;
+  call_user_func_array($operation[0], $operation[1]);
+
+  if ($fine_progress) {
+    // Transfer back context result to batch api
+    $batch_context = (array)$batch_context;
+    foreach (array_keys($batch_context) as $key) {
+      $context[$key] = $batch_context[$key];
+    }
+  }
+  else {
+    $batch_context = new BackgroundBatchContext($context);
+    $batch_context['finished'] = $context['finished'];
+  }
+}
+
+/**
+ * Process a batch step
+ * @param type $id
+ * @return type
+ */
+function _background_batch_process($id = NULL) {
+  if (!$id) {
+    return;
+  }
+
+  // Retrieve the current state of batch from db.
+  $data = db_query("SELECT batch FROM {batch} WHERE bid = :bid", array(':bid' => $id))->fetchColumn();
+  if (!$data) {
+    return;
+  }
+
+  require_once('includes/batch.inc');
+
+  $batch =& batch_get();
+  $batch = unserialize($data);
+
+  // Check if the current user owns (has access to) this batch.
+  global $user;
+  if ($batch['uid'] != $user->uid) {
+    return drupal_access_denied();
+  }
+
+
+  // Register database update for the end of processing.
+  drupal_register_shutdown_function('_batch_shutdown');
+
+  timer_start('background_batch_processing');
+
+  $percentage = 0;
+  $mem_max_used = 0;
+  $mem_last_used = memory_get_usage();
+  $mem_limit = ini_get('memory_limit');
+  preg_match('/(\d+)(\w)/', $mem_limit, $matches);
+  switch ($matches[2]) {
+    case 'M':
+    default:
+      $mem_limit = $matches[1] * 1024 * 1024;
+      break;
+  }
+
+  while ($percentage < 100) {
+    list ($percentage, $message) = _batch_process();
+
+    $mem_used = memory_get_usage();
+    // If we memory usage of last run will exceed the memory limit in next run
+    // then bail out
+    if ($mem_limit < $mem_used + $mem_last_used) {
+      break;
+    }
+
+    $mem_last_used = $mem_used - $mem_last_used;
+    // If we maximum memory usage of previous runs will exceed the memory limit in next run
+    // then bail out
+    $mem_max_used = $mem_max_used < $mem_last_used ? $mem_last_used : $mem_max_used;
+    if ($mem_limit < $mem_used + $mem_max_used) {
+      break;
+    }
+
+    // Restart background process after X miliseconds
+    if (timer_read('background_batch_processing') > variable_get('background_batch_process_lifespan', BACKGROUND_BATCH_PROCESS_LIFESPAN)) {
+      break;
+    }
+  }
+  if ($percentage < 100) {
+    background_process_keepalive($id);
+  }
+}
+
+/**
+ * Processes the batch.
+ *
+ * Unless the batch has been marked with 'progressive' = FALSE, the function
+ * issues a drupal_goto and thus ends page execution.
+ *
+ * This function is not needed in form submit handlers; Form API takes care
+ * of batches that were set during form submission.
+ *
+ * @param $redirect
+ *   (optional) Path to redirect to when the batch has finished processing.
+ * @param $url
+ *   (optional - should only be used for separate scripts like update.php)
+ *   URL of the batch processing page.
+ */
+function background_batch_process_batch($redirect = NULL, $url = 'batch', $redirect_callback = 'drupal_goto') {
+  $batch =& batch_get();
+
+  drupal_theme_initialize();
+
+  if (isset($batch)) {
+    // Add process information
+    $process_info = array(
+      'current_set' => 0,
+      'progressive' => TRUE,
+      'url' => $url,
+      'url_options' => array(),
+      'source_url' => $_GET['q'],
+      'redirect' => $redirect,
+      'theme' => $GLOBALS['theme_key'],
+      'redirect_callback' => $redirect_callback,
+    );
+    $batch += $process_info;
+
+    // The batch is now completely built. Allow other modules to make changes
+    // to the batch so that it is easier to reuse batch processes in other
+    // environments.
+    drupal_alter('batch', $batch);
+
+    // Assign an arbitrary id: don't rely on a serial column in the 'batch'
+    // table, since non-progressive batches skip database storage completely.
+    $batch['id'] = db_next_id();
+
+    // Move operations to a job queue. Non-progressive batches will use a
+    // memory-based queue.
+    foreach ($batch['sets'] as $key => $batch_set) {
+      _batch_populate_queue($batch, $key);
+    }
+
+    // Initiate processing.
+    // Now that we have a batch id, we can generate the redirection link in
+    // the generic error message.
+    $t = get_t();
+    $batch['error_message'] = $t('Please continue to <a href="@error_url">the error page</a>', array('@error_url' => url($url, array('query' => array('id' => $batch['id'], 'op' => 'finished')))));
+
+    // Clear the way for the drupal_goto() redirection to the batch processing
+    // page, by saving and unsetting the 'destination', if there is any.
+    if (isset($_GET['destination'])) {
+      $batch['destination'] = $_GET['destination'];
+      unset($_GET['destination']);
+    }
+
+    // Store the batch.
+    db_insert('batch')
+      ->fields(array(
+        'bid' => $batch['id'],
+        'timestamp' => REQUEST_TIME,
+        'token' => drupal_get_token($batch['id']),
+        'batch' => serialize($batch),
+      ))
+      ->execute();
+
+    // Set the batch number in the session to guarantee that it will stay alive.
+    $_SESSION['batches'][$batch['id']] = TRUE;
+
+    // Redirect for processing.
+    $function = $batch['redirect_callback'];
+    if (function_exists($function)) {
+      // $function($batch['url'], array('query' => array('op' => 'start', 'id' => $batch['id'])));
+    }
+  }
+  background_process_start('_background_batch_process_callback', $batch);
+}
+
+function _background_batch_process_callback($batch) {
+  $rbatch =& batch_get();
+  $rbatch = $batch;
+  require_once('background_batch.pages.inc');
+  _background_batch_page_start();
+}
+
+
+/**
+ * Class batch context.
+ * Automatically updates progress when 'finished' index is changed.
+ */
+class BackgroundBatchContext extends ArrayObject {
+  private $batch = NULL;
+  private $interval = NULL;
+  private $progress = NULL;
+
+  public function __construct() {
+    $this->interval = variable_get('background_batch_delay', BACKGROUND_BATCH_DELAY) / 1000000;
+    $args = func_get_args();
+    return call_user_func_array(array('parent', '__construct'), $args);
+  }
+  /**
+   * Set progress update interval in seconds (float).
+   */
+
+  public function setInterval($interval) {
+    $this->interval = $interval;
+  }
+
+  /**
+   * Override offsetSet().
+   * Update progress if needed.
+   */
+  public function offsetSet($name, $value) {
+    if ($name == 'finished') {
+      if (!isset($this->batch)) {
+        $this->batch =& batch_get();
+        $this->progress = progress_get_progress('_background_batch:' . $this->batch['id']);
+      }
+      if ($this->batch) {
+        $total = $this->batch['sets'][$this->batch['current_set']]['total'];
+        $count = $this->batch['sets'][$this->batch['current_set']]['count'];
+        $elapsed = $this->batch['sets'][$this->batch['current_set']]['elapsed'];
+        $progress_message = $this->batch['sets'][$this->batch['current_set']]['progress_message'];
+        $current = $total - $count;
+        $step = 1 / $total;
+        $base = $current * $step;
+        $progress = $base + $value * $step;
+
+        progress_estimate_completion($this->progress);
+        $elapsed = floor($this->progress->current - $this->progress->start);
+
+        $values     = array(
+          '@remaining'  => $count,
+          '@total'      => $total,
+          '@current'    => $current,
+          '@percentage' => $progress * 100,
+          '@elapsed'    => format_interval($elapsed),
+          // If possible, estimate remaining processing time.
+          '@estimate'   => format_interval(floor($this->progress->estimate) - floor($this->progress->current)),
+        );
+        $message = strtr($progress_message, $values);
+        $message .= $message && $this['message'] ? '<br/>' : '';
+        $message .= $this['message'];
+        progress_set_intervalled_progress('_background_batch:' . $this->batch['id'], $message ? $message : $this->progress->message, $progress, $this->interval);
+      }
+    }
+
+    return parent::offsetSet($name, $value);
+  }
+}
+

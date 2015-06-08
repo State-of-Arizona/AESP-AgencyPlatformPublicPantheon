@@ -1,0 +1,229 @@
+<?php
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ */
+function agency_platform_distribution_install() {
+  /*
+   * Enable, disable and set active themes
+   */
+  theme_enable(array(
+    'theme_default' => 'az_gov',
+    'agency2_theme' => 'az_branded',
+    'agency3_theme' => 'az_commercial',
+    //'comm_theme' => 'comm',
+  ));
+  variable_set('theme_default', 'az_gov');
+  variable_set('admin_theme', 'rubik');
+  variable_set('node_admin_theme', '1');
+  theme_disable(array('bartik'));
+
+
+  //Rebuilds all enabled features
+  features_revert();
+
+// ignore any rebuild messages
+  node_access_needs_rebuild(FALSE);
+
+// ignore any other install messages
+  drupal_get_messages();
+
+  //creates the contributor role
+  $role = new stdClass();
+  $role->name = 'Contributor';
+  $role->weight = 4;
+  user_role_save($role);
+
+  //creates teh editor role
+  $role = new stdClass();
+  $role->name = 'Editor';
+  $role->weight = 6;
+  user_role_save($role);
+
+  //creates the power user role
+  $role = new stdClass();
+  $role->name = 'Power User';
+  $role->weight = 8;
+  user_role_save($role);
+
+  // Create a default role for site administrators, with all available permissions assigned.
+  $role = new stdClass();
+  $role->name = 'administrator';
+  $role->weight = 20;
+  user_role_save($role);
+
+  user_role_grant_permissions($role->rid, array_keys(module_invoke_all('permission')));
+// Set this as the administrator role.
+  variable_set('user_admin_role', $role->rid);
+
+// Assign user 1 the "administrator" role.
+  db_insert('users_roles')
+    ->fields(array('uid' => 1, 'rid' => $role->rid))
+    ->execute();
+
+  //sets the initial permissions for the starting roles
+  $permissions = array(
+    'administrator' => array(),
+    'anonymous user' => array(
+      'access content' => 1,
+      'search content' => 1,
+      'view files' => 1,
+    ),
+    'authenticated user' => array(
+      'access content' => 1,
+      'post comments' => 1,
+      'search content' => 1,
+      'use text format basic_html' => 1,
+      'view files' => 1,
+      'view own files' => 1,
+      'view own unpublished content' => 1,
+    ),
+    'Contributor' => array(
+      'access content' => 1,
+      'access content overview' => 1,
+      'access media browser' => 1,
+      'add media from remote sources' => 1,
+      'add media from remote urls' => 1,
+      'administer menu' => 1,
+      'create basic_block content' => 1,
+      'create basic_page content' => 1,
+      'create basic_slideshow content' => 1,
+      'create files' => 1,
+      'edit own audio files' => 1,
+      'edit own basic_block content' => 1,
+      'edit own basic_page content' => 1,
+      'edit own basic_slideshow content' => 1,
+      'edit own document files' => 1,
+      'edit own image files' => 1,
+      'edit own video files' => 1,
+      'post comments' => 1,
+      'search content' => 1,
+      'use text format basic_html' => 1,
+      'view files' => 1,
+      'view own files' => 1,
+      'view own unpublished content' => 1,
+    ),
+    'Editor' => array(
+      'access administration pages' => 1,
+      'access content' => 1,
+      'access content overview' => 1,
+      'access contextual links' => 1,
+      'access draggableviews' => 1,
+      'access media browser' => 1,
+      'access user profiles' => 1,
+      'add media from remote sources' => 1,
+      'add media from remote urls' => 1,
+      'administer files' => 1,
+      'administer menu' => 1,
+      'administer nodes' => 1,
+      'administer quicktabs' => 1,
+      'administer taxonomy' => 1,
+      'administer themes' => 1,
+      'administer url aliases' => 1,
+      'administer users' => 1,
+      'bypass file access' => 1,
+      'bypass node access' => 1,
+      'create basic_block content' => 1,
+      'create basic_page content' => 1,
+      'create basic_slideshow content' => 1,
+      'create files' => 1,
+      'create url aliases' => 1,
+      'edit own audio files' => 1,
+      'edit own basic_block content' => 1,
+      'edit own basic_page content' => 1,
+      'edit own basic_slideshow content' => 1,
+      'edit own document files' => 1,
+      'edit own image files' => 1,
+      'edit own video files' => 1,
+      'post comments' => 1,
+      'search content' => 1,
+      'use text format basic_html' => 1,
+      'view files' => 1,
+      'view own files' => 1,
+      'view own unpublished content' => 1,
+      'view the administration theme' => 1,
+    ),
+    'Power User' => array(
+      'access administration pages' => 1,
+      'access all views' => 1,
+      'access content' => 1,
+      'access content overview' => 1,
+      'access contextual links' => 1,
+      'access draggableviews' => 1,
+      'access media browser' => 1,
+      'access site reports' => 1,
+      'access user profiles' => 1,
+      'add media from remote sources' => 1,
+      'add media from remote urls' => 1,
+      'administer blocks' => 1,
+      'administer files' => 1,
+      'administer image styles' => 1,
+      'administer menu' => 1,
+      'administer nodes' => 1,
+      'administer quicktabs' => 1,
+      'administer taxonomy' => 1,
+      'administer themes' => 1,
+      'administer url aliases' => 1,
+      'administer users' => 1,
+      'administer views' => 1,
+      'bypass file access' => 1,
+      'bypass node access' => 1,
+      'create basic_block content' => 1,
+      'create basic_page content' => 1,
+      'create basic_slideshow content' => 1,
+      'create files' => 1,
+      'create url aliases' => 1,
+      'edit own audio files' => 1,
+      'edit own basic_block content' => 1,
+      'edit own basic_page content' => 1,
+      'edit own basic_slideshow content' => 1,
+      'edit own document files' => 1,
+      'edit own image files' => 1,
+      'edit own video files' => 1,
+      'insert view gen use' => 1,
+      'post comments' => 1,
+      'search content' => 1,
+      'use text format basic_html' => 1,
+      'view files' => 1,
+      'view own files' => 1,
+      'view own unpublished content' => 1,
+      'view the administration theme' => 1,
+    ),
+  );
+
+  //obtains all the roles and role IDs
+  $query = db_select('role', 'rid')
+    ->fields('rid', array('rid', 'name'));
+  $result = $query->execute();
+  //looops through all the roles and sets the permissions if the role exists from the array of permissions above
+  while ($record = $result->fetchAssoc()) {
+    if (array_key_exists($record['name'], $permissions)) {
+      user_role_change_permissions($record['rid'], $permissions[$record['name']]);
+    }
+  }
+
+  //Creates Initial 403 Page using the Basic Page type
+  $node = new StdClass();
+  $node->type = 'basic_page';
+  $node->status = 1;
+  $node->title = "Access Denied";
+  $node->body['und'][0]['format'] = 'basic_html';
+  $node->body['und'][0]['value'] = '<h2 style="text-align: center;">We Appologize.</h2><p style="text-align: center;">You currently do not have permission to view this page.<br>If you believe you have encountered this by mistake, please contact the site administrators.</p><p style="text-align: center;">Thank You.</p>';
+  node_save($node);
+
+  //Creates Initial 404 Page using the Basic Page type
+  $node = new StdClass();
+  $node->type = 'basic_page';
+  $node->status = 1;
+  $node->title = "Page Not Found";
+  $node->body['und'][0]['format'] = 'basic_html';
+  $node->body['und'][0]['value'] = '<h2 style="text-align: center;">We Appologize.</h2><p style="text-align: center;">This page can not be found. Please check the URL and try again.</p><p style="text-align: center;">Thank You.</p>';
+  node_save($node);
+
+  //sets the 403 & 404 variables for the first nodes created above.
+  variable_set('site_403', 'node/1');
+  variable_set('site_404', 'node/2');
+
+  //variable_set();
+}

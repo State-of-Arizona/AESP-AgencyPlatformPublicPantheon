@@ -1,0 +1,9 @@
+name = Insert View Code Generator
+description = A field that can be added to any node that will generate the code to insert a view into the node
+core = 7.x
+version = 7.x - 1.00
+package = Custom
+configure = admin/config/content/insert-gen
+
+dependencies[] = insert_view
+dependencies[] = views

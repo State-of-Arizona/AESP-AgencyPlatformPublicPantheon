@@ -1,0 +1,70 @@
+<?php
+
+
+/**
+ *  Implements hook_field_schema().
+ */
+function feature_enewsletter_field_schema($field) {
+  $schema = array();
+  switch ($field['type']) {
+    case 'enewsletters':
+      $schema['columns']['value'] = array(
+        'type' => 'int',
+        'not null' => FALSE
+      );
+      break;
+    case 'enews_demographics':
+      $schema['columns']['value'] = array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE
+      );
+      break;
+  }
+  return $schema;
+}
+
+/**
+ *  Implements hook_uninstall().
+ */
+function feature_enewsletter_uninstall() {
+  variable_del('feature_enewsletter');
+}
+
+/**
+ * Moves variables to fields
+ */
+function feature_enewsletter_update_7010() {
+  $features = array(
+    'feature_enewsletter' => array(
+      'field_base',
+      'field_instance',
+    )
+  );
+  features_revert($features);
+
+  $query = db_select('variable', 'v')
+    ->condition('name', 'feature_enewsletter_%', 'like')
+    ->fields('v', array('name'))
+    ->execute();
+
+  while ($name = $query->fetchField()) {
+    $nid = substr($name, 20);
+    $lists = explode(',', variable_get($name));
+    foreach ($lists as &$value) {
+      $value = array('value' => $value);
+    }
+
+    $node = node_load($nid);
+    $node->field_enews_letters = array(
+      'und' => $lists,
+    );
+    node_save($node);
+
+    variable_del($name);
+  }
+
+  $settings = variable_get('feature_enewsletter');
+  $settings['chosen'] = 0;
+  variable_set('feature_enewsletter', $settings);
+}

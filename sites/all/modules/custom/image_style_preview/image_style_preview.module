@@ -1,0 +1,120 @@
+<?php
+
+/*
+ * Implements hook_block_info().
+ */
+function image_style_preview_block_info() {
+  $blocks = array();
+  $blocks['image_style_preview'] = array(
+    'info' => t('Image Style Preview'),
+    'cache' => DRUPAL_NO_CACHE
+  );
+  return $blocks;
+}
+
+/*
+ * Implements hook_block_view().
+ */
+function image_style_preview_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'image_style_preview':
+      $block['title'] = t('Image Style Preview');
+      $block['content'] = drupal_get_form('_image_style_preview_block');
+      break;
+  }
+
+  return $block;
+}
+
+/*
+ * Block display function
+ */
+function _image_style_preview_block() {
+  $form = array();
+
+  //Form for a large image effects
+  $large_image = image_load(drupal_get_path('module', 'image_style_preview') . '/img/stock_image.png');
+  $form['large_image_effects'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('View image styles on a large image'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['large_image_effects']['original_large_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Original Image'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['large_image_effects']['original_large_fieldset']['original_image'] = array(
+    '#markup' => theme_image(array(
+      'path' => $large_image->source,
+      'attributes' => $large_image->info
+    )),
+  );
+
+  //generates the styled images and creates a fieldset and the markup to display those images
+  foreach (image_styles() as $key => $value) {
+    $derivative_uri = image_style_path($key, 'image_style_preview/stock_image.png');
+    image_style_create_derivative(image_style_load($key), $large_image->source, $derivative_uri);
+
+    $form['large_image_effects'][$key . '_fieldset'] = array(
+      '#type' => 'fieldset',
+      '#title' => $value['label'],
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['large_image_effects'][$key . '_fieldset'][$key . 'image'] = array(
+      '#markup' => theme_image_style(array(
+        'style_name' => $key,
+        'path' => 'image_style_preview/stock_image.png',
+        'width' => image_load($derivative_uri)->info['width'],
+        'height' => image_load($derivative_uri)->info['height'],
+      )),
+    );
+  }
+
+  //Form for a small image effects
+  $small_image = image_load(drupal_get_path('module', 'image_style_preview') . '/img/small_stock_image.png');
+  $form['small_image_effects'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('View image styles on a small image'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['small_image_effects']['original_small_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Original Image'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['small_image_effects']['original_small_fieldset']['original_image'] = array(
+    '#markup' => theme_image(array(
+      'path' => $small_image->source,
+      'attributes' => $small_image->info
+    )),
+  );
+
+  //generates the styled images and creates a fieldset and the markup to display those images
+  foreach (image_styles() as $key => $value) {
+    $derivative_uri = image_style_path($key, 'image_style_preview/small_stock_image.png');
+    image_style_create_derivative(image_style_load($key), $small_image->source, $derivative_uri);
+
+    $form['small_image_effects'][$key . '_fieldset'] = array(
+      '#type' => 'fieldset',
+      '#title' => $value['label'],
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['small_image_effects'][$key . '_fieldset'][$key . 'image'] = array(
+      '#markup' => theme_image_style(array(
+        'style_name' => $key,
+        'path' => 'image_style_preview/small_stock_image.png',
+        'width' => image_load($derivative_uri)->info['width'],
+        'height' => image_load($derivative_uri)->info['height'],
+      )),
+    );
+  }
+  return $form;
+}

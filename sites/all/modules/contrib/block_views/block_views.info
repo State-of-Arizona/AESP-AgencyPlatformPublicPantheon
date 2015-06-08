@@ -1,0 +1,14 @@
+name = Block Views Visiblility
+description = Example module to demonstrate module block_views.
+core = 7.x
+php = 5.1
+configure = admin/config/block_views
+files[] = block_views.module
+dependencies[] = block
+dependencies[] = views
+; Information added by drupal.org packaging script on 2012-03-04
+version = "7.x-1.0-beta2"
+core = "7.x"
+project = "block_views"
+datestamp = "1330880437"
+

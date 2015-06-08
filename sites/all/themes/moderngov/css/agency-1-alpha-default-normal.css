@@ -1,0 +1,60 @@
+/* This file will hold styles that are loaded using the same media query as the normal grid.
+all and (min-width: 980px) and (min-device-width: 980px), all and (max-device-width: 1024px) and (min-width: 1024px) and (orientation:landscape) */
+
+
+
+/*
+ * Page backgrounds
+ */
+
+.site-name-slogan {
+	width:75%;
+}
+
+
+#region-preface-second{
+	
+	 margin-left: 8px;
+}
+
+body.node-type-no-sidebars-page #zone-content,  
+body.node-type-no-sidebars-page #zone-preface {
+	background-image: none;
+	background-color: #fff;
+}
+
+.breaking-news span.read-more {
+  display:block;
+}
+
+.home-top-intro {
+   text-indent:0;
+   font-size: 15px;
+   margin: 40px 40px 30px 70px;
+}
+#zone-header.container-12 .grid-12 {
+	width: 960px !important; 
+}
+#home-top-read-more {
+	margin: 0 0 0 70px;
+	width: 75%;
+}
+#home-top-numbers {
+	margin: 0 0 0 65px;
+    padding: 15px 0;
+}
+.block-breadcrumb {
+  
+}
+.block-addthis {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+
+
+
+
+
+

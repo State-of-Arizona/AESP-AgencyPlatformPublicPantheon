@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Node expanded menu install file.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function node_expanded_menu_install() {
+  // Make sure this module loads after menu.
+  db_query("UPDATE {system} SET weight = 1 WHERE name = 'node_expanded_menu'");
+}

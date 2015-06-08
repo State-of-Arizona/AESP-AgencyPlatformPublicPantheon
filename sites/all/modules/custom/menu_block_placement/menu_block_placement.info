@@ -1,0 +1,12 @@
+name = Menu Block Placement
+description = Provides a field widget to use for block placement assigned to a region taking the menu heirachry into account.
+core = 7.x
+package = Custom
+version = 7.x-1.10
+
+dependencies[] = views
+dependencies[] = menu
+
+files[] = includes/menu_block_placement.views.inc
+files[] = includes/views_plugin_argument_default_menu_block_placement.inc
+files[] = includes/views_plugin_argument_default_menu_block_placement_per_path.inc

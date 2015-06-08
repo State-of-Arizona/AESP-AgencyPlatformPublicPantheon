@@ -1,0 +1,31 @@
+<?php
+
+/**
+ *  Implements hook_token_info().
+ */
+function menu_title_token_token_info() {
+  $info['tokens']['menu-link']['link-or-title'] = array(
+    'name' => t("Menu Link or Title"),
+    'description' => t("The text of the menu link if available. If not node title will be used."),
+  );
+  return $info;
+}
+
+/**
+ *  Implements hook_tokens().
+ */
+function menu_title_token_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
+  if ($type == 'node' && !empty($data['node'])) {
+    $node = $data['node'];
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'menu-link:link-or-title':
+          $replacements[$original] = !empty($node->menu['link_title']) ? $node->menu['link_title'] : $node->title;
+          break;
+      }
+    }
+  }
+
+  return $replacements;
+}

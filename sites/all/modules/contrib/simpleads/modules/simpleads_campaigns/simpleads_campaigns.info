@@ -1,0 +1,14 @@
+name = "Campaigns"
+description = "Advertisement campaigns"
+package = "SimpleAds"
+core = "7.x"
+
+scripts[] = simpleads_campaigns.js
+
+dependencies[] = simpleads
+; Information added by Drupal.org packaging script on 2014-12-18
+version = "7.x-1.9"
+core = "7.x"
+project = "simpleads"
+datestamp = "1418928698"
+

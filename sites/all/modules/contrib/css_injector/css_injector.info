@@ -1,0 +1,14 @@
+name = CSS Injector
+description = Adds CSS to the page output based on configurable rules
+core = 7.x
+
+configure = admin/config/development/css-injector
+
+dependencies[] = ctools
+
+; Information added by Drupal.org packaging script on 2014-10-06
+version = "7.x-2.x-dev"
+core = "7.x"
+project = "css_injector"
+datestamp = "1412618931"
+

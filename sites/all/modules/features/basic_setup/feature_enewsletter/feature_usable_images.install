@@ -1,0 +1,8 @@
+<?php
+
+/**
+ *  Implements hook_uninstall().
+ */
+function feature_usable_images_uninstall() {
+  variable_del('feature_usable_images');
+}

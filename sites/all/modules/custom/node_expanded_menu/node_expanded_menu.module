@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * node_expanded_menu module file
+ */
+
+/**
+ * Implements hook_form_form-id_alter().
+ */
+function node_expanded_menu_form_node_form_alter(&$form, &$form_status) {
+  if (isset($form['menu']['link'])) {
+    // Alter the expanded form element to override the default setting
+    $form['menu']['link']['expanded']['#weight'] = 25;
+    $form['menu']['link']['expanded']['#type'] = 'checkbox';
+    $form['menu']['link']['expanded']['#title'] = t('Show as expanded');
+    $desctiption = t('If selected and this menu link has children, the menu will always appear expanded.');
+    $form['menu']['link']['expanded']['#description'] = t($desctiption);
+    if (isset($form['nid']) && is_null($form['nid']['#value'])) {
+      $form['menu']['link']['expanded']['#default_value'] = 1;
+    }
+    else {
+      $form['menu']['link']['expanded']['#default_value'] = $form['menu']['link']['expanded']['#value'];
+    }
+    unset($form['menu']['link']['expanded']['#value']);
+  }
+}

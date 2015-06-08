@@ -1,0 +1,97 @@
+<?php
+
+/**
+ * @file
+ * Provides HTML5 video and audio elements using Mediaelement.js.
+ */
+
+// @todo This could be removed when http://drupal.org/node/977052 is fixed.
+module_load_include('inc', 'mediaelement', 'mediaelement.field');
+
+/**
+ * Implements hook_menu().
+ */
+function mediaelement_menu() {
+  return array(
+    'admin/config/media/mediaelement' => array(
+      'title' => 'MediaElement.js',
+      'description' => 'Settings for MediaElement.js integration with Drupal',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('mediaelement_admin_form'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'mediaelement.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_library().
+ */
+function mediaelement_library() {
+  $path = libraries_get_path('mediaelement');
+  $libraries = array();
+
+  $libraries['mediaelement'] = array(
+    'title' => 'Media Element',
+    'website' => 'http://mediaelementjs.com/',
+    'version' => '2.1.6',
+    'js' => array(
+      // The mediaelement script detects the path to itself to call other files
+      // in the same location. With preprocessing this is problematic as the
+      // script is no longer in the same directory as its other assets. There
+      // is an option that can be passed into the script with its location.
+      // @todo Update all calls to mediaelement to pass in the assets location.
+      $path . '/build/mediaelement-and-player.min.js' => array('group' => JS_LIBRARY, 'preprocess' => FALSE),
+    ),
+    'css' => array(
+      $path . '/build/mediaelementplayer.min.css' => array('group' => CSS_SYSTEM),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Implements hook_init().
+ */
+function mediaelement_init() {
+  // When the media player is set to be on all pages add it to the page.
+  if (variable_get('mediaelement_sitewide', FALSE)) {
+    drupal_add_library('mediaelement', 'mediaelement');
+    drupal_add_js(drupal_get_path('module', 'mediaelement') . '/mediaelement.js');
+    drupal_add_js(array('mediaelementAll' => TRUE), array('type' => 'setting'));
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function mediaelement_theme() {
+  return array(
+    'mediaelement_video' => array(
+      'variables' => array('attributes' => array(), 'settings' => array()),
+    ),
+    'mediaelement_audio' => array(
+      'variables' => array('attributes' => array(), 'settings' => array()),
+    ),
+  );
+}
+
+function theme_mediaelement_video($variables) {
+  $output = '<div class="mediaelement-video">';
+  $output .= '<video ' . drupal_attributes($variables['attributes']) . ' ></video>';
+  if ($variables['settings']['download_link']) {
+    $output .= '<div class="mediaelement-download-link"><a href="' . $variables['attributes']['src'] . '">' . filter_xss_admin($variables['settings']['download_text']) . '</a></div>';
+  }
+  $output .= '</div>';
+  return $output;
+}
+
+function theme_mediaelement_audio($variables) {
+  $output = '<div class="mediaelement-audio">';
+  $output .= '<audio ' . drupal_attributes($variables['attributes']) . ' ></audio>';
+  if ($variables['settings']['download_link']) {
+    $output .= '<div class="mediaelement-download-link"><a href="' . $variables['attributes']['src'] . '">' . filter_xss_admin($variables['settings']['download_text']) . '</a></div>';
+  }
+  $output .= '</div>';
+  return $output;
+}

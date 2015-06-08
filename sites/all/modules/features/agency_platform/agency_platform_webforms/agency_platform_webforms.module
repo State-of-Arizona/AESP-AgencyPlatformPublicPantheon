@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Agency Platform Webforms feature.
+ */
+
+include_once 'agency_platform_webforms.features.inc';

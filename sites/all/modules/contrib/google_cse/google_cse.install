@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ */
+function google_cse_uninstall() {
+  variable_del('google_cse_cof_google');
+  variable_del('google_cse_cof_here');
+  variable_del('google_cse_cr');
+  variable_del('google_cse_cx');
+  variable_del('google_cse_domain');
+  variable_del('google_cse_gl');
+  variable_del('google_cse_hl');
+  variable_del('google_cse_ie');
+  variable_del('google_cse_locale_hl');
+  variable_del('google_cse_locale_lr');
+  variable_del('google_cse_lr');
+  variable_del('google_cse_oe');
+  variable_del('google_cse_results_display');
+  variable_del('google_cse_results_gadget');
+  variable_del('google_cse_results_prefix');
+  variable_del('google_cse_results_searchbox_width');
+  variable_del('google_cse_results_suffix');
+  variable_del('google_cse_results_tab');
+  variable_del('google_cse_results_title');
+  variable_del('google_cse_results_width');
+  variable_del('google_cse_safe');
+  variable_del('google_cse_searchbox_width');
+  variable_del('google_cse_sitesearch');
+  variable_del('google_cse_sitesearch_default');
+  variable_del('google_cse_sitesearch_option');
+}

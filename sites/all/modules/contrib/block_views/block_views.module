@@ -1,0 +1,172 @@
+<?php
+
+/**
+ * @file
+ * Demonstrate basic module block_views.
+ */
+
+/**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Adds node-type specific visibility options to add block form.
+ *
+ * @see block_add_block_form()
+ */
+function block_views_form_block_add_block_form_alter(&$form, &$form_state) {
+  block_views_form_block_admin_configure_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Adds node-type specific visibility options to block configuration form.
+ *
+ * @see block_admin_configure()
+ */
+function block_views_form_block_admin_configure_alter(&$form, &$form_state) {
+	drupal_add_js(drupal_get_path('module', 'block_views') . '/block_views.js');
+  $result = db_query("SELECT * FROM {block_views} WHERE module = :module AND delta = :delta", array(
+    ':module' => $form['module']['#value'],
+    ':delta' => $form['delta']['#value'],
+  ))->fetchAll();
+  $defaults = array();
+  if (is_array($result)) {
+  	foreach ($result AS $row) {
+  	  $defaults[] = "$row->view:$row->display";
+  	}
+  }
+  $form['visibility']['views'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Views'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'visibility',
+    '#weight' => 5,
+  );
+  $options = block_views_get_views_options();
+  $form['visibility']['views']['views'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Show block for specific views'),
+    '#default_value' => $defaults,
+    '#options' => $options,
+    '#description' => t('Show this block only on pages that display content of the given type(s). If you select no types, there will be no type-specific limitation.'),
+  );
+  $form['#submit'][] = 'block_views_form_block_admin_configure_submit';
+  $menu = menu_get_item();
+}
+
+function block_views_get_views_options() {
+  $options = array();
+	$views = views_get_enabled_views();
+	foreach ($views AS $view_name => $view) {
+	  if (!empty($view->disabled)) {
+      continue;
+    }
+		foreach ($view->display AS $display_name => $display) {
+			if ($display->display_plugin == 'page') {
+				$options["$view_name:$display_name"] = (($view->human_name) ? $view->human_name : $view->name) . ": " . $display->display_title;
+			}
+		}
+	}
+	natcasesort($options); 
+
+  return $options;
+}
+
+/**
+ * Form submit handler for block configuration form.
+ *
+ * @see node_form_block_admin_configure_alter()
+ */
+function block_views_form_block_admin_configure_submit($form, &$form_state) {
+
+  db_delete('block_views')
+    ->condition('module', $form_state['values']['module'])
+    ->condition('delta', $form_state['values']['delta'])
+    ->execute();
+  $query = db_insert('block_views')->fields(array('view', 'display', 'module', 'delta'));
+  foreach (array_filter($form_state['values']['views']) as $viewdisplay) {
+  	list($view, $display) = explode(':', $viewdisplay);
+    $query->values(array(
+      'view' => $view,
+      'display' => $display,
+      'module' => $form_state['values']['module'],
+      'delta' => $form_state['values']['delta'],
+    ));
+  }
+  $query->execute();
+}
+
+/**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Adds node specific submit handler to delete custom block form.
+ *
+ * @see block_custom_block_delete()
+ */
+function block_views_form_block_custom_block_delete_alter(&$form, &$form_state) {
+  $form['#submit'][] = 'block_views_form_block_custom_block_delete_submit';
+}
+
+/**
+ * Form submit handler for custom block delete form.
+ *
+ * @see node_form_block_custom_block_delete_alter()
+ */
+function block_views_form_block_custom_block_delete_submit($form, &$form_state) {
+  db_delete('block_views')
+    ->condition('module', 'block')
+    ->condition('delta', $form_state['values']['bid'])
+    ->execute();
+}
+
+/**
+ * Implements hook_block_list_alter().
+ *
+ * Check the view specific visibilty settings.
+ * Remove the block if the visibility conditions are not met.
+ */
+function block_views_block_list_alter(&$blocks) {
+  global $theme_key;
+
+  // Build an array of node types for each block.
+  $block_views = array();
+  $result = db_query('SELECT * FROM {block_views}');
+  foreach ($result as $record) {
+    $block_views[$record->module][$record->delta][$record->view][$record->display] = TRUE;
+  }
+//dsm($block_views);
+  $menu = menu_get_item();
+//dsm($menu);
+  $view = '';
+  if ($menu['page_callback'] == 'views_page') {
+    $view = $menu['page_arguments'][0];
+    $display = $menu['page_arguments'][1];
+  }
+//dsm($view);
+  foreach ($blocks as $key => $block) {
+
+    if (!isset($block->theme) || !isset($block->status) || $block->theme != $theme_key || $block->status != 1) {
+      // This block was added by a contrib module, leave it in the list.
+      continue;
+    }
+    // If a block has no node types associated, it is displayed for every type.
+    // For blocks with node types associated, if the node type does not match
+    // the settings from this block, remove it from the block list.
+    if (isset($block_views[$block->module][$block->delta])) {
+      if (!empty($view)) {
+        // This is a node or node edit page.
+        if (!isset($block_views[$block->module][$block->delta][$view][$display])) {
+          // This block should not be displayed for this node type.
+          unset($blocks[$key]);
+          continue;
+        }
+      }
+      else {
+        // This is not a views page, remove the block.
+        unset($blocks[$key]);
+        continue;
+      }
+    }
+  }
+}

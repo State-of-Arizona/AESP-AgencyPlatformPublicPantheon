@@ -1,0 +1,95 @@
+<?php
+/**
+ * @file
+ * The AET main module file.
+ *
+ * This file contains all of hooks and main programming logic of AET.
+ */
+
+/**
+ * Clears unreplaced tokens.
+ *
+ * @param array $tokens
+ *   The tokens array.
+ * @param array $replacements
+ *   The replacements array
+ *
+ * @param bool $clear
+ *   The clear flag is used to set if unreplaced tags should be cleared.
+ *   defaults to TRUE.
+ */
+function aet_clear_tokens($tokens, &$replacements, $clear = TRUE) {
+
+  // Checks if the clear option has been flagged.
+  if ($clear) {
+
+    // Loop threw all the tokens.
+    foreach ($tokens as $original) {
+
+      // Check if the token original value exists in the replacements array.
+      if (!isset($replacements[$original])) {
+
+        // Replace the token in the replacements array to an empty string.
+        $replacements[$original] = '';
+      }
+    }
+  }
+}
+
+/**
+ * Checks if an entity is being viewed.
+ *
+ * @return bool
+ *   TRUE if the entity with $id as its id and of type $entity_type is being
+ *   viewed.
+ */
+function aet_entity_is_viewed($entity_type, $id_key, $id) {
+
+  // Get the function backtrace to check if the the entity view function is
+  // part of the chain.
+  $backtrace = debug_backtrace();
+  foreach ($backtrace as $caller) {
+    if ($caller['function'] === $entity_type . '_view') {
+
+      // If the received id matches the viewed entity id than return TRUE
+      // (the entity of the received id is being viewed).
+      if ($id == $caller['args'][0]->{$id_key}) {
+        return TRUE;
+      }
+    }
+    elseif ($caller['function'] == '_drupal_bootstrap_full' || $caller == 'menu_execute_active_handler') {
+
+      // There is no point in going back this far, so just stop.
+      break;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Checks if the current page is the full page view of the passed-in entity.
+ *
+ * @param int $entity_id
+ *   An entity id.
+ * @param string $id_key
+ *   The entity id key (e.g. nid for nodes, fid for files).
+ */
+function aet_entity_is_page($entity_id, $id_key) {
+
+  // Returns the object of the entity being viewed.
+  $page_entity = menu_get_object();
+
+  // Checks if no entity is being viewed or if it doesn't contain the a property
+  // with $id_key as it's key.
+  if (empty($page_entity) || !isset($page_entity->{$id_key})) {
+
+    // If the above check is true than the passed in entity is not being viewed
+    // directly.
+    return FALSE;
+  }
+
+  // Returns true if the id of the passed in entity is equal to the id of the
+  // entity being viewed.
+  return $page_entity->{$id_key} === $entity_id;
+}

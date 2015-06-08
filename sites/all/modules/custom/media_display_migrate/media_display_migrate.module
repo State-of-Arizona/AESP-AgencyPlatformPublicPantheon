@@ -1,0 +1,163 @@
+<?php
+/*
+ * Implements hook_permission().
+ */
+function media_display_migrate_permission() {
+  return array(
+    'administer media display migrate' => array(
+      'title' => t('Administer Media Display Migrate'),
+    ),
+  );
+}
+
+/*
+ * Implements hook_menu().
+ */
+function media_display_migrate_menu() {
+  $items = array();
+  $items['admin/config/media/migrate'] = array(
+    'title' => 'Media File Display Migration',
+    'description' => 'Import and export file display settings for Media Module',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('media_migrate_admin'),
+    'access arguments' => array('administer media display migrate'),
+  );
+  return $items;
+}
+
+/*
+ * Media Migrate Admin Form
+ */
+function media_migrate_admin() {
+  $form = array();
+  $form['upload_container'] = array(
+    '#type' => 'container',
+  );
+  $form['upload_container']['media_migrate_file'] = array(
+    '#type' => 'managed_file',
+    '#description' => t('Upload a csv of an exported display settings. Upon upload, save the settings to enable the import of this file.'),
+    '#title' => t('Upload Display File'),
+    '#default_value' => (variable_get('media_migrate_file')),
+    '#upload_location' => 'public://media_migrate',
+    '#upload_validators' => array(
+      'file_validate_extensions' => array('csv'),
+    ),
+  );
+  if (variable_get('media_migrate_file')) {
+    $form['upload_container']['import_uploaded_displays'] = array(
+      '#type' => 'submit',
+      '#value' => 'Import Displays From File',
+      '#submit' => array('_media_migrate_upload_import'),
+      '#attributes' => array('onclick' => 'if(!confirm("Replace Existing Display Settings?")){return false;}'),
+    );
+  }
+  if (file_exists(drupal_get_path('module', 'media_display_migrate') . "/file_display.csv")) {
+    $form['default_displays_container'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Import From Module File'),
+      '#description' => t('WARNING: This will modify existing file displays'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['default_displays_container']['import_default_displays'] = array(
+      '#type' => 'submit',
+      '#value' => 'Import Default Displays',
+      '#submit' => array('_media_migrate_default_import'),
+      '#attributes' => array('onclick' => 'if(!confirm("Replace Existing Display Settings?")){return false;}'),
+    );
+  }
+
+  $form['export_display_settings'] = array(
+    '#type' => 'submit',
+    '#value' => t('Download Current Settings'),
+    '#submit' => array('_media_migrate_export'),
+  );
+  return system_settings_form($form);
+}
+
+/*
+ * Submit handler for the import_uploaded_displays button in admin form
+ */
+function _media_migrate_upload_import() {
+  if (variable_get('media_migrate_file')) {
+    $f = file_load(variable_get('media_migrate_file'));
+    $file_url = file_create_url($f->uri);
+    $display = array();
+    $file = fopen($file_url, "r");
+    while (!feof($file)) {
+      array_push($display, fgetcsv($file));
+    }
+    fclose($file);
+    foreach ($display as $row) {
+      if ($row[0] != NULL) {
+        db_merge('file_display')
+          ->key(array('name' => $row[0]))
+          ->fields(array(
+            'name' => $row[0],
+            'weight' => $row[1],
+            'status' => $row[2],
+            'settings' => $row[3],
+          ))->execute();
+      }
+    }
+    drupal_set_message('Display settings have been successfully imported from ' . $file_url . '.', 'status');
+  }
+  else {
+    drupal_set_message('Please upload a file to be imported', 'critical');
+  }
+}
+
+/*
+ * Submit handler for the import_default_displays button in admin form
+ *
+ * Function that is called in the admin configurations or module install to
+ * populate the database with the display settings from the file within the module
+ */
+function _media_migrate_default_import() {
+  if (file_exists(drupal_get_path('module', 'media_display_migrate') . "/file_display.csv")) {
+    $display = array();
+
+    //Gets the file
+    $file = fopen(drupal_get_path('module', 'media_display_migrate') . "/file_display.csv", "r");
+    while (!feof($file)) {
+      array_push($display, fgetcsv($file));
+    }
+    fclose($file);
+
+    //inserts/updates each row in the database with the row from the file
+    foreach ($display as $row) {
+      if ($row[0] != NULL) {
+        db_merge('file_display')
+          ->key(array('name' => $row[0]))
+          ->fields(array(
+            'name' => $row[0],
+            'weight' => $row[1],
+            'status' => $row[2],
+            'settings' => $row[3],
+          ))->execute();
+      }
+    }
+    drupal_set_message('Default display settings imported from default file.', 'status');
+  }
+}
+
+/*
+ * Submit handler for export_display_settings button to download display settings
+ */
+function _media_migrate_export() {
+  $results = db_query("select * from file_display");
+  $all_displays = array();
+  foreach ($results as $display) {
+    array_push($all_displays, (array) $display);
+  }
+
+  drupal_add_http_header('Content-Type', 'text/csv');
+  drupal_add_http_header('Content-Disposition', 'attachment;filename=file_display.csv');
+  $fp = fopen('php://output', 'w');
+  foreach ($all_displays as $line) {
+    fputcsv($fp, $line);
+  }
+  fclose($fp);
+  drupal_exit();
+}

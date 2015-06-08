@@ -1,0 +1,118 @@
+<?php
+
+function feature_basic_config_install() {
+  if (module_exists('toolbar')) {
+    module_disable(array('toolbar'));
+  }
+  db_update('block')
+    ->condition('module', 'search')
+    ->fields(array('status' => 0))
+    ->execute();
+
+  foreach (field_info_field_map() as $key => $value) {
+    if ($value['type'] == 'text_with_summary' || $value['type'] == 'text_long' || $value['type'] == 'text') {
+      db_update('field_data_' . $key)
+        ->isNotNull($key . '_format')
+        ->fields(array($key . '_format' => 'basic_html'))
+        ->execute();
+    }
+  }
+
+  db_update('role_permission')
+    ->condition('permission', 'use text format full_html')
+    ->fields(array('permission' => 'use text format basic_html'))
+    ->execute();
+
+  if (module_exists('webform')) {
+    $query = db_select('webform_component', 'w')
+      ->condition('type', 'markup')
+      ->fields('w', array('nid', 'cid', 'extra'))
+      ->execute();
+    while ($row = $query->fetchAssoc()) {
+      $extra = unserialize($row['extra']);
+      $extra['format'] = 'basic_html';
+      $row['extra'] = serialize($extra);
+      db_update('webform_component')
+        ->condition('nid', $row['nid'])
+        ->condition('cid', $row['cid'])
+        ->fields($row)
+        ->execute();
+    }
+  }
+
+  db_update('users')
+    ->condition('signature_format', 'basic_html', '!=')
+    ->fields(array('signature_format' => 'basic_html'))
+    ->execute();
+
+  db_query('update views_display set display_options = replace(display_options,\'s:9:"full_html\', \'s:10:"basic_html\') where display_options like \'%full_html%\';');
+
+  feature_basic_config_update_7010();
+}
+
+function feature_basic_config_update_7010() {
+  module_disable(array('toolbar'));
+  variable_set('search404_page_text', t('The page you requested could not be found. You may try one of the links listed below or try searching again.'));
+  variable_set('search404_disable_error_message', '1');
+  variable_set('search404_do_custom_search', '1');
+  variable_set('search404_custom_search_path', 'search/node/@keys');
+
+  if (module_exists('admin_menu')) {
+    $permissions = array(
+      'Contributor' => array(
+        'access administration menu' => 1,
+        'create files' => 1,
+        'view own files' => 1,
+        'access media browser' => 1,
+        'add media from remote sources' => 1,
+        'use media wysiwyg' => 1,
+        'access own broken links report' => 1,
+      ),
+      'Editor' => array(
+        'access administration menu' => 1,
+        'bypass file access' => 1,
+        'administer files' => 1,
+        'create files' => 1,
+        'view own files' => 1,
+        'access media browser' => 1,
+        'add media from remote sources' => 1,
+        'use media wysiwyg' => 1,
+        'access own broken links report' => 1,
+        'flush caches' => 1,
+      ),
+      'Power User' => array(
+        'access administration menu' => 1,
+        'bypass file access' => 1,
+        'administer files' => 1,
+        'create files' => 1,
+        'view own files' => 1,
+        'access media browser' => 1,
+        'add media from remote sources' => 1,
+        'use media wysiwyg' => 1,
+        'access own broken links report' => 1,
+        'access broken links report' => 1,
+        'flush caches' => 1,
+      ),
+    );
+
+    //obtains all the roles and role IDs
+    $query = db_select('role', 'rid')
+      ->fields('rid', array('rid', 'name'));
+    $result = $query->execute();
+    //looops through all the roles and sets the permissions if the role exists from the array of permissions above
+    while ($record = $result->fetchAssoc()) {
+      if (array_key_exists($record['name'], $permissions)) {
+        user_role_change_permissions($record['rid'], $permissions[$record['name']]);
+      }
+    }
+  }
+  $features = array(
+    'feature_basic_config' => array(
+      'filter',
+      'variable',
+      'wysiwyg',
+    )
+  );
+  features_revert($features);
+
+}

@@ -1,0 +1,160 @@
+<?php
+
+function media_displays_theme() {
+  $theme = array(
+    'media_displays_download_file_alt' => array(
+      'variables' => array('items' => NULL),
+      'file' => 'media_displays.formatter.inc'
+    ),
+    'media_displays_download_alt_item' => array(
+      'variables' => array('file' => NULL),
+      'file' => 'media_displays.formatter.inc'
+    ),
+    'media_displays_image_alt_quotes' => array(
+      'variables' => array(
+        'items' => NULL,
+        'path' => NULL,
+        'image_style' => NULL,
+      ),
+      'file' => 'media_displays.formatter.inc'
+    ),
+  );
+  return $theme;
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function media_displays_field_formatter_info() {
+  $formatters = array(
+    'direct_download_alt' => array(
+      'label' => t('Download File (ALT Text)'),
+      'field types' => array('file', 'image'),
+      'description' => t('Displays a link to direct download the file using the ALT text.')
+    ),
+    'image_alt_quotes' => array(
+      'label' => t('Image (ALT quotes)'),
+      'field types' => array('file', 'image'),
+      'description' => t('Allows alt attributes to have single quotes'),
+      'settings' => array(
+        'media_displays_image_style' => '',
+        'media_displays_image_link' => '',
+      ),
+    ),
+  );
+  return $formatters;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function media_displays_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $image_styles = image_style_options(FALSE, PASS_THROUGH);
+
+  $element['media_displays_image_style'] = array(
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#default_value' => $settings['media_displays_image_style'],
+    '#empty_option' => t('None (original image)'),
+    '#options' => $image_styles,
+  );
+
+  $link_types = array(
+    'content' => t('Content'),
+    'file' => t('File'),
+  );
+  $element['media_displays_image_link'] = array(
+    '#title' => t('Link image to'),
+    '#type' => 'select',
+    '#default_value' => $settings['media_displays_image_link'],
+    '#empty_option' => t('Nothing'),
+    '#options' => $link_types,
+  );
+
+  return $element;
+}
+
+/**
+ * Implementation of hook_field_formatter_view().
+ */
+function media_displays_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  switch ($display['type']) {
+    case 'direct_download_alt':
+      $element[0] = array(
+        '#theme' => 'media_displays_download_file_alt',
+        '#items' => $items
+      );
+      break;
+    case 'image_alt_quotes':
+      if ($display['settings']['media_displays_image_link'] == 'content') {
+        $uri = entity_uri($entity_type, $entity);
+      }
+      elseif ($display['settings']['media_displays_image_link'] == 'file') {
+        $link_file = TRUE;
+      }
+
+      foreach ($items as $delta => $item) {
+        if (isset($link_file)) {
+          $uri = array(
+            'path' => file_create_url($item['uri']),
+            'options' => array(),
+          );
+        }
+        $element[$delta] = array(
+          '#theme' => 'media_displays_image_alt_quotes',
+          '#items' => $items,
+          '#image_style' => $display['settings']['media_displays_image_style'],
+          '#path' => isset($uri) ? $uri : '',
+        );
+      }
+      break;
+  }
+  return $element;
+}
+
+/**
+ *  Implements hook_filter_info_alter().
+ */
+function media_displays_filter_info_alter(&$info) {
+  $info['media_filter']['process callback'] = '_media_displays_filter';
+}
+
+function _media_displays_filter($text) {
+  $offset = 0;
+  while (preg_match('/\[\[{.*?}\]\]/m', $text, $match, 0, $offset)) {
+    $token = str_replace('[[', '', $match[0]);
+    $token = str_replace(']]', '', $token);
+    $json = json_decode($token, TRUE);
+
+    if ((isset($json['direct_download']) && $json['direct_download'])) {
+      $file = file_load($json['fid']);
+      $url = file_create_url($file->uri);
+      $options = array('attributes' => isset($json['attributes']) ? $json['attributes'] : array());
+      $options['attributes']['title'] = $json['fields']['title'];
+      $text = str_replace($match, l($json['fields']['link_text'], $url, $options), $text);
+    }
+    elseif ($json['view_mode'] == 'default' && isset($json['fields']['field_alt_text[und][0][value]'])) {
+      $file = file_load($json['fid']);
+      $url = file_create_url($file->uri);
+      $options = array('attributes' => isset($json['attributes']) ? $json['attributes'] : array());
+      $options['attributes']['title'] = $json['fields']['field_alt_text[und][0][value]'];
+      $text = str_replace($match, l($json['fields']['field_alt_text[und][0][value]'], $url, $options), $text);
+    }
+    else {
+      $offset = strpos($text, $match[0], $offset) + strlen($match[0]);
+    }
+  }
+  $text = media_wysiwyg_filter($text);
+  return $text;
+}
+
+/**
+ *  Implements hook_init().
+ */
+function media_displays_init() {
+  drupal_add_css('.view-media-default iframe {width:200px; height:140px;}', 'inline');
+}

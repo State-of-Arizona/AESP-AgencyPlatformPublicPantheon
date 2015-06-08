@@ -1,0 +1,158 @@
+#top-nav {
+  width: 100%;
+  background: #f0f0f0;
+  color: #000;
+  position: fixed;
+  z-index: 99;
+  top: -100px;
+}
+#top-nav .logo img {
+  max-height: 40px;
+}
+#top-nav .site-name h2 {
+  border-bottom: none;
+  padding: 0;
+}
+#top-nav .site-name h2 a {
+  color: #000;
+  text-transform: none;
+}
+#top-nav .fa {
+  font-size: 35px;
+  cursor: pointer;
+  padding: 5px 20px;
+}
+#top-nav .fa:hover {
+  color: red;
+}
+#top-nav .wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+}
+#top-nav .wrapper > div {
+  float: left;
+}
+#top-nav .wrapper > div.top-menu {
+  float: right;
+}
+#top-nav .wrapper > div.top-menu ul.menu {
+  display: table;
+}
+#top-nav .wrapper > div.top-menu ul.menu > li {
+  display: table-cell;
+  padding-right: 10px;
+  text-align: center;
+}
+#top-nav .wrapper > div.top-menu ul.menu > li:last-child {
+  padding-right: 0;
+}
+#top-nav .wrapper > div.top-menu ul.menu > li a {
+  color: #fff;
+  background: #024385;
+  font-size: 17px;
+  font-weight: 300;
+}
+#top-nav .wrapper > div.top-menu ul.menu > li a:hover {
+  color: #ffd046;
+}
+#top-nav .wrapper > div.top-menu ul.menu ul {
+  display: none !important;
+}
+
+#slide-nav {
+  background: #fff;
+  position: absolute;
+  z-index: 99;
+  width: 280px;
+  display: none;
+  overflow-y: scroll;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.7);
+}
+#slide-nav .close-slide-nav {
+  cursor: pointer;
+  font-size: 35px;
+  z-index: 9999;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+#slide-nav .close-slide-nav:hover {
+  color: red;
+}
+#slide-nav .slide-nav-menu {
+  padding-top: 50px;
+  border-bottom: 1px solid #ccc;
+}
+#slide-nav .contact-info {
+  padding-bottom: 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+#slide-nav .contact-info h3.contact-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+#slide-nav .contact-info .agency-name {
+  font-weight: 600;
+}
+#slide-nav .contact-info .contact-map-link {
+  margin-top: 20px;
+}
+#slide-nav ul.menu {
+  margin-top: 5px;
+}
+#slide-nav ul.menu li {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+#slide-nav ul.menu li .fa {
+  position: absolute;
+  z-index: 120;
+  right: 10px;
+  font-size: 35px;
+  cursor: pointer;
+}
+#slide-nav ul.menu li .fa:hover {
+  color: red;
+}
+#slide-nav ul.menu li a {
+  font-family: "Oswald", sans-serif;
+  text-transform: uppercase;
+  margin-left: .5em;
+  color: #000;
+  padding: 5px 0;
+}
+#slide-nav ul.menu li ul {
+  padding-left: 20px;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  #top-nav {
+    display: block !important;
+    position: relative;
+    top: 0;
+  }
+  #top-nav .top-menu {
+    width: 100%;
+  }
+  #top-nav .top-menu ul.menu {
+    width: 100%;
+  }
+  #top-nav .top-menu ul.menu li {
+    padding: 0 !important;
+  }
+
+  #slide-nav {
+    position: fixed;
+  }
+
+  .region-menu.hide-mobile {
+    display: none !important;
+  }
+
+  #mobile-menu {
+    display: none;
+  }
+}

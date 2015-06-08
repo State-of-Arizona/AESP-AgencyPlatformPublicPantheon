@@ -1,0 +1,8 @@
+<?php
+
+/**
+ *  Implements hook_uninstall().
+ */
+function az_flyout_uninstall() {
+  variable_del('az_flyout');
+}

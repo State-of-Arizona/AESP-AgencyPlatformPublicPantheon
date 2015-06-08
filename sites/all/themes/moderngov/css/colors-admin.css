@@ -1,0 +1,14 @@
+#palette .form-item {
+    width: 30em !important;
+	display: none;
+}
+.color-form label {
+    width: 25em !important;
+}
+.color-form .form-item {
+    height: 0 !important;
+}
+#placeholder,
+.color-form h2 {
+	display: none !important;
+}

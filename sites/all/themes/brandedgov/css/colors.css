@@ -1,0 +1,199 @@
+
+/* ---------- Color Module Styles ----------- */
+
+/* Main */
+body {
+  background: #d2c0ac;
+  color:#333333;
+}
+a:link,
+a:visited {
+	color:#006666;
+}
+a:hover, 
+a:active, 
+li a.active {
+  color:#ff6633;
+}
+
+/* Branding zone */
+#zone-branding-wrapper {
+  
+}
+#zone-branding {
+  color: #eeedee;
+  background-color: #5c8984;
+}
+#zone-branding h2.block-title {
+  color: #aaa9aa;
+}
+
+/* Menu zone */
+#zone-menu-wrapper,
+#right-nav ul.menu li.active-trail ul li a:hover,
+#right-nav ul.menu li ul li.active-trail a.active,
+#right-nav ul.menu li ul li.active-trail a.active-trail ul.menu a.active {
+  background-color: #5c8984;
+}
+#zone-branding .navigation li ul li a:hover{
+  color: #ffffff;
+  background: none;
+  background-color: #5C8984;
+}
+/* Header zone */
+#zone-header .home-rotator-text-block {
+  color: #eeeeed;
+  background-color: #333333;
+}
+#zone-header a,
+#zone-header a.active {
+  color: #009999;
+}
+#zone-header a:hover {
+	color: #009999;
+}
+#zone-header h2 a{
+  color: #ffffff;
+}
+.node-basic-slideshow .field-slideshow-pager a,
+#zone-header #home-top-numbers li a,
+#right-nav li a:hover, 
+#right-nav li.active a:hover, 
+#right-nav li.active-active a:hover,
+#right-nav li.active a, 
+#right-nav li.active-trail a {
+  background-color: #c5d8db;
+}
+.node-basic-slideshow .field-slideshow-pager a.activeSlide,
+#zone-header #home-top-numbers a.activeSlide {
+  background-color: #009999;
+}
+#zone-header #home-top-numbers li a:hover,
+#zone-header #home-top-numbers a.activeSlide:hover {
+  background-color: #8ab4af;
+}
+
+/* Preface zone */
+#zone-preface {
+  color: #333333;
+}
+
+#zone-preface #region-preface-first,
+#zone-preface #region-preface-second,
+#zone-preface #region-preface-third
+ {
+  background-color: #c5d8db;
+}
+
+#zone-preface a,
+#zone-preface a.active {
+  color: #006666;
+}
+
+#zone-preface .more-link,
+#zone-preface a.views-more-link,
+#zone-preface .views-field-view-node,
+#zone-preface .view-id-documents .download-link,
+#zone-preface .download-btn .file
+{
+	border-top: 1px solid #006666;
+}
+#zone-preface .field-name-field-subtitle,
+#zone-preface .views-field-title,
+#zone-preface .views-field-title a {
+  color: #63270d;
+}
+
+/* Content zone */
+#zone-content .block-inner,
+#zone-content #region-sidebar-first .block-inner,
+#zone-content #region-sidebar-second .block-inner,
+.not-front #zone-content #region-content,
+/*.not-front #zone-content #region-sidebar-first,*/
+.not-front #zone-content #region-second,
+#zone-postscript {
+	background-color: #eae5d7;
+}
+.node-basic-slideshow .file,
+#zone-content a,
+#zone-content a.active,
+#zone-content .node-content .webform-client-form input.form-submit,
+#zone-content .view-id-documents .download-link,
+#zone-content .file {
+  color: #006666;
+  
+}
+#zone-content h2.block-title,
+#zone-content #stay-connected h3 {
+  color: #474848;
+}
+
+#zone-content .node-content .webform-client-form input.form-submit,
+#zone-content h2:before,
+#zone-postscript .views-field-view-node a,
+#zone-footer h2.block-title:before,
+#zone-content h1:before
+/*.page-press-releases #zone-content h1:before,
+.page-blogs #zone-content h1:before,
+.page-resources #zone-content h1:before,
+.node-type-resource #zone-content h1:before,
+.page-services #zone-content h1:before,
+.node-type-services #zone-content h1:before,
+.page-events #zone-content h1:before,
+.page-media-room #zone-content h1:before,
+.page-multimedia #zone-content h1:before,
+.page-staff-directory #zone-content h1:before,
+.page-documents #zone-content h1:before,
+.page-webform #zone-content h1:before,
+.context-contact-us #zone-content h1:before */
+ {
+  background-color: #d9cfc6 !important;
+}
+#zone-content section[class*="block-views-press-releases-block-"] h2.block-title:before {
+   background: url('../img/colorize.php?image=icon-news&color=#ED5C2D') no-repeat scroll 13px 8px transparent;
+ }
+/* Postscript zone */
+
+#zone-postscript {
+  color: #333333;
+}
+#zone-postscript a,
+#zone-postscript a.active {
+  color: #006666;
+}
+#zone-postscript h2.block-title {
+  color: #333333;
+}
+
+
+/* Footer zone */
+#zone-footer-wrapper {
+  background-color: #5e8a85;
+}
+#zone-footer h2.block-title {
+  color: #474848;
+}
+#zone-footer #block-nodeblock-contact-us,
+#zone-footer .footer-branding  {
+	background-color: #eae5d7;
+}
+
+#footer-menu {
+   background-color: #8b8175;
+}
+#region-footer-second {
+  background-color: #8b8175;
+}
+#footer-tab-icon img {
+   background-color: #8b8175;
+}
+#zone-footer a,
+#zone-footer a.active {
+  color: #ffffff;
+}
+.field-name-field-google-maps-link a,
+.field-group-format a,
+.block-nodeblock-contact-us a {
+	color: #006666 !important;
+}
+

@@ -1,0 +1,12 @@
+name = Background Process Apache server status
+description = Automatically unlocks dead processes using Apache server status
+core = 7.x
+
+dependencies[] = background_process
+
+; Information added by Drupal.org packaging script on 2014-02-15
+version = "7.x-1.16"
+core = "7.x"
+project = "background_process"
+datestamp = "1392495207"
+

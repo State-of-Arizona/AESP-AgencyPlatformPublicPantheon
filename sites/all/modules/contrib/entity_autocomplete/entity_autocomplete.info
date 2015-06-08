@@ -1,0 +1,13 @@
+name = Entity Autocomplete
+description = Provides functionalities for entity fields autocompletion, like a menu callback that autocompletes any entity that defines a label, or a ready to use form element.
+core = 7.x
+
+; Tests
+files[] = tests/entity_autocomplete.test
+
+; Information added by drupal.org packaging script on 2012-12-15
+version = "7.x-1.0-beta3"
+core = "7.x"
+project = "entity_autocomplete"
+datestamp = "1355614650"
+

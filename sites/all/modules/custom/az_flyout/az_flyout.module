@@ -1,0 +1,229 @@
+<?php
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function az_flyout_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "context" && $api == "context") {
+    return array("version" => "3");
+  }
+}
+
+/**
+ *  Implements hook_init().
+ */
+function az_flyout_init() {
+  $settings = variable_get('az_flyout', array());
+  drupal_add_js(array('azflyout' => array('hidemain' => isset($settings['hide_main']) ? $settings['hide_main'] : 0)), array('type' => 'setting'));
+  drupal_add_js(drupal_get_path('module', 'az_flyout') . '/js/az_flyout.js');
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function az_flyout_permission() {
+  return array(
+    'administer az flyout' => array(
+      'title' => t('Administer Arizona Flyout Menu'),
+      'description' => t('Choose which menu to display and alter the images.'),
+    ),
+  );
+}
+
+/**
+ *  Implements hook_menu().
+ */
+function az_flyout_menu() {
+  $items['admin/config/user-interface/az-flyout'] = array(
+    'title' => 'AZ Flyout Menu',
+    'description' => t('Choose which menu to display and alter the images.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('az_flyout_admin'),
+    'access arguments' => array('administer az flyout'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ *  Implements hook_form().
+ */
+function az_flyout_admin($form, &$form_state) {
+  $settings = variable_get('az_flyout', array());
+  $menus = menu_get_menus();
+  $menus = array_merge(array(0 => '- None -'), $menus);
+  $form = array();
+  $form['image'] = array(
+    '#title' => t('Top Menu '),
+    '#description' => t('If no image is used, the site name will be used'),
+    '#type' => 'managed_file',
+    '#default_value' => isset($settings['image']) ? $settings['image'] : '',
+  );
+  $form['header'] = array(
+    '#title' => t('Top Menu'),
+    '#type' => 'select',
+    '#options' => $menus,
+    '#default_value' => isset($settings['header']) ? $settings['header'] : 'none',
+  );
+  $form['menu'] = array(
+    '#title' => t('Side Flyout Menu'),
+    '#type' => 'select',
+    '#options' => $menus,
+    '#default_value' => isset($settings['menu']) ? $settings['menu'] : 'none',
+  );
+  $form['displays'] = array(
+    '#title' => t('When to display top bar'),
+    '#type' => 'radios',
+    '#options' => array('Mobile and Desktop', 'Mobile Only'),
+    '#default_value' => isset($settings['displays']) ? $settings['displays'] : 0,
+  );
+  $form['hide_main'] = array(
+    '#title' => t('Hide main menu when the top menu is visible'),
+    '#type' => 'checkbox',
+    '#default_value' => isset($settings['hide_main']) ? $settings['hide_main'] : 0,
+  );
+  $form['contact'] = array(
+    '#title' => t('Contact Information'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => isset($settings['contact_title']) && !empty($settings['contact_title']) ? FALSE : TRUE,
+  );
+  $form['contact']['contact_title'] = array(
+    '#title' => t('Contact Title'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_title']) ? $settings['contact_title'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_title_link'] = array(
+    '#title' => t('Contact Title Link'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_title_link']) ? $settings['contact_title_link'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_name'] = array(
+    '#title' => t('Agency Name'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_name']) ? $settings['contact_name'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_address1'] = array(
+    '#title' => t('Address Line 1'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_address1']) ? $settings['contact_address1'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_address2'] = array(
+    '#title' => t('Address Line 2'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_address2']) ? $settings['contact_address2'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_phone'] = array(
+    '#title' => t('Phone'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_phone']) ? $settings['contact_phone'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_fax'] = array(
+    '#title' => t('Fax'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_fax']) ? $settings['contact_fax'] : '',
+    '#size' => 20,
+  );
+  $form['contact']['contact_map_image'] = array(
+    '#title' => t('Map Image'),
+    '#type' => 'managed_file',
+    '#default_value' => isset($settings['contact_map_image']) ? $settings['contact_map_image'] : '',
+  );
+  $form['contact']['contact_map_link'] = array(
+    '#title' => t('Map Link'),
+    '#type' => 'textfield',
+    '#default_value' => isset($settings['contact_map_link']) ? $settings['contact_map_link'] : '',
+    '#size' => 20,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Configuration'),
+    '#submit' => array('az_flyout_admin_submit'),
+  );
+  return $form;
+}
+
+function az_flyout_admin_submit($form, &$form_state) {
+  $dir = 'public://az_flyout';
+  file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+  if ($form_state['values']['image'] && !$form_state['input']['image']['fid']) {
+    $file = file_load($form_state['values']['image']);
+    $file->status = FILE_STATUS_PERMANENT;
+    file_save($file);
+    file_usage_add($file, 'theme', 'az_commercial', 1);
+    file_move($file, 'public://az_flyout/' . $file->filename);
+  }
+  if ($form_state['values']['contact_map_image'] && !$form_state['input']['contact_map_image']['fid']) {
+    $file = file_load($form_state['values']['contact_map_image']);
+    $file->status = FILE_STATUS_PERMANENT;
+    file_save($file);
+    file_usage_add($file, 'theme', 'az_commercial', 1);
+    file_move($file, 'public://az_flyout/' . $file->filename);
+  }
+  $settings = $form_state['values'];
+  unset($settings['submit']);
+  unset($settings['form_build_id']);
+  unset($settings['form_token']);
+  unset($settings['op']);
+  unset($settings['form_id']);
+  variable_set('az_flyout', $settings);
+  drupal_set_message(t('Settings Saved'));
+}
+
+/**
+ *  Implements hook_block_info().
+ */
+function az_flyout_block_info() {
+  $blocks['az_flyout'] = array(
+    'info' => t('Arizona Flyout'),
+  );
+
+  return $blocks;
+}
+
+/**
+ *  Implements hook_block_view().
+ */
+function az_flyout_block_view($delta = '') {
+  $block = array(
+    'subject' => t(''),
+    'content' => _az_flyout_content(),
+  );
+  return $block;
+}
+
+function az_flyout_theme() {
+  return array(
+    'az_flyout_output' => array(
+      'variables' => array(),
+      'template' => 'templates/az_flyout_block',
+    ),
+  );
+}
+
+function _az_flyout_content() {
+  $settings = variable_get('az_flyout', array());
+
+  if (isset($settings['header']) && $settings['header']) {
+    $settings['header'] = menu_tree_output(menu_tree_all_data($settings['header']));
+  }
+  if (isset($settings['menu']) && $settings['menu']) {
+    $settings['menu'] = menu_tree_output(menu_tree_all_data($settings['menu']));
+  }
+  $settings['displays'] = isset($settings['displays']) && $settings['displays'] ? 'mobile-only' : 'desktop-and-mobile';
+  if (isset($settings['image']) && $settings['image']) {
+    $file = file_load($settings['image']);
+    $settings['image'] = file_create_url($file->uri);
+  }
+  if (isset($settings['contact_map_image']) && $settings['contact_map_image']) {
+    $file = file_load($settings['contact_map_image']);
+    $settings['contact_map_image'] = file_create_url($file->uri);
+  }
+  return theme('az_flyout_output', $settings);
+}

@@ -1,0 +1,72 @@
+#zone-branding .region-menu {
+  background: none;
+}
+
+#page {
+  #breadcrumb {
+    background: none;
+    box-shadow: none;
+    a, li + li::before {
+      color: #fff;
+      font-size: 14px;
+    }
+  }
+}
+
+#page #zone-header .region {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+#postscript-group {
+  .mbp-defaults-row {
+    margin: 0 5px 0;
+    &:first-child {
+      margin: 0 5px 0 0;
+    }
+    &:last-child {
+      margin: 0 0 0 5px;
+    }
+    &:only-child {
+      margin: 0;
+    }
+  }
+  .postscript {
+    display: flex;
+    > div {
+      width: 100%;
+    }
+    > .region.menu-block-placement-doesnt-exist {
+      margin: 0 5px;
+    }
+  }
+}
+
+#zone-branding {
+  box-shadow: none;
+  .site-details {
+    a.logo img {
+      width: auto;
+    }
+  }
+
+  .region-menu .content > ul.menu {
+    > li {
+      &:hover {
+        border-top: 2px solid #ffd046;
+        margin-top: -2px;
+      }
+      &.menu-li-home:hover {
+        border-top: 0;
+        margin-top: 0;
+      }
+
+      > a {
+        padding: 10px;
+        &:hover {
+          background: transparent;
+        }
+      }
+    }
+  }
+}

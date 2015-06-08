@@ -1,0 +1,241 @@
+<?php
+/**
+ * @file
+ *
+ * Progress framework for keeping track of progresses
+ *
+ * @todo Force MyISAM for table {progress} to avoid transaction/isolation level problems, and use INSERT DELAYED for performance?
+ */
+
+define('PROGRESS_AGE', 86400);
+
+/**
+ * Initialize a progress
+ *
+ * @param string $name
+ *   Name of progress
+ * @param string $message
+ *   Message for progress
+ * @return mixed
+ *   Result from db execute()
+ */
+function progress_initialize_progress($name, $message) {
+  progress_remove_progress($name);
+  $current = microtime(TRUE);
+  return db_insert('progress')
+    ->fields(array(
+      'name' => $name,
+      'progress' => 0,
+      'message' => $message,
+      'start_stamp' => $current,
+      'current_stamp' => $current,
+    ))
+    ->execute();
+}
+
+/**
+ * Set progress
+ *
+ * @param string $name
+ *   Name of progress
+ * @param string $message
+ *   Message for progress
+ * @param double $progress
+ *   Current progress (0 - 1)
+ * @return mixed
+ *   Result from db execute()
+ */
+function progress_set_progress($name, $message, $progress) {
+  $current = microtime(TRUE);
+  $result = db_update('progress')
+              ->fields(array(
+                'progress' => $progress,
+                'message' => $message,
+                'current_stamp' => $current,
+              ))
+              ->condition('name', $name)
+              ->execute();
+
+  if (module_exists('nodejs')) {
+    $start_stamp = db_query("SELECT start_stamp FROM {progress} WHERE name = :name", array(':name' => $name))->fetchField();
+    $object = (object) array(
+      'name' => $name,
+      'progress' => $progress,
+      'message' => $message,
+      'current_stamp' => $current,
+      'start_stamp' => $start_stamp,
+    );
+    $message = (object) array(
+      'channel' => 'progress',
+      'data' => (object) array(
+        'action' => 'setProgress',
+        'progress' => $object,
+        'timestamp' => microtime(TRUE),
+      ),
+      'callback' => 'nodejsProgress',
+    );
+    drupal_alter('progress_message', $message);
+    nodejs_send_content_channel_message($message);
+  }
+
+  return $result;
+}
+
+/**
+ * Set progress start time
+ *
+ * @param string $name
+ *   Name of progress
+ * @param float $start
+ *   Start time of progress
+ */
+function progress_set_progress_start($name, $start) {
+  return db_update('progress')
+    ->fields(array(
+      'start_stamp' => $start,
+    ))
+    ->condition('name', $name)
+    ->execute();
+}
+
+/**
+ * Set intervalled progress
+ * Use when you don't need to spam the progress table every time.
+ *
+ * @param string $name
+ *   Name of progress
+ * @param string $message
+ *   Message for progress
+ * @param double $progress
+ *   Current progress (0 - 1)
+ * @param double $interval
+ *   Interval in seconds
+ * @return mixed
+ *   Result from db execute()
+ */
+function progress_set_intervalled_progress($name, $message, $progress, $interval = NULL) {
+  static $set = array();
+  if (isset($interval, $set[$name])) {
+    if ($set[$name] + $interval > microtime(TRUE)) {
+      return TRUE;
+    }
+  }
+  $result = progress_set_progress($name, $message, $progress);
+  $set[$name] = microtime(TRUE);
+  return $result;
+}
+
+/**
+ * Get progress
+ *
+ * @param string $name
+ *   Name of progress
+ * @return object
+ *   Object containing all the progress data
+ */
+function progress_get_progress($name) {
+  $result = db_query("SELECT name, progress, message, start_stamp, end_stamp, current_stamp FROM {progress} WHERE name = :name", array(':name' => $name))->fetchObject();
+  if ($result) {
+    $result->start = $result->start_stamp;
+    $result->end = $result->end_stamp;
+    $result->current = $result->current_stamp;
+  }
+  return $result;
+}
+
+/**
+ * End a progress. Sets to 100% (=1)
+ *
+ * @param string $name
+ *   Name of progress
+ * @param string $message
+ *   Message for progress
+ * @return boolean
+ *   TRUE on success, FALSE on fail
+ */
+function progress_end_progress($name, $message) {
+  $current = microtime(TRUE);
+  return db_update('progress')
+    ->fields(array(
+      'progress' => 1,
+      'message' => $message,
+      'end_stamp' => $current,
+    ))
+    ->condition('name', $name)
+    ->execute();
+}
+
+/**
+ * Remove a progress
+ *
+ * @param string $name
+ *   Name of progress
+ * @return boolean
+ *   TRUE on success, FALSE on fail
+ */
+function progress_remove_progress($name) {
+  return db_delete('progress')
+    ->condition('name', $name)
+    ->execute();
+}
+
+/**
+ * Get all progresses
+ *
+ * @return array
+ *   Array of objects containing all progress data
+ */
+function progress_get_progresses() {
+  $result = db_select('progress', 'p')
+    ->fields('p', array('name', 'progress', 'message', 'start_stamp', 'end_stamp', 'current_stamp'))
+    ->execute();
+
+  $progresses = array();
+  foreach ($result as $progress) {
+    $progress->start = $progress->start_stamp;
+    $progress->end = $progress->end_stamp;
+    $progress->current = $progress->current_stamp;
+    $progresses[$progress->name] = $progress;
+  }
+  return $progresses;
+}
+
+/**
+ * Estimate completion time of a progress
+ *
+ * @param object $progress
+ *   Progress object
+ * @return double
+ *   Estimated unix timestamp of completion in microseconds
+ */
+function progress_estimate_completion($progress) {
+  if ($progress->progress) {
+    $progress->estimate = $progress->start + 1 / $progress->progress * ($progress->current - $progress->start);
+  }
+  else {
+    $progress->estimate = NULL;
+  }
+  return $progress->estimate;
+}
+
+/**
+ * Implements hook_cron().
+ *
+ * Clean up finished progresses
+ */
+function progress_cron() {
+  return db_delete('progress')
+    ->condition('end_stamp', 0, '>')
+    ->condition('end_stamp', time() - variable_get('progress_age', PROGRESS_AGE), '<')
+    ->execute();
+}
+
+/**
+ * Implements hook_cronapi().
+ */
+function progress_cronapi($op, $job = NULL) {
+  switch ($op) {
+    case 'list':
+      return array('progress_cron' => t('Cleanup old progresses'));
+  }
+}

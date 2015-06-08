@@ -1,0 +1,17 @@
+#page {
+  background: url("../img/bg-page-splash.png") no-repeat scroll right 100px transparent;
+}
+
+#zone-branding {
+  width: 100%;
+}
+#zone-branding .silhouette {
+  background: url("../img/seal-silhouette.png") no-repeat scroll 90% 100% transparent;
+}
+#zone-branding .site-info {
+  max-width: 500px;
+}
+#zone-branding input {
+  float: right;
+  max-width: 250px;
+}

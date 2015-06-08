@@ -1,0 +1,104 @@
+#preview h2 {
+    border-bottom: 4px solid #DCD2C3;
+    padding: 15px 0px 5px;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+    text-transform: none;
+    color: #600;
+}
+
+#preview-branding img {
+    padding: 15px;
+    float: left;
+}
+
+#preview-branding h1.preview-site-name {
+    float:left;
+    font-size: 2em;
+    font-family: "Times New Roman", Georgia, Times, serif;
+    color: #FFF;
+    display: inline;
+    text-decoration: none;
+    font-style: normal;
+    font-weight: 300;
+    padding: 15px 0px 0px;
+    letter-spacing: 1px;
+    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+#preview-main-menu-links {
+    list-style: none;
+
+}
+
+#preview-main-menu-links li {
+    display: inline-block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1em;
+    font-weight: 300;
+    margin: 10px;
+    padding: 0;
+    position: relative;
+    text-transform: uppercase;
+    clear: both;
+}
+
+#preview-main-menu-links a {
+    padding: 10px;
+}
+
+#preview-main-menu-links li:hover > a {
+    background: #f2f2f2;
+    color: #000 !important;
+}
+
+#preview-main-menu-links a {
+    color: #fff !important;
+}
+
+#preview-main {
+    margin: 15px;
+}
+
+#preview-content {
+    padding: 10px;
+}
+
+#preview-footer-first p {
+    padding: 15px;
+}
+
+#preview-footer-second ul {
+    margin: 0 15px;
+}
+
+#preview-footer-second li {
+    float: left;
+    margin-right: 20px;
+}
+
+#preview-footer-second a {
+    color: #fff !important;
+}
+
+#preview-preface-group {
+    margin: 15px;
+}
+
+#preview-preface-group .preview-preface {
+    float: left;
+    width: 50%;
+}
+
+#preview-preface-group .preview-preface > div {
+    padding: 15px;
+}
+
+#preview-preface-group .preface-title {
+    text-transform: uppercase;
+    font-size: 1.1em;
+    border-bottom: medium none;
+    margin: -15px -15px 10px;
+    padding: 20px 10px 10px;
+    color: #fff;
+}

@@ -1,0 +1,218 @@
+<?php
+/**
+ * @file
+ * This is the installation file for the Background Process module
+ */
+
+/**
+ * Implements of hook_enable().
+ */
+function background_process_enable() {
+  $_SESSION['background_process_determine_default_service_host'] = TRUE;
+}
+
+/**
+ * Implements of hook_schema().
+ */
+function background_process_schema() {
+  $schema = array();
+
+  $schema['background_process'] = array(
+    'fields' => array(
+      'handle' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'callback' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'args' => array(
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'service_host' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'start_stamp' => array(
+        'type' => 'varchar',
+        'length' => '18',
+        'not null' => FALSE,
+      ),
+      'exec_status' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('handle'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function background_process_uninstall() {
+  // Removing process variables.
+  variable_del('background_process_service_timeout');
+  variable_del('background_process_connection_timeout');
+  variable_del('background_process_stream_timeout');
+  variable_del('background_process_service_groups');
+  variable_del('background_process_default_service_group');
+  variable_del('background_process_service_hosts');
+  variable_del('background_process_default_service_host');
+  variable_del('background_process_cleanup_age');
+  variable_del('background_process_queues');
+  variable_del('background_process_derived_default_host');
+  variable_del('background_process_token');
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function background_process_requirements($phase) {
+  $response = array();
+  $t = get_t();
+  switch ($phase) {
+    case 'install':
+      return $response;
+
+    case 'runtime':
+      $response['title'] = 'Background Process';
+      $response['value'] = $t('OK');
+      $response['severity'] = REQUIREMENT_OK;
+      if (ini_get('safe_mode')) {
+        $desc = $t('Safe mode enabled. Background Process is unable to control maximum execution time for background processes. This may cause background processes to end prematurely.');
+        if ($response['severity'] < REQUIREMENT_WARNING) {
+          $response['severity'] = REQUIREMENT_WARNING;
+          $response['value'] = $t('Safe mode enabled');
+          $response['description'] = $desc;
+        }
+        else {
+          $response['description'] .= '<br/>' . $desc;
+        }
+      }
+      $result = array();
+      $result['background_process'] = $response;
+      return $result;
+  }
+}
+
+/**
+ * Major version upgrade of Drupal.
+ */
+function background_process_update_7000() {
+  // No point in recording anything in $context here, as it can never be
+  // referred to in any other hook_update_N() anyway.
+}
+
+/**
+ * Add status column to background_process table.
+ */
+function background_process_update_7101() {
+  if (!db_field_exists('background_process', 'status')) {
+    // 'status' doesn't exist, so this update has never run and was never run
+    // when it was previously called background_process_update_6101() - hence,
+    // it's safe to run.
+    db_add_field('background_process', 'status', array(
+      'type' => 'int',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+    ));
+  }
+}
+
+/**
+ * Determine default service host.
+ */
+function background_process_update_7102() {
+}
+
+/**
+ * Determine default service host.
+ */
+function background_process_update_7103() {
+}
+
+/**
+ * Change start column from double to numeric.
+ */
+function background_process_update_7104() {
+  if (db_field_exists('background_process', 'start')) {
+    // 'start' exists, so this update may have been run before when this was
+    // called background_process_update_6104(). However, this update should be
+    // safe to run multiple times, so let's just run it again...
+    db_change_field('background_process', 'start', 'start', array(
+      'type' => 'numeric',
+      'precision' => '16',
+      'scale' => '6',
+      'not null' => FALSE,
+    ));
+  }
+}
+
+/**
+ * Re-determine default service host.
+ */
+function background_process_update_7105() {
+  $_SESSION['background_process_determine_default_service_host'] = TRUE;
+}
+
+/**
+ * Change schema to SQL 99 compliance.
+ */
+function background_process_update_7106() {
+  if (db_field_exists('background_process', 'start')) {
+    // 'start' exists, so this update has never run and was not run when it was
+    // called background_process_update_6106(). Hence, it's safe to run.
+    db_change_field('background_process', 'start', 'start_stamp', array(
+      'type' => 'varchar',
+      'length' => '18',
+      'not null' => FALSE,
+    ));
+  }
+  if (db_field_exists('background_process', 'status')) {
+    // 'status' exists, so this update has never run and was not run when it
+    // was called background_process_update_6106(). Hence, it's safe to run.
+    db_change_field('background_process', 'status', 'exec_status', array(
+      'type' => 'int',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+    ));
+  }
+}
+
+/**
+ * Increase size of args column.
+ */
+function background_process_update_7107() {
+  if (db_field_exists('background_process', 'args')) {
+    db_change_field('background_process', 'args', 'args', array(
+      'type' => 'blob',
+      'size' => 'big',
+      'not null' => FALSE,
+    ));
+  }
+}

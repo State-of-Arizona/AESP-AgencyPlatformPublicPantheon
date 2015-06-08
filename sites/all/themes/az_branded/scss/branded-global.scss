@@ -1,0 +1,124 @@
+html, body, #page {
+  font-family: Helvetica, sans-serif;
+  font-size: 1.0em;
+}
+
+body {
+  font: 13px/1.5 Verdana, Helvetica, Arial, sans-serif;
+  line-height: 1.4em;
+}
+
+#page {
+  h2 {
+    border: none;
+  }
+}
+
+#zone-branding {
+  .region-menu {
+    background-color: rgba(51, 51, 51, 0.2);
+  }
+}
+
+#breadcrumb {
+  background-color: rgba(251, 251, 251, 0.6);
+  ul.breadcrumb a {
+    color: #000;
+  }
+  ul.breadcrumb a.active {
+    color: #2b2b2b;
+  }
+  .breadcrumb > li + li:before {
+    color: #000;
+  }
+  border-radius: 0 0 3px 3px;
+}
+
+#page #zone-header {
+  box-shadow: none;
+  .block-views {
+    margin-top: 20px;
+  }
+  .region {
+    box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
+  }
+}
+
+#zone-content {
+  margin-top: 20px;
+
+  #preface-group {
+    margin-bottom: 10px;
+    box-shadow: none;
+    .preface {
+      border-right: none;
+      > div.menu-block-placement-doesnt-exist {
+        margin: 5px 5px 0;
+        box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    .mbp-defaults-row {
+      border: none;
+      > div {
+        margin: 0 5px;
+        box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+}
+
+#content-wrapper {
+  box-shadow: none;
+  padding-bottom: 20px;
+  .region {
+    box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
+  }
+  aside .region {
+    border-radius: 3px;
+  }
+  #page-title {
+    border-radius: 3px 3px 0 0;
+  }
+  #content {
+    .region {
+      border-radius: 0 0 3px 3px;
+      box-shadow: none;
+    }
+  }
+  #region-content {
+    box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
+  }
+}
+
+#content {
+  z-index: 10;
+}
+
+#footer-branding {
+  margin-bottom: 20px;
+  .footer-wrapper .footer-field {
+    color: #000;
+  }
+}
+
+#footer-contact {
+  .footer-info .footer-address {
+    background: none;
+    box-shadow: none;
+    padding: 10px 10px 0 0;
+  }
+  .footer-title {
+    border: none;
+    padding-bottom: 7px;
+  }
+  .footer-title:before {
+    background: url('../img/icons/icon-contactus.png') no-repeat scroll 13px 8px #d9cfc6;
+    display: block;
+    float: left;
+    height: 45px;
+    width: 60px;
+    content: "";
+    margin: -10px 10px 0 0;
+  }
+}

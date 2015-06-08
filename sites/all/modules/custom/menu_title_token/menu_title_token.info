@@ -1,0 +1,7 @@
+name = Menu Title Token
+description = Provides a token for path auto to use menu link if available or title.
+core = 7.x
+version = 1.00
+
+dependencies[] = token
+dependencies[] = menu

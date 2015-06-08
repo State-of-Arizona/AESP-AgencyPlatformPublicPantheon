@@ -1,0 +1,11 @@
+name = Menu Block Placement Defaults
+core = 7.x
+description = Automatically creates the proper views, quicktabs, and context upon field creation
+configure = admin/config/mbp/defaults
+
+dependencies[] = menu_block_placement
+dependencies[] = quicktabs
+dependencies[] = draggableviews
+dependencies[] = context
+
+files[] = mbp_defaults.views_default.inc

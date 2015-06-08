@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Agency Platform Site Page feature.
+ */
+
+include_once 'agency_platform_site_page.features.inc';

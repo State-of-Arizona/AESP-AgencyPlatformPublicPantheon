@@ -1,0 +1,8 @@
+/* IE Specific Stylesheet - Less than or equal to IE 8 */
+
+.container-12 .grid-5 {
+	width: 98% !important;
+}
+.logo-img {
+	float:left;
+}

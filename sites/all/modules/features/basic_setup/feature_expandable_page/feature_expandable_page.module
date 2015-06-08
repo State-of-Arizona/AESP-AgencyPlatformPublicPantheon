@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Feature Expandable Page feature.
+ */
+
+include_once 'feature_expandable_page.features.inc';

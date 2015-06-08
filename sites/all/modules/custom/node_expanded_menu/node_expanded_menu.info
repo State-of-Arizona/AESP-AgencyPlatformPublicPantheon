@@ -1,0 +1,4 @@
+name = Node expanded menu
+description = Allows users to set the expanded nature of the menu item on creation.
+core = 7.x
+package = Custom

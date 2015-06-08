@@ -1,0 +1,50 @@
+audio__preview__file_field_media_large_icon,50,1,N;
+document__default__file_field_direct_download_alt,0,1,N;
+document__default__file_field_file_default,50,0,"s:0:"""";"
+document__default__file_field_file_download_link,0,0,"a:1:{s:4:""text"";s:20:""Download [file:name]"";}"
+document__default__file_field_file_table,0,0,N;
+document__default__file_field_file_url_plain,0,0,N;
+document__default__file_field_image_alt_quotes,0,0,"a:2:{s:26:""media_displays_image_style"";s:0:"""";s:25:""media_displays_image_link"";s:0:"""";}"
+document__default__file_field_media_large_icon,0,0,N;
+document__preview__file_field_media_large_icon,50,1,N;
+image__default__file_field_colorbox,0,0,"a:7:{s:19:""colorbox_node_style"";s:0:"""";s:25:""colorbox_node_style_first"";s:0:"""";s:20:""colorbox_image_style"";s:0:"""";s:16:""colorbox_gallery"";s:4:""post"";s:23:""colorbox_gallery_custom"";s:0:"""";s:16:""colorbox_caption"";s:4:""auto"";s:23:""colorbox_caption_custom"";s:0:"""";}"
+image__default__file_field_direct_download_alt,0,0,N;
+image__default__file_field_file_default,50,0,"s:0:"""";"
+image__default__file_field_file_download_link,0,0,"a:1:{s:4:""text"";s:20:""Download [file:name]"";}"
+image__default__file_field_file_table,0,0,"s:0:"""";"
+image__default__file_field_file_url_plain,0,0,"s:0:"""";"
+image__default__file_field_image,50,1,"a:2:{s:11:""image_style"";s:9:""thumbnail"";s:10:""image_link"";s:0:"""";}"
+image__default__file_field_image_alt_quotes,0,0,"a:2:{s:26:""media_displays_image_style"";s:0:"""";s:25:""media_displays_image_link"";s:0:"""";}"
+image__default__file_field_media_large_icon,0,0,"s:0:"""";"
+image__default__file_field_slideshow,0,0,"a:29:{s:21:""slideshow_image_style"";s:0:"""";s:14:""slideshow_link"";s:0:"""";s:30:""slideshow_colorbox_image_style"";s:0:"""";s:28:""slideshow_colorbox_slideshow"";s:0:"""";s:34:""slideshow_colorbox_slideshow_speed"";s:4:""4000"";s:29:""slideshow_colorbox_transition"";s:7:""elastic"";s:24:""slideshow_colorbox_speed"";s:3:""350"";s:17:""slideshow_caption"";s:0:"""";s:22:""slideshow_caption_link"";s:0:"""";s:12:""slideshow_fx"";s:4:""fade"";s:15:""slideshow_speed"";s:4:""1000"";s:17:""slideshow_timeout"";s:4:""4000"";s:15:""slideshow_order"";s:0:"""";s:18:""slideshow_controls"";i:0;s:24:""slideshow_controls_pause"";i:0;s:27:""slideshow_controls_position"";s:5:""after"";s:15:""slideshow_pause"";i:0;s:24:""slideshow_start_on_hover"";i:0;s:15:""slideshow_pager"";s:0:"""";s:24:""slideshow_pager_position"";s:5:""after"";s:27:""slideshow_pager_image_style"";s:0:"""";s:30:""slideshow_carousel_image_style"";s:0:"""";s:26:""slideshow_carousel_visible"";s:1:""3"";s:25:""slideshow_carousel_scroll"";s:1:""1"";s:24:""slideshow_carousel_speed"";s:3:""500"";s:23:""slideshow_carousel_skin"";s:0:"""";s:25:""slideshow_carousel_follow"";i:0;s:27:""slideshow_carousel_vertical"";i:0;s:27:""slideshow_carousel_circular"";i:0;}"
+image__full__file_field_colorbox,0,0,"a:7:{s:19:""colorbox_node_style"";s:0:"""";s:25:""colorbox_node_style_first"";s:0:"""";s:20:""colorbox_image_style"";s:0:"""";s:16:""colorbox_gallery"";s:4:""post"";s:23:""colorbox_gallery_custom"";s:0:"""";s:16:""colorbox_caption"";s:4:""auto"";s:23:""colorbox_caption_custom"";s:0:"""";}"
+image__full__file_field_direct_download_alt,0,0,N;
+image__full__file_field_file_default,0,0,N;
+image__full__file_field_file_download_link,0,0,"a:1:{s:4:""text"";s:20:""Download [file:name]"";}"
+image__full__file_field_file_table,0,0,N;
+image__full__file_field_file_url_plain,0,0,N;
+image__full__file_field_image,0,1,"a:2:{s:11:""image_style"";s:0:"""";s:10:""image_link"";s:0:"""";}"
+image__full__file_field_image_alt_quotes,0,0,"a:2:{s:26:""media_displays_image_style"";s:0:"""";s:25:""media_displays_image_link"";s:0:"""";}"
+image__full__file_field_media_large_icon,0,0,N;
+image__full__file_field_slideshow,0,0,"a:29:{s:21:""slideshow_image_style"";s:0:"""";s:14:""slideshow_link"";s:0:"""";s:30:""slideshow_colorbox_image_style"";s:0:"""";s:28:""slideshow_colorbox_slideshow"";s:0:"""";s:34:""slideshow_colorbox_slideshow_speed"";s:4:""4000"";s:29:""slideshow_colorbox_transition"";s:7:""elastic"";s:24:""slideshow_colorbox_speed"";s:3:""350"";s:17:""slideshow_caption"";s:0:"""";s:22:""slideshow_caption_link"";s:0:"""";s:12:""slideshow_fx"";s:4:""fade"";s:15:""slideshow_speed"";s:4:""1000"";s:17:""slideshow_timeout"";s:4:""4000"";s:15:""slideshow_order"";s:0:"""";s:18:""slideshow_controls"";i:0;s:24:""slideshow_controls_pause"";i:0;s:27:""slideshow_controls_position"";s:5:""after"";s:15:""slideshow_pause"";i:0;s:24:""slideshow_start_on_hover"";i:0;s:15:""slideshow_pager"";s:0:"""";s:24:""slideshow_pager_position"";s:5:""after"";s:27:""slideshow_pager_image_style"";s:0:"""";s:30:""slideshow_carousel_image_style"";s:0:"""";s:26:""slideshow_carousel_visible"";s:1:""3"";s:25:""slideshow_carousel_scroll"";s:1:""1"";s:24:""slideshow_carousel_speed"";s:3:""500"";s:23:""slideshow_carousel_skin"";s:0:"""";s:25:""slideshow_carousel_follow"";i:0;s:27:""slideshow_carousel_vertical"";i:0;s:27:""slideshow_carousel_circular"";i:0;}"
+image__preview__file_field_colorbox,0,1,"a:7:{s:19:""colorbox_node_style"";s:6:""medium"";s:25:""colorbox_node_style_first"";s:0:"""";s:20:""colorbox_image_style"";s:0:"""";s:16:""colorbox_gallery"";s:4:""none"";s:23:""colorbox_gallery_custom"";s:0:"""";s:16:""colorbox_caption"";s:5:""title"";s:23:""colorbox_caption_custom"";s:0:"""";}"
+image__preview__file_field_direct_download_alt,0,0,N;
+image__preview__file_field_file_default,50,0,"s:0:"""";"
+image__preview__file_field_file_download_link,0,0,"a:1:{s:4:""text"";s:20:""Download [file:name]"";}"
+image__preview__file_field_file_table,0,0,N;
+image__preview__file_field_file_url_plain,0,0,N;
+image__preview__file_field_image,50,1,"a:2:{s:11:""image_style"";s:6:""medium"";s:10:""image_link"";s:0:"""";}"
+image__preview__file_field_image_alt_quotes,0,0,"a:2:{s:26:""media_displays_image_style"";s:0:"""";s:25:""media_displays_image_link"";s:0:"""";}"
+image__preview__file_field_media_large_icon,50,0,"s:0:"""";"
+image__preview__file_field_slideshow,0,0,"a:29:{s:21:""slideshow_image_style"";s:0:"""";s:14:""slideshow_link"";s:0:"""";s:30:""slideshow_colorbox_image_style"";s:0:"""";s:28:""slideshow_colorbox_slideshow"";s:0:"""";s:34:""slideshow_colorbox_slideshow_speed"";s:4:""4000"";s:29:""slideshow_colorbox_transition"";s:7:""elastic"";s:24:""slideshow_colorbox_speed"";s:3:""350"";s:17:""slideshow_caption"";s:0:"""";s:22:""slideshow_caption_link"";s:0:"""";s:12:""slideshow_fx"";s:4:""fade"";s:15:""slideshow_speed"";s:4:""1000"";s:17:""slideshow_timeout"";s:4:""4000"";s:15:""slideshow_order"";s:0:"""";s:18:""slideshow_controls"";i:0;s:24:""slideshow_controls_pause"";i:0;s:27:""slideshow_controls_position"";s:5:""after"";s:15:""slideshow_pause"";i:0;s:24:""slideshow_start_on_hover"";i:0;s:15:""slideshow_pager"";s:0:"""";s:24:""slideshow_pager_position"";s:5:""after"";s:27:""slideshow_pager_image_style"";s:0:"""";s:30:""slideshow_carousel_image_style"";s:0:"""";s:26:""slideshow_carousel_visible"";s:1:""3"";s:25:""slideshow_carousel_scroll"";s:1:""1"";s:24:""slideshow_carousel_speed"";s:3:""500"";s:23:""slideshow_carousel_skin"";s:0:"""";s:25:""slideshow_carousel_follow"";i:0;s:27:""slideshow_carousel_vertical"";i:0;s:27:""slideshow_carousel_circular"";i:0;}"
+image__teaser__file_field_colorbox,0,0,"a:7:{s:19:""colorbox_node_style"";s:0:"""";s:25:""colorbox_node_style_first"";s:0:"""";s:20:""colorbox_image_style"";s:0:"""";s:16:""colorbox_gallery"";s:4:""post"";s:23:""colorbox_gallery_custom"";s:0:"""";s:16:""colorbox_caption"";s:4:""auto"";s:23:""colorbox_caption_custom"";s:0:"""";}"
+image__teaser__file_field_direct_download_alt,0,0,N;
+image__teaser__file_field_file_default,50,0,"s:0:"""";"
+image__teaser__file_field_file_download_link,0,0,"a:1:{s:4:""text"";s:20:""Download [file:name]"";}"
+image__teaser__file_field_file_table,0,0,N;
+image__teaser__file_field_file_url_plain,0,0,N;
+image__teaser__file_field_image,50,1,"a:2:{s:11:""image_style"";s:6:""medium"";s:10:""image_link"";s:0:"""";}"
+image__teaser__file_field_image_alt_quotes,0,0,"a:2:{s:26:""media_displays_image_style"";s:0:"""";s:25:""media_displays_image_link"";s:0:"""";}"
+image__teaser__file_field_media_large_icon,0,0,N;
+image__teaser__file_field_slideshow,0,0,"a:29:{s:21:""slideshow_image_style"";s:0:"""";s:14:""slideshow_link"";s:0:"""";s:30:""slideshow_colorbox_image_style"";s:0:"""";s:28:""slideshow_colorbox_slideshow"";s:0:"""";s:34:""slideshow_colorbox_slideshow_speed"";s:4:""4000"";s:29:""slideshow_colorbox_transition"";s:7:""elastic"";s:24:""slideshow_colorbox_speed"";s:3:""350"";s:17:""slideshow_caption"";s:0:"""";s:22:""slideshow_caption_link"";s:0:"""";s:12:""slideshow_fx"";s:4:""fade"";s:15:""slideshow_speed"";s:4:""1000"";s:17:""slideshow_timeout"";s:4:""4000"";s:15:""slideshow_order"";s:0:"""";s:18:""slideshow_controls"";i:0;s:24:""slideshow_controls_pause"";i:0;s:27:""slideshow_controls_position"";s:5:""after"";s:15:""slideshow_pause"";i:0;s:24:""slideshow_start_on_hover"";i:0;s:15:""slideshow_pager"";s:0:"""";s:24:""slideshow_pager_position"";s:5:""after"";s:27:""slideshow_pager_image_style"";s:0:"""";s:30:""slideshow_carousel_image_style"";s:0:"""";s:26:""slideshow_carousel_visible"";s:1:""3"";s:25:""slideshow_carousel_scroll"";s:1:""1"";s:24:""slideshow_carousel_speed"";s:3:""500"";s:23:""slideshow_carousel_skin"";s:0:"""";s:25:""slideshow_carousel_follow"";i:0;s:27:""slideshow_carousel_vertical"";i:0;s:27:""slideshow_carousel_circular"";i:0;}"
+video__preview__file_field_media_large_icon,50,1,N;

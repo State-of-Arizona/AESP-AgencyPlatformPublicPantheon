@@ -1,0 +1,7 @@
+name = 'Media Display Migrate'
+core = 7.x
+package = Custom
+configure = admin/config/media/migrate
+
+dependencies[] = media
+dependencies[] = file_entity

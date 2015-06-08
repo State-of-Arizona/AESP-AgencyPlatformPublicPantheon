@@ -1,0 +1,207 @@
+<?php
+/*
+ * Implements hook_permission().
+ */
+function insert_view_gen_permission() {
+  return array(
+    'bypass insert view gen' => array(
+      'title' => t('Bypass Insert View Code Generator Access Control'),
+      'description' => t('View all view in the dropdown field regardless of configurations. Warning: Give to trusted roles only; this permission has security implications.')
+    ),
+    'administer insert view gen' => array(
+      'title' => t('Administer Insert View Code Generator'),
+      'description' => t('Choose which views to hide from the generator.'),
+    ),
+    'insert view gen use' => array(
+      'title' => t('Use Insert View Generator'),
+      'description' => t('Gives access to the insert view generator field. NOTE: This does not restrict them from actually using the insert view module.')
+    ),
+  );
+}
+
+/*
+ * Implements hook_menu().
+ */
+function insert_view_gen_menu() {
+  $items = array();
+  $items['admin/config/content/insert-gen'] = array(
+    'title' => 'Insert View Code Generator',
+    'description' => 'Configure which views are hidden from the generator',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('insert_view_gen_config'),
+    'access arguments' => array('administer insert view gen'),
+  );
+  return $items;
+}
+
+/*
+ * Insert View Generator Admin Form
+ */
+function insert_view_gen_config() {
+  $view_list = _insert_view_gen_views();
+
+  $form = array();
+  $form['instructions'] = array(
+    '#markup' => t('Choose the views below which you wish to <strong style="text-decoration: underline;">exclude</strong> from the generator'),
+  );
+  $form['views'] = array(
+    '#type' => 'vertical_tabs',
+    '#title' => t('Available Views'),
+  );
+  foreach ($view_list as $key => $view) {
+    if(isset($view['displays'])) {
+      $form[$key] = array(
+        '#type' => 'fieldset',
+        '#group' => 'views',
+        '#title' => t($view['human_name']),
+      );
+      $form[$key]['insert_view_' . $key . '_displays'] = array(
+        '#title' => t('Available Displays'),
+        '#type' => 'checkboxes',
+        '#options' => $view['displays'],
+        '#default_value' => variable_get('insert_view_' . $key . '_displays', array()),
+      );
+    }
+  }
+
+  return system_settings_form($form);
+}
+
+/*
+ * Implements hook_field_info().
+ */
+function insert_view_gen_field_info() {
+  return array(
+    'insert_view_generator' => array(
+      'label' => t('Insert View Generator'),
+      'description' => t('This field will provide a list of available views and provide the token to insert into the content.'),
+      'default_widget' => 'insert_view_gen_widget',
+      'default_formatter' => 'insert_view_gen_formatter',
+    ),
+  );
+}
+
+function insert_view_gen_field_widget_info() {
+  return array(
+    'insert_view_gen_widget' => array(
+      'label' => t('Insert View Generator'),
+      'field types' => array('insert_view_generator'),
+    )
+  );
+}
+
+function insert_view_gen_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $view_list = _insert_view_gen_views();
+  //creates an array of the hidden views from configuration
+  $mod_settings = array();
+  if (!user_access('bypass insert view gen')) {
+    foreach ($view_list as $view_key => $view) {
+      $mod_settings = array_merge($mod_settings, variable_get('insert_view_' . $view_key . '_displays', array()));
+    }
+  }
+
+  //creates the option list based on admin config settings
+  $options = array('none' => '- None -');
+  foreach ($view_list as $view_key => $view) {
+    if (isset($view['displays'])) {
+      foreach ($view['displays'] as $key => $display) {
+        if (!array_key_exists($key, $mod_settings) || !$mod_settings[$key]) {
+          $options[$view['human_name']][$key] = $display;
+        }
+      }
+    }
+  }
+
+  if (!empty($options) && (user_access('bypass insert view gen') || user_access('insert view gen use'))) {
+    $element['view_select'] = array(
+      '#type' => 'select',
+      '#title' => t('Available Views'),
+      '#options' => $options,
+    );
+    $element['include_args'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Include Arguments for the view'),
+      '#tree' => FALSE,
+    );
+    $element['args'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'invisible' => array(
+          ':input[name="include_args"]' => array('checked' => FALSE),
+        ),
+      ),
+    );
+    $element['args']['arg_1'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Argument #1'),
+      '#size' => 20,
+    );
+    $element['args']['arg_2'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Argument #2'),
+      '#size' => 20,
+    );
+    $element['args']['arg_3'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Argument #3'),
+      '#size' => 20,
+
+    );
+
+    $element['generated_code'] = array(
+      '#markup' => '<div style="display:none; " class="form-item insert-view-code">Copy and paste the text below to display the view in this content.<br><div class="insert-view-gen-code"></div></div>',
+      '#attached' => array(
+        'js' => array(drupal_get_path('module', 'insert_view_gen') . '/insert_view_gen.js'),
+      ),
+    );
+  }
+  return $element;
+}
+
+/**
+ *  Implements hook_cron().
+ */
+function insert_view_gen_cron() {
+  GLOBAL $conf;
+  $current_views = views_get_all_views();
+  foreach ($conf as $key => $value) {
+    if (substr($key, 0, 12) == 'insert_view_' && substr($key, strlen($key) - 9) == '_displays') {
+      $view_key = substr($key, 12, strlen($key) - 21);
+      if (!array_key_exists($view_key, $current_views)) {
+        variable_del($key);
+      }
+    }
+  }
+}
+
+
+/*
+ * Implements hook_field_widget_info_alter()
+ */
+function insert_view_gen_field_widget_info_alter($info) {
+  $info['options_select']['field types'][] = 'insert_view_generator';
+}
+
+/*
+ * Implements hook_filed_is_empty()
+ */
+function insert_view_gen_field_is_empty($item, $field) {
+  return !is_array($item) ? TRUE : FALSE;
+}
+
+
+//creates the array to be used in the admin form and the select list
+function _insert_view_gen_views() {
+  $view_list = array();
+  foreach (views_get_enabled_views() as $key => $view) {
+    $displays = $view->display;
+    $view_list[$key] = array('human_name' => $view->human_name);
+    foreach ($displays as $display_key => $display) {
+      if ($display->id != 'default') {
+        $view_list[$key]['displays'][$key . '=' . $display_key] = t($display->display_title);
+      }
+    }
+  }
+  return $view_list;
+}

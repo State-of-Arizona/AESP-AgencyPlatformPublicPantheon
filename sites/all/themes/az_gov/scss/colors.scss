@@ -1,0 +1,71 @@
+body {
+  background-color: #d2c0ac;
+  color: #333333;
+  a, #sidebar-second .glyphicon {
+    color: #ed5c2d;
+  }
+  a:visited {
+    color:#ad4321;
+  }
+}
+
+#content-wrapper, #footer-contact, #postscript-group {
+  background-color: #eae5d7;
+}
+
+#zone-branding {
+  background-color: #5c8984;
+  .region-menu ul.menu ul {
+    a:hover {
+      background-color: #5c8984 !important;
+      color: #ffffff !important;
+    }
+  }
+}
+
+#zone-footer {
+  background-color: #5e8a85;
+  p, div, span {
+    color: #ffffff;
+  }
+  a {
+    color: #eeeeee;
+  }
+  #region-footer-second {
+    background-color: #8b8175;
+  }
+  #footer-contact a {
+    color: #ed5c2d;
+  }
+}
+
+#breadcrumb, #zone-header .region {
+  background-color: #494949;
+}
+
+#zone-header .region {
+  color: #ffffff;
+}
+
+#preface-group {
+  background-color: #c5d8db;
+  h2.title, .block-title {
+    background-color: #6d9591;
+    color: #ffffff;
+  }
+}
+
+p.file, div.file, span.file, a.file, div.more-link, a.more-link {
+  background-color: #d9cfc6;
+}
+
+.node-basic-slideshow {
+  .field-slideshow-pager {
+    a {
+      background-color: #c5d8db;
+    }
+    a.activeSlide {
+      background-color: #6d9591;
+    }
+  }
+}

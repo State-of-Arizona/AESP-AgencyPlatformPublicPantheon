@@ -1,0 +1,25 @@
+#zone-branding .silhouette,
+#zone-branding .region-menu,
+#region-branding,
+#zone-header .region,
+#breadcrumbs .breadcrumb-wrapper,
+#messages,
+#preface-group,
+#postscript-group,
+#content-wrapper,
+#zone-footer .region,
+#footer-first,
+#footer-second,
+#footer-first-contact {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+#preface-group [class*="view-mbp-"].view-display-id-block > .view-content, #postscript-group [class*="view-mbp-"].view-display-id-block > .view-content {
+  display: flex;
+}
+#preface-group .total-results-5 .mbp-defaults-row,
+#preface-group .total-results-5 .mbp-defaults-row.views-row-first, #postscript-group .total-results-5 .mbp-defaults-row,
+#postscript-group .total-results-5 .mbp-defaults-row.views-row-first {
+  width: 20%;
+}

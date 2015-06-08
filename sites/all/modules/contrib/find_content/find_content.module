@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * @file
+ * Provides functionality to search the node content screen.
+ */
+
+/**
+ * Implements hook_form_alter().
+ */
+function find_content_form_node_admin_content_alter(&$form, &$form_state, $form_id) {
+  
+  // Check to see if we are on the delete submit page, if we are, don't show the form
+  if(!in_array('node_multiple_delete_confirm_submit', $form['#submit'])){
+    $searched_for = '';
+    $results_array = '';
+    if (isset($_SESSION['node_overview_search'])) {
+      $results_array = $_SESSION['node_overview_search'];
+    }
+    if (isset($_SESSION['node_overview_search_term'])) {
+      $searched_for = $_SESSION['node_overview_search_term'];
+    }
+    $form['admin']['options']['#weight'] = 5;
+    $form['admin']['search']['#weight'] = 10;
+    $form['admin']['nodes']['#weight'] = 15;
+    $form['admin']['pager']['#weight'] = 20;
+    
+    $form['admin']['search'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Search by title'),
+      '#access' => TRUE,
+    );
+    $form['admin']['search']['search_term'] = array(
+      '#type' => 'textfield',
+      '#title' => t(''),
+      '#size' => 60,
+      '#default_value' => $searched_for,
+    );
+    $form['admin']['search']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Search'),
+    );
+    $form['admin']['search']['clear'] = array(
+      '#type' => 'submit',
+      '#value' => t('Clear'),
+    );
+    $form['#submit'][] = '_find_content_submit';
+    if (!empty($results_array) && isset($form['admin']['nodes']['#options'])) {
+      foreach ($form['admin']['nodes']['#options'] as $key => $value) {
+        if (!in_array($key, $results_array)) {
+          unset($form['admin']['nodes']['#options'][$key]);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Submit function for search form.
+ */
+function _find_content_submit($form, &$form_state) {
+  switch ($form_state['clicked_button']['#value']) {
+    case 'Clear':
+      unset($_SESSION['node_overview_search']);
+      unset($_SESSION['node_overview_search_term']);
+      $nodes_to_show = array();
+      $_SESSION['node_overview_search'] = $nodes_to_show;
+      break;
+
+    default:
+      unset($_SESSION['node_overview_search']);
+      $search_term = $form['admin']['search']['search_term']['#value'];
+      $_SESSION['node_overview_search_term'] = $search_term;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_query_TAG_alter (node_access)
+ */
+function find_content_query_node_access_alter(QueryAlterableInterface $query) {
+  if ($_GET['q'] == 'admin/content' && isset($_SESSION['node_overview_search_term'])) {
+    $query->condition('n.title', '%' . $_SESSION['node_overview_search_term'] . '%', 'LIKE');
+  }
+}

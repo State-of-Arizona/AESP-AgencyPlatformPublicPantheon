@@ -1,0 +1,27 @@
+/* Winning Numbers Changes */
+Structure > Views > Winning Numbers > Edit: Change Format to "Unformatted list"
+Change date format for "Draw Date" to "Short"
+Added new Data Format of "l, F j" Assign this date to "Next Draw Date" on "Winning Numbers"
+Deleted field "Next Jackpot" from "Winning Numbers" content. Re-added as "Text" instead of "Decimal"
+Structure > Content Types > Winning Numbers > Manage Fields > Add new field called "Display Order" of type "Integer"
+Structure > Content > (Winning Number Type) > Set Display Order to relative display order
+Structure > Views > Winning Numbers > Add sort order of "Display Order" ASC
+Structure > Views > Winning Numbers > Remove sort order of "Draw Date"
+
+/* Home Page Feature Changes */
+Modules > OpenPublic > Home Page Feature: Uncheck Enabled and save configuration
+Structure > Views > home_page_feature_rotator Edit: Change Format to "HTML list"
+Structure > Views > home_page_feature_rotator > Content > Edit Content: Featured Image: Change "Formatter" to "Image"
+
+/* Header Changes /*
+Created page holder for "find a retailer"
+Disable "External Links" module
+Disable/hide search block
+Configure existing menu block "main menu" with links "Games, Promotions, Hall of winners, How the money Helps, Find a Retailer"
+Created menu block with machine name "menu-flyout-menu" and setup links for "Games, Promotions, Hall of winners, how the money helps, find a retailer"
+Created menu block with machine name "menu-sticky-nav" amd setup links for "Find a retailer, Winning numbers"
+
+/* Footer Changes /*
+Add <none> for name to all follow links in footer
+configure existing 'footer utility' menu block with links: "Games, Promotions, Hall of Winners, Find a Retailer, Must be 21 to Play, Unclaimed Prizes, Privacy Policy, Terms & Conditions, Contact Us"
+configure existing 'sponsor link' block with WYSIWYG html: <p><a href="http://www.problemgambling.az.gov/" target="_blank"><img alt="Problem Gambling" src="/sites/default/themes/azltheme/img/logo-problem-gambling.png" /></a><a href="http://www.azgovernor.gov/" target="_blank"><img alt="Governor Janice K. Brewer" src="/sites/default/themes/azltheme/img/logo-janbrewer.png" /></a> <a href="http://www.openbooks.az.gov/" target="_blank"><img alt="Arizona Open Books" src="/sites/default/themes/azltheme/img/logo-openbooks.png" /></a> <a href="http://www.kold.com/" target="_blank"><img alt="KOLD News 13" src="/sites/default/themes/azltheme/img/logo-news.png" /></a></p>

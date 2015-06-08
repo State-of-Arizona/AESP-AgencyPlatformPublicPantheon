@@ -1,0 +1,6 @@
+name = Menu Block Placement Roles
+core = 7.x
+description = Designate a menu item for a role to restrict their ability to add menu items.
+configure = admin/config/mbp/roles
+
+dependencies[] = menu_block_placement

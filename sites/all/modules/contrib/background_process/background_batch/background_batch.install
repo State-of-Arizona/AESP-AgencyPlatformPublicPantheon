@@ -1,0 +1,15 @@
+<?php
+/**
+ * @file
+ * This is the installation file for the Background Batch submodule
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function background_batch_uninstall() {
+  // Removing used variables.
+  variable_del('background_batch_delay');
+  variable_del('background_batch_process_lifespan');
+  variable_del('background_batch_show_eta');
+}

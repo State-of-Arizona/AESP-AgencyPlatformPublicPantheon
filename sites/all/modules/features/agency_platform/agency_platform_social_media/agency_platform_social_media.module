@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Agency Platform Social Media feature.
+ */
+
+include_once 'agency_platform_social_media.features.inc';

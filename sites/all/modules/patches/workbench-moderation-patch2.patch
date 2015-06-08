@@ -1,0 +1,31 @@
+diff --git a/workbench_moderation.module b/workbench_moderation.module
+index f510e2e..0439ac8 100644
+--- a/workbench_moderation.module
++++ b/workbench_moderation.module
+@@ -675,13 +675,21 @@ function workbench_moderation_node_update($node) {
+     return;
+   }
+ 
+-  // Set default moderation state values.
++  // Set moderation state values.
+   if (!isset($node->workbench_moderation_state_current)) {
+-    $node->workbench_moderation_state_current = ($node->status ? workbench_moderation_state_published() : workbench_moderation_state_none());
+-  };
++    $node->workbench_moderation_state_current = $node->original->workbench_moderation['current']->state ? $node->original->workbench_moderation['current']->state : workbench_moderation_state_none();
++  }
+   if (!isset($node->workbench_moderation_state_new)) {
+-    $node->workbench_moderation_state_new = variable_get('workbench_moderation_default_state_' . $node->type, workbench_moderation_state_none());
+-  };
++    if ($node->status == 0 && $node->original->status == 1) {
++      // moving from published to unpublished
++      $node->workbench_moderation_state_new = variable_get('workbench_moderation_default_state_' . $node->type, workbench_moderation_state_none());
++    } elseif ($node->status == 1 && $node->original->status == 0) {
++      // moving from unpublished to published
++      $node->workbench_moderation_state_new = workbench_moderation_state_published();
++    } else {
++      $node->workbench_moderation_state_new = $node->original->workbench_moderation['published']->state ? $node->original->workbench_moderation['published']->state : variable_get('workbench_moderation_default_state_' . $node->type, workbench_moderation_state_none());
++    }
++  }
+ 
+   // If this is a new node, give it some information about 'my revision'.
+   if (!isset($node->workbench_moderation)) {

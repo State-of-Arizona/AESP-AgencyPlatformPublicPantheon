@@ -1,0 +1,532 @@
+/**
+  *  This CSS file (THEME-alpha-default.css) contains styles that applies to ALL the responsive layouts
+  *  Unlike global.css (the global, including mobile layout CSS file), THEME-alpha-default.css is only
+  *  used on any size ABOVE mobile, which translates to all the responsive sizes of your mobile-first theme.
+  *
+  *  Any CSS included here will be used in your narrow, normal, wide, AND fluid grids, depending on which you 
+  *  have enabled in your theme settings. 
+  *  So this CSS will provide global styles for everything EXCEPT the default, mobile-first layout.
+  960px    */
+
+
+
+/**/
+#page {
+  background: url("../img/bg-page-splash.png") no-repeat scroll right 100px transparent;
+  
+}
+.site-name-slogan {
+	width:60%;
+}
+
+.site-name-slogan .site-name {
+  font-size: 2em;
+}
+.site-name-slogan .site-slogan {
+  font-size:0.9em;
+  float: left;
+  text-align: left;
+}
+
+ .azgov a {
+	position: relative;
+	float: right;
+	width: 170px;
+	height: 45px;
+}
+.azgov {
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 170px;
+	height: 45px;
+	background: none;
+	background: url(../img/azgov.png) no-repeat;
+	border-top: 0px;
+	margin: 0 auto;
+	padding:0;
+	text-indent: -9999px;
+	visibility:visible;
+	display: block;
+}
+
+
+
+.branding-data {
+	float:left;
+}
+
+/*search form*/
+.block-search-form {
+	/*position: absolute;
+	right: 0;
+	top: 60px;*/
+	width: 292px;
+	padding: 0;
+}
+
+
+
+.block-search-form h2 {visibility: hidden; font-size: 1px; line-height: 0;} 
+
+
+
+form#search-block-form .form-text {
+	float: left;
+	background: url(../img/bg-form-field.png);
+	padding: 5px 10px;
+	border: 1px solid #333;
+	border-right: 0px;
+	color: #999;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 1.167em;
+	font-style: italic;
+	width: 62%;
+	margin-right: 0;
+	-moz-border-radius: 5px 0px 0px 5px;
+	-webkit-border-radius: 5px 0px 0px 5px;
+	-o-border-radius: 5px 0px 0px 5px;
+	border-radius: 5px 0px 0px 5px;
+}
+
+form#search-block-form input.form-submit {
+	border: 1px solid #333;
+	border-left: 0px;
+	cursor: pointer;
+	height: 29x;
+	line-height: 1em;
+	float: right;
+	margin-left: 0px;
+	-moz-border-radius: 0px 5px 5px 0px;
+	-webkit-border-radius: 0px 5px 5px 0px;
+	-o-border-radius: 0px 5px 5px 0px;
+	border-radius: 0px 5px 5px 0px;
+}
+
+.zone-branding {
+  background: url(../img/seal-silhouette.png) 90% 100% no-repeat;
+}
+
+#zone-preface .region-inner section:first-child h2.block-title {
+  margin: 0 -11px;
+}
+
+#zone-preface h2.block-title {
+	margin: 0;
+}
+/*
+.region-preface-first-inner h2.block-title{
+	margin: 0 0 0 -10px;
+	width: 320px;
+}
+.region-preface-second-inner h2.block-title {
+	margin: 0 0 0 0px;
+	width: 320px;
+}
+.region-preface-third-inner h2.block-title {
+	margin: 0 0 0 -30px;
+	width: 320px;
+}*/
+/* navigation */
+
+#region-menu {
+	float:right;
+	width: 56%;
+}
+
+#zone-menu-wrapper {
+	height: auto;
+	/*border-top: 4px solid #ececec; */
+	margin: 0;
+	padding:0;
+}
+#region-branding {
+	border-bottom: none;
+	padding:  0;
+	width: 39.667%;
+}
+#navigation {
+	
+  overflow: hidden;
+  position: relative; 
+ 
+}
+.navigation ul.menu li.expanded:hover > ul.menu {
+    display: block;
+}
+#block-search-form {
+    float: right;
+}
+.navigation ul {
+    
+	padding:  0;
+	position: relative;
+	display: block;
+
+}
+.navigation ul li {
+  float: left;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.85em;
+  font-weight: 300;
+  list-style-type: none;
+  list-style-image: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  text-transform: uppercase;
+  display: inline;
+  clear:none;
+	
+}
+.navigation li a {
+
+  border-top: none;
+  border-bottom: none;
+  color: #fff;
+  height:  auto;
+  display: block;
+  /*padding: 11px 20px 10px 20px;*/
+  text-align: center;
+  text-decoration: none;
+  margin:0;
+  
+}
+.navigation li.first {
+	/*border-left: 1px solid #ececec;*/
+}
+.navigation li ul li.first{
+	border-left: 0px;
+}
+
+
+
+/*.navigation li.active-trail a,
+.navigation li a.active,*/
+.navigation li a:hover,
+.navigation li a.active:hover,
+.navigation li a:focus,
+.navigation ul li:hover a,
+.navigation ul li.active:hover a {
+	background-color: #f2f2f2; /* Old browsers */
+	background: -moz-linear-gradient(top, #f2f2f2 0%, #ececec 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f2f2f2), color-stop(100%,#ececec)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #f2f2f2 0%,#ececec 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #f2f2f2 0%,#ececec 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #f2f2f2 0%,#ececec 100%); /* IE10+ */
+	background: linear-gradient(top, #f2f2f2 0%,#ececec 100%); /* W3C */
+	/*border-right: 1px solid #FFF;
+	border-left: 1px solid #FFF;
+	padding-left: 19px;
+	padding-right: 19px;*/
+	color: #333;
+}
+.navigation li a.menu-home:hover, 
+.navigation li a.menu-home:focus,
+.navigation ul li:hover a.menu-home,
+.navigation ul li.active:hover a.menu-home {
+ 	background:  url(../img/home-icon.png) 0px 6px no-repeat;
+	background-color: transparent;
+}
+
+.menu-home {
+	background:url(../img/home-icon.png) 0px 6px no-repeat ;
+	padding: 0px;
+	text-indent: -9999px;
+}
+
+.navigation li a.menu-home {
+	margin: 0 10px 0 20px;
+	height: 20px;
+	border-right: 1px solid rgba(0, 0, 0, 0.2);
+    width: 20px;
+}
+/******* Drop-down Navigation ******/
+
+.navigation li ul {
+	background: none repeat scroll 0 0 #FFF;
+	-webkit-box-shadow: 0 3px 10px rgba(0,0,0,.2);
+	-moz-box-shadow: 0 3px 10px rgba(0,0,0,.2);
+	box-shadow: 0 3px 10px rgba(0,0,0,.2);
+	border: 1px solid #efefef;
+	height: auto;
+	left: -999em;
+	margin: 0;
+	padding: 5px;
+	position: absolute;
+	width: 200px;
+	z-index: 1000;
+	display:block;
+	
+}
+
+.navigation ul li:hover > ul {
+	display: block;
+	left: 0;
+	
+}
+
+.navigation li ul li {
+	float: none;
+	margin: 0;
+	padding: 0;
+	text-transform: none;
+	font-weight: 400;
+	font-size: 13px;
+	list-style-image: none;
+	border-right: 0px;
+}
+
+.navigation li ul li a,
+.navigation li.active-trail ul li a,
+.navigation li:hover ul li a {
+	text-align: left;
+	background: url(../img/sprite.png) repeat-x 0 -490px; /* grey bg*/
+	color: #484848;
+	display: block;
+	padding: 7px 16px;
+	border: none;
+}
+
+.navigation li ul li a:hover,
+.navigation li.active-trail ul li a.active {
+	padding: 7px 16px;
+	border: none;
+	
+} 
+	
+/*
+ * Home page rotator
+ */
+.view-home-page-feature-rotator {
+  margin-left: 0;
+  width: 100%;
+}
+#zone-header.container-12 .grid-12 {
+	width: 100% !important; 
+}
+#region-header-first.grid-12 {
+	margin: 0 !important; 
+}
+#home-rotator {
+  width: 100%;
+  padding: 0;
+  min-height: 280px;
+  height: 280px;
+}
+.home-top-intro {
+  /* This is only hidden actually during the fluid layout, 960 size overwrites it again to show the subtext */
+  /*font-size: 0;*/
+  text-align:left;
+  margin: 10px 20px;
+ 
+}
+#home-top-read-more {
+	margin: 0 0 0 20px;
+	width: 85%;
+}
+
+#home-top-numbers {
+	margin: 0 0 0 15px;
+    padding: 15px 0 0 0;
+}
+
+
+
+#home-top-numbers li a {
+  height: 18px;
+  width: 18px;
+  margin: 0 3px;
+  border-radius: 9px;
+ 
+}
+
+.home-rotator-slide {
+  width: 100%;
+  margin: 0;
+}
+.home-rotator-text-block {
+  float: left;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  width: 42.489361702128%;
+  height: 278px;
+}
+
+/**/.home-rotator-photo {
+  float: right;
+  width: 56.31914893617%;
+  margin: 0;
+  overflow: hidden;
+}
+.home-rotator-photo {
+  float: right;
+}
+.home-rotator-photo img, .home-rotator-slide img {
+    width:auto;
+    /*NB adding height to fix responsive issue*/
+    height: 278px;
+    /*end custom*/
+    margin: 0;
+	float: right;
+}
+
+
+/*
+*  Content
+*/
+
+/*#block-nodeblock-agency-highlight-center-1 */
+#region-preface-second{
+	border-right: 1px solid #999;
+	border-left: 1px solid #999;
+	 margin-left: 0px;
+}
+#region-content .region-inner {
+	border-right: 1px solid #ccc;
+}
+/*
+ * Breaking News
+ */
+.breaking-news {
+  background:#fff url(../img/sprite.png) no-repeat 0 -200px;
+  height: 45px;
+}
+
+.breaking-news .headline {
+  width:65%;
+}
+.breaking-news .breaking-news-header {
+  width: 185px;
+  margin: 6px 0 0 10px;
+  visibility: visible;
+}
+.breaking-news .headline a {
+  height: 11px;
+  padding: 13px 0;
+}
+
+/*
+ * Footer
+ */
+ #footer-nav {
+  width: 100%;
+  overflow: hidden;
+  display:block;
+}
+
+ #block-nodeblock-agency-footer-branding {
+	float: left;
+    width: 30%;
+	padding: 55px 0;
+}
+#block-nodeblock-contact-us {
+	float: right;
+    width: 62%;
+} 
+.field-name-field-map-image {
+	float: right;
+	margin-top: 0px;
+}
+.group_address {
+	width: 63%;
+	margin-right: 0px;
+	padding: 20px;
+    box-shadow:  0 2px 8px rgba(0, 0, 0, 0.5);
+	background: #fff url(../img/bg-post-card.png) bottom repeat-x;
+}
+.group_column1{
+	width: 60%;
+	float:left;
+}
+.group_column2 {
+	margin-left: 10px;
+    width: 37%;
+}
+.field-name-field-address-name,
+.field-name-field-address-,
+.field-name-field-address-line-2,
+.field-name-field-google-maps-link,
+.field-name-field-phone-number,
+.field-name-field-fax {
+	border-bottom: 1px solid #efefef;
+}
+.field-name-field-phone-number {
+	border-top: 1px solid #EFEFEF;
+}
+#footer-info,
+#footer-tab-icon {
+	width: 960px;
+	margin: 0 auto;
+}
+.footer-utility li,
+.footer-nav ul.menu li {
+  float: left;
+}
+
+.footer-nav ul.menu li li {
+	float: none;
+}
+.footer-nav ul.menu {
+	display: inline;
+}
+#footer-nav-wrapper {
+  width: 840px;
+}
+#footer-tab-icon img{
+	padding: 3px;
+}
+
+.footer-menu-wrapper {
+	width: 960px;
+}
+
+#footer-logo-subscribe .site-name{
+  display: block;
+}
+#footer-logo-subscribe .logo{
+  display: block;
+}
+#footer-subscribe label {
+  display: none;
+}
+#footer-subscribe .form-item, 
+#footer-subscribe .form-actions {
+  margin: 1em 0;
+}
+
+.footer-branding {
+	/*
+	 * MD Adjusted width due to the padding change of the container
+	 * width:26%;
+	 */
+	width:35%;
+	 
+	float: left;
+}
+
+#follow-wrapper {
+  width: 100px;
+  
+}
+#stay-connected li,
+#content .connect-block li {
+  float: left;
+}
+
+
+.node-content .webform-client-form .grippie, .node-content .webform-client-form textarea, .node-content .webform-client-form input, .webform-client-form select,
+.node-content .webform-client-form select {
+	/*
+	 * MD - Fixed width to make checkbox labels fit inline
+	 * width: 460px;
+	 */
+	width:auto;
+	display:inline;
+	padding-left:10x;
+}
+
+.node-content .webform-client-form textarea {
+	width: 475px;
+}

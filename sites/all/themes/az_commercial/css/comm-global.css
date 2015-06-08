@@ -1,0 +1,192 @@
+#content-wrapper #content > .content, #content h1#page-title, #zone-branding, #postscript-group {
+  box-shadow: none;
+}
+
+#page {
+  font-family: "Oswald", sans-serif;
+}
+#page #content,
+#page #preface-group .mbp-defaults-row > div,
+#page #postscript-group .region.menu-block-placement-doesnt-exist,
+#page #postscript-group .mbp-defaults-row {
+  box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
+}
+#page #postscript-group .postscript:only-child .region {
+  padding: 0;
+}
+#page h1#page-title {
+  line-height: 130%;
+  padding: 17px 0px 15px;
+  margin: 0px;
+  text-align: center;
+}
+#page h2 {
+  border-bottom: 4px solid #dcd2c3;
+  padding: 00 5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  text-align: center;
+}
+#page h2.block-title {
+  font-size: 24px;
+  margin-bottom: 0px;
+  padding: 15px 0px 0px;
+  border-bottom: none;
+}
+#page h3 {
+  padding: 0px 0px 5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+#page .region-menu .content > ul.menu > li > a {
+  text-shadow: 1px 1px 0px #fff, -1px 1px 0px #fff, 1px -1px 0px #fff, -1px -1px 0px #fff;
+  letter-spacing: 2px;
+}
+#page .views-more-link {
+  display: inline-block;
+  width: auto;
+  background: url("../img/bullet-arrow.png") no-repeat scroll 95% center transparent;
+  padding: 7px 45px 7px 20px;
+  border-radius: 50px;
+  white-space: normal;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.3);
+  font-weight: normal;
+}
+#page .region-menu ul.menu a {
+  font-family: "Oswald", sans-serif;
+}
+
+#zone-footer .region {
+  text-align: center;
+  padding: 5px 0;
+}
+#zone-footer .region > div.block {
+  display: inline-block;
+}
+#zone-footer ul.menu {
+  padding: 5px;
+}
+#zone-footer ul.menu li {
+  display: inline-block;
+}
+#zone-footer ul.menu li a {
+  border-right: 1px solid #fff;
+  padding: 0 15px;
+}
+#zone-footer ul.menu li a:hover {
+  color: #ffd046;
+}
+#zone-footer ul.menu li:last-child a {
+  border-right: none;
+}
+
+#page ul.menu a:hover {
+  background: transparent;
+}
+
+.read-more a {
+  background: url("../img/bullet-arrow.png") no-repeat scroll 95% center transparent;
+  padding: 7px 45px 7px 20px;
+  border-radius: 50px;
+  white-space: normal;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-weight: normal;
+}
+
+.follow-links a {
+  font-family: FontAwesome;
+  background: none;
+  padding: 0;
+  margin: 0 5px;
+  visibility: hidden;
+  font-size: 0px;
+  text-decoration: none;
+}
+.follow-links a:before {
+  font-size: 30px;
+  visibility: visible;
+}
+.follow-links a.follow-link-facebook:before {
+  content: "\f082";
+  color: #3c5b9a;
+}
+.follow-links a.follow-link-twitter:before {
+  content: "\f081";
+  color: #2ba8e0;
+}
+.follow-links a.follow-link-youtube:before {
+  content: "\f166";
+  color: #bf2026;
+}
+.follow-links a.follow-link-flickr:before {
+  content: "\f16e";
+  color: #3566b1;
+}
+.follow-links a.follow-link-newsletter:before {
+  content: "\f199";
+  color: #1aa79c;
+}
+.follow-links a.follow-link-instagram:before {
+  content: "\f16d";
+  color: #3e749d;
+}
+.follow-links a.follow-link-googleplus:before {
+  content: "\f0d4";
+  color: #cd2027;
+}
+.follow-links a.follow-link-vimeo:before {
+  content: "\f194";
+  color: #66b7e7;
+}
+.follow-links a.follow-link-lastfm:before {
+  content: "\f203";
+  color: #dc1f26;
+}
+.follow-links a.follow-link-linkedin:before {
+  content: "\f08c";
+  color: #1473a6;
+}
+.follow-links a.follow-link-delicious:before {
+  content: "\f1a5";
+  color: #3f71b7;
+}
+.follow-links a.follow-link-tumblr:before {
+  content: "\f174";
+  color: #2c4862;
+}
+.follow-links a.follow-link-xing:before {
+  content: "\f169";
+  color: #0c6668;
+}
+.follow-links a.follow-link-this-site:before {
+  content: "\f143";
+  color: #f38e35;
+}
+.follow-links a.follow-link-myspace {
+  visibility: visible;
+  font-size: 14px;
+}
+.follow-links a.follow-link-virb {
+  visibility: visible;
+  font-size: 14px;
+}
+.follow-links a.follow-link-picasa {
+  visibility: visible;
+  font-size: 14px;
+}
+.follow-links a.follow-link-bliptv {
+  visibility: visible;
+  font-size: 14px;
+}
+.follow-links a.follow-link-viadeo {
+  visibility: visible;
+  font-size: 14px;
+}
+.follow-links a.follow-link-spiceworks {
+  visibility: visible;
+  font-size: 14px;
+}
+
+.view-commercial-slider .flexslider {
+  border: none;
+}

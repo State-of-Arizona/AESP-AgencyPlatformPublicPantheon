@@ -1,0 +1,48 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ *
+ * @return Array
+ *   The Schema required for AET Insert to work.
+ */
+function aet_insert_schema() {
+  $schema['aet_insert'] = array(
+    'description' => 'The base table for AET Insert.',
+    'fields' => array(
+      'entity_type' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'field_name' => array(
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length' => 125,
+        'default' => '',
+      ),
+    ),
+  );
+  return $schema;
+}
+
+/**
+ * transforms the old use of variables into a better use of schema.
+ */
+function aet_insert_update_7100(&$sandbox = NULL) {
+  db_create_table('aet_insert', drupal_get_schema_unprocessed('aet_insert', 'aet_insert'));
+  $query = db_select('variable', 'v')
+  ->fields('v', array('name', 'value'))
+  ->condition('v.name', 'aet_insert_use_%', 'LIKE');
+  $results = $query->execute();
+  $query = db_insert('aet_insert')
+  ->fields(array('entity_type', 'field_name'));
+  foreach ($results as $result) {
+    if ($result->value) {
+      list($entity_type, $bundle, $field_name) = explode('_', str_replace('aet_insert_use_', '', $result->name), 3);
+      $query->values(array('entity_type' => $entity_type, 'field_name' => $field_name));
+    }
+  }
+  $query->execute();
+}

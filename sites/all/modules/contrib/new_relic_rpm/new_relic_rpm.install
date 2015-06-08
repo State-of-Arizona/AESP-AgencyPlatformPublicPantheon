@@ -1,0 +1,77 @@
+<?php
+/**
+ * @file
+ * Install and uninstall functions as well as schema definition for the Mollom module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function new_relic_rpm_requirements($phase) {
+  $requirements = array();
+  $t = get_t();
+
+  if ($phase == 'install') {
+    if (!extension_loaded('newrelic')) {
+      $requirements['newrelic'] = array(
+        'title' => $t('none.'),
+        'value' => NULL,
+        'description' => $t('New Relic PHP Library missing. Check <a href="https://newrelic.com/docs/php/new-relic-for-php">Install New Relic for PHP</a> for more information.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+  if ($phase == 'runtime') {
+    $new_relic_loaded = extension_loaded('newrelic');
+    $requirements['newrelic'] = array(
+      'title' => $t('New Relic PHP Library'),
+      'value' =>  $new_relic_loaded ? $t('Exists') : $t('Not loaded'),
+      'severity' => $new_relic_loaded ? REQUIREMENT_OK : REQUIREMENT_ERROR,
+    );
+    $requirements['newrelic_apikey'] = array(
+      'title' => $t('New Relic API key'),
+      'value' => (variable_get('new_relic_rpm_api_key', 0) == '' ? $t('Not set') : $t('Available')) . ' (' . l('Configure', 'admin/config/development/new-relic-rpm') . ')',
+      'severity' => variable_get('new_relic_rpm_api_key', 0) == '' ? REQUIREMENT_INFO : REQUIREMENT_OK,
+    );
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_install().
+ */
+function new_relic_rpm_install() {
+  // Set New Relic RPM module's weight to very low so we can trigger job state
+  // changes early. This can be important in cases like hook_cron().
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query("UPDATE {system} SET weight = -20 WHERE name = 'new_relic_rpm'") */
+  db_update('system')
+  ->fields(array(
+    'weight' => -20,
+  ))
+  ->condition('name', 'new_relic_rpm')
+  ->execute();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function new_relic_rpm_uninstall() {
+
+  // Remove variables.
+  variable_del('new_relic_rpm_track_cron');
+  variable_del('new_relic_rpm_ignore_urls');
+  variable_del('new_relic_rpm_bg_urls');
+  variable_del('new_relic_rpm_exclusive_urls');
+  variable_del('new_relic_rpm_api_key');
+  variable_del('new_relic_rpm_module_deployment');
+  variable_del('new_relic_rpm_app_name');
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function new_relic_rpm_update_last_removed() {
+  return 6002;
+}

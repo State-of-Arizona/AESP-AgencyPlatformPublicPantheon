@@ -1,0 +1,7 @@
+name = Arizona Flyout Menu
+core = 7.x
+configure = admin/config/user-interface/az-flyout
+
+stylesheets[all][] = css/az_flyout.css
+dependencies[] = fontawesome
+features[context][] = az_flyout

@@ -1,0 +1,115 @@
+<?php
+
+/**
+ * @file
+ * Main file for the Respond.js module
+ */
+
+//define('AZ_GOV_SLIVER_SCOPE_DEFAULT','header');
+//define('AZ_GOV_SLIVER_QUIET_DEFAULT',NULL);
+
+/**
+ * Implements hook_menu().
+ *
+ * Provides admin config pages.
+ */
+function az_gov_sliver_menu() {
+  /*$items = array();
+  $items['admin/config/user-interface/az_gov_sliver'] = array(
+    'title' => 'AZ.gov Sliver',
+    'description' => 'Configure Az.Gov Sliver settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('az_gov_sliver_admin'),
+    'access arguments' => array('administer az_gov_sliver'),
+    'file' => 'az_gov_sliver.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;*/
+}
+
+/**
+ * Implements hook_permission().
+ */
+function az_gov_sliver_permission() {
+  /*return array(
+    'administer az_gov_sliver' => array(
+      'title' => t('Administer Az.Gov Sliver'),
+    ),
+  );*/
+}
+
+/**
+ * Implements hook_init().
+ *
+ * This is the function that adds sliver.js to the page.
+ * Feel free to snatch this code if you're adding it directly into your theme.
+ */
+function az_gov_sliver_preprocess_page() {
+  // We need sliver.js to load as soon in the HTML as possible, because it can
+  // affect the presentation of a page. The options below ensure that it happens.
+  
+  //Only do this on non-admin pages.
+  if( !path_is_admin(current_path()) ){
+	  drupal_add_js(
+		az_gov_sliver_get_library_file(),
+		array(
+		  'type' => 'file',
+		  'scope' => 'header',
+		  'group' => JS_LIBRARY,
+		  //'every_page' => TRUE,
+		  'weight' => -999,
+		  'preprocess' => 0,
+		)
+	  );
+  }
+}
+
+/**
+ * Implements hook_library().
+ */
+function az_gov_sliver_library() {
+  $libraries['az_gov_sliver'] = array(
+    'title' => 'az.gov Sliver',
+    'website' => 'http://www.az.gov',
+    'version' => '',
+    'js' => array(
+      az_gov_sliver_get_library_file() => array(),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Helper function gets the path to the library directory
+ * Use this if you're keeping a local copy of the file.
+ */
+function az_gov_sliver_get_library_path() {
+  $default_path = drupal_get_path('module', 'az_gov_sliver') . '/lib';
+
+  // If Libraries API is enabled, make sure the file exists before pointing there
+  if (function_exists('libraries_get_path') && file_exists(libraries_get_path('az_gov_sliver'))) {
+    $path = libraries_get_path('az_gov_sliver');
+  }
+  // Check if the file is in the module directory if it's not in the library
+  else if (file_exists($default_path)) {
+    $path = $default_path;
+  }
+  // If the module's files have been altered, we should not report the default path.
+  // repsondjs_requirements() will report this error.
+  else {
+    $path = NULL;
+  }
+
+  return $path;
+}
+
+/**
+ * Helper function gets the path to the library Javascript file
+ */
+function az_gov_sliver_get_library_file() {
+	//Uncomment if you want to switch to the live official sliver once it's hit production
+	return 'https://static.az.gov/sliver/sliver.js';
+	
+	//Uncomment if you're using a local copy and not the one hosted elsewhere.
+	//return az_gov_sliver_get_library_path() . '/sliver.js';
+}

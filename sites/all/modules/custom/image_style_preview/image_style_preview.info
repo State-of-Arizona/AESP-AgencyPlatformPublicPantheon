@@ -1,0 +1,7 @@
+name = Image Style Preview
+description = Creates a block which will display all available image styles
+core = 7.x
+package = Custom
+
+dependencies[] = block
+dependencies[] = image

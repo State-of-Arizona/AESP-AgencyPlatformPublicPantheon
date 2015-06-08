@@ -1,0 +1,38 @@
+<?php
+/**
+ * @file
+ * This file contains all the theming functions required for AET Insert.
+ */
+
+/**
+ * The AET Insert Theming function.
+ *
+ * To manipulate this field use hook_aet_insert_field_pre_render or override
+ * this function (just don't forget to call it when your done manipulating the
+ * variables array).
+ */
+function theme_aet_insert_field($vars) {
+
+ $element = $vars['element'];
+
+ $output = '<div ';
+
+ $output .= 'id="' . $element['#id'] . '" ';
+
+ if (!empty($element['#attributes']['class'])) {
+  $element['#attributes']['class'] = implode(' ', $element['#attributes']['class']);
+ }
+ $output .= drupal_attributes($element['#attributes']);
+
+ $output .= '>';
+
+ $output .= !empty($element['#prefix']) ? $element['#prefix'] : '';
+
+ $output .= render($element['#children']);
+
+ $output .= !empty($element['#suffix']) ? $element['#sufix'] : '';
+
+ $output .= '</div>';
+
+ return $output;
+}

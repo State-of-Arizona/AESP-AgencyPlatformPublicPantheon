@@ -1,0 +1,644 @@
+<?php
+/**
+ * @file
+ * Code for the Feature ENewsletter feature.
+ */
+
+include_once 'feature_enewsletter.features.inc';
+
+/**
+ *  Implements hook_field_info().
+ */
+function feature_enewsletter_field_info() {
+  return array(
+    'enewsletters' => array(
+      'label' => t('Enewsletters'),
+      'description' => t('This field stores varchar text in the database.'),
+      'default_widget' => 'options_select',
+      'default_formatter' => 'text_default',
+    ),
+    'enews_demographics' => array(
+      'label' => t('Enewsletter Demographics'),
+      'description' => t('This field stores varchar text in the database.'),
+      'default_widget' => 'options_buttons',
+      'default_formatter' => 'text_default',
+    ),
+  );
+}
+
+
+/**
+ *  Implements hook_field_widget_info_alter().
+ */
+function feature_enewsletter_field_widget_info_alter(&$info) {
+  $widgets = array(
+    'options_select' => array('enewsletters', 'enews_demographics'),
+    'options_buttons' => array('enews_demographics'),
+  );
+  foreach ($widgets as $widget => $field_types) {
+    $info[$widget]['field types'] = array_merge($info[$widget]['field types'], $field_types);
+  }
+}
+
+/**
+ *  Implements hook_options_list().
+ */
+function feature_enewsletter_options_list($field, $instance, $entity_type, $entity) {
+  $settings = variable_get('feature_enewsletter');
+  $options = array();
+
+  switch ($field['type']) {
+    case 'enewsletters':
+      foreach ($settings['lists'] as $key => $value) {
+        $options[$key] = $value['name'];
+      }
+
+      break;
+    case 'enews_demographics':
+      if (!empty($settings['demos'])) {
+        foreach ($settings['demos'] as $key => $value) {
+          $options[$key] = $value['name'];
+        }
+      }
+      break;
+  }
+  return $options;
+}
+
+/*
+ * Implements hook_filed_is_empty()
+ */
+function feature_enewsletter_field_is_empty($item, $field) {
+  return !is_array($item) ? TRUE : FALSE;
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function feature_enewsletter_permission() {
+  return array(
+    'administer enewsletter' => array(
+      'title' => t('Administer Enewsletter'),
+      'description' => t('Change settings for enewsletter lists and demographics.'),
+    ),
+  );
+}
+
+/**
+ *  Implements hook_menu().
+ */
+function feature_enewsletter_menu() {
+  $items['admin/config/content/az-enewsletter'] = array(
+    'title' => 'Enewsletter Settings',
+    'description' => t('Set Enewsletter Pro Settings'),
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('feature_enewsletter_config'),
+    'access arguments' => array('administer enewsletter'),
+    'file' => 'feature_enewsletter.admin.inc',
+    'file path' => drupal_get_path('module', 'feature_enewsletter'),
+  );
+  return $items;
+}
+
+/**
+ *  Implements hook_node_view().
+ *
+ * Collects node field values, then builds the form and appends to the node.
+ */
+function feature_enewsletter_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'enewsletter_subscription') {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $settings = variable_get('feature_enewsletter');
+
+    // gathers field values
+    $vars = array(
+      'sid' => isset($settings['sid']) ? $settings['sid'] : '',
+      'create_form' => $node_wrapper->field_enews_create_form->value(),
+      'opt_out_form' => $node_wrapper->field_enews_opt_out->value(),
+      'double_email' => $node_wrapper->field_enews_double_email->value(),
+      'include_salutation' => isset($node_wrapper->field_enews_saluation) ? $node_wrapper->field_enews_saluation->value() : 0,
+      'include_name' => isset($node_wrapper->field_enews_name) ? $node_wrapper->field_enews_name->value() : 0,
+      'include_link' => isset($node_wrapper->field_enews_link) ? $node_wrapper->field_enews_link->value() : 0,
+      'link_text' => isset($node_wrapper->field_enews_link_text) ? $node_wrapper->field_enews_link_text->value() : 0,
+      'password' => $node_wrapper->field_enews_password->value(),
+      'hide_delivery_format' => $node_wrapper->field_enews_format->value(),
+      'dont_require_confirm' => isset($node_wrapper->field_enews_confirm) ? $node_wrapper->field_enews_confirm->value() : 0,
+      'dont_send_message' => isset($node_wrapper->field_enews_message) ? $node_wrapper->field_enews_message->value() : 0,
+      'name_format' => $node_wrapper->field_enews_name_format->value(),
+      'require_name' => isset($node_wrapper->field_enews_require_name) ? $node_wrapper->field_enews_require_name->value() : 0,
+      'list_format' => $node_wrapper->field_enews_list_format->value(),
+      'update_subs' => isset($node_wrapper->field_enews_update_subs) ? $node_wrapper->field_enews_update_subs->value() : 0,
+      'update_demo' => isset($node_wrapper->field_enews_update_demo) ? $node_wrapper->field_enews_update_demo->value() : 0,
+      'list' => array(),
+    );
+
+    if (!empty($node->field_enews_letters)) {
+      foreach ($node->field_enews_letters['und'] as $value) {
+        if (!is_null($value['value'])) {
+          if ($node->field_enews_descriptions['und'][0]['value']) {
+            $vars['list'][$value['value']] = t($settings['lists'][$value['value']]['name'] . ' - ' . $settings['lists'][$value['value']]['description']);
+          }
+          else {
+            $vars['list'][$value['value']] = t($settings['lists'][$value['value']]['name']);
+          }
+        }
+      }
+    }
+
+    $vars['demographics'] = array();
+    if (!empty($node->field_enews_demos)) {
+      foreach ($node->field_enews_demos['und'] as $value) {
+        $vars['demographics'][$value['value']] = $value['value'];
+      }
+    }
+
+    // build form for either subscripotion or unsubscripe form
+    if ($vars['create_form'] == 'in') {
+      $form = drupal_build_form('feature_enewsletter_subscribe_form', $vars);
+    }
+    else {
+      $form = drupal_build_form('feature_enewsletter_unsubscribe_form', $vars);
+    }
+
+    //append the form to the node
+    $node->content['subscription'] = $form;
+  }
+}
+
+
+/**
+ *  Implements hook_form().
+ *
+ * Opt-Out Unsubscribe Form
+ */
+function feature_enewsletter_unsubscribe_form($form, &$form_state) {
+  // Unsubscribe from all newsletters
+  if ($form_state['opt_out_form'] != 'all') {
+    $keys = array_keys($form_state['list']);
+    $form['NewsletterListID'] = array(
+      '#type' => 'hidden',
+      '#value' => isset($keys[0]) ? $keys[0] : '',
+    );
+  }
+  $form['Email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email Address'),
+    '#size' => 35,
+    '#required' => TRUE,
+  );
+  $form['UserOptOutReason'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Reason for Opting Out'),
+    '#size' => 35,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Unsubscribe',
+  );
+  $form['LogAddress'] = array(
+    '#type' => 'hidden',
+    '#value' => 'ON',
+  );
+  $form['SID'] = array(
+    '#type' => 'hidden',
+    '#value' => $form_state['sid'],
+  );
+  honeypot_add_form_protection($form, $form_state, array(
+    'honeypot',
+    'time_restriction'
+  ));
+  return $form;
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ *
+ * Checks if given email field is an email address
+ */
+function feature_enewsletter_unsubscribe_form_validate($form, &$form_state) {
+  if (isset($form_state['input']['Email'])) {
+    $email = $form_state['input']['Email'];
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      form_set_error('title', t('Please enter a valid Email Address.'));
+    }
+  }
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ *
+ * Sends the data to enewsletter pro and obtains the result.
+ * Notifies the user of the appropriate message without going off site.
+ */
+function feature_enewsletter_unsubscribe_form_submit($form, &$form_state) {
+
+  $curl = curl_init();
+  curl_setopt_array($curl, array(
+    CURLOPT_RETURNTRANSFER => 1,
+    CURLOPT_URL => 'https://enewsletter.az.gov/members.aspx?Task=UnSubscribe',
+    CURLOPT_USERAGENT => 'Codular Sample cURL Request',
+    CURLOPT_POST => 1,
+    CURLOPT_FOLLOWLOCATION => TRUE,
+    CURLOPT_POSTFIELDS => $form_state['values']
+  ));
+  $resp = curl_exec($curl);
+  curl_close($curl);
+
+
+  if (strpos($resp, $form_state['values']['Email']) !== FALSE) {
+    $message = 'We have removed ' . $form_state['values']['Email'] . ' from our database.';
+  }
+  else {
+    $message = 'The email address you provided is not on this newsletter.';
+  }
+  drupal_set_message(t($message));
+}
+
+
+/**
+ *  Implements hook_form().
+ *
+ * Opt-In Subscription Form
+ */
+function feature_enewsletter_subscribe_form($form, &$form_state) {
+  $settings = variable_get('feature_enewsletter');
+  // Salutation field
+  if ($form_state['include_salutation']) {
+    $form['Salutation'] = array(
+      '#type' => 'select',
+      '#title' => t('Salutation'),
+      '#options' => array('Mr.' => 'Mr.', 'Mrs.' => 'Mrs.'),
+      '#chosen' => $settings['chosen'],
+    );
+  }
+
+  // Name Field settings
+  if ($form_state['include_name']) {
+    if ($form_state['name_format'] == 'full') {
+      $form['Name'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Name'),
+        '#required' => $form_state['require_name'],
+        '#size' => 35,
+      );
+    }
+    else {
+      $form['FirstName'] = array(
+        '#type' => 'textfield',
+        '#title' => t('First Name'),
+        '#required' => $form_state['require_name'],
+        '#size' => 15,
+      );
+      $form['LastName'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Last Name'),
+        '#required' => $form_state['require_name'],
+        '#size' => 15,
+      );
+    }
+  }
+
+  // Email and re-enter email address
+  $form['Email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email Address'),
+    '#required' => TRUE,
+    '#size' => 35,
+  );
+  if ($form_state['double_email']) {
+    $form['Email_Confirm'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Re-Enter Email Address'),
+      '#required' => TRUE,
+      '#attached' => array(
+        'js' => array(
+          drupal_get_path('module', 'feature_enewsletter') . '/email_confirm.js',
+        ),
+        'css' => array(
+          drupal_get_path('module', 'feature_enewsletter') . '/email_confirm.css',
+        ),
+      ),
+      '#size' => 35,
+    );
+  }
+
+  // Password entry or hidden field
+  switch ($form_state['password']) {
+    case 'Enter':
+      $form['Password'] = array(
+        '#type' => 'password',
+        '#title' => t('Password'),
+        '#required' => TRUE,
+        '#size' => 35,
+      );
+      break;
+    case 'IPAddress':
+      $form['Password'] = array(
+        '#type' => 'hidden',
+        '#value' => 'IPAddress',
+      );
+      break;
+    case 'RandomNumber':
+      $form['Password'] = array(
+        '#type' => 'hidden',
+        '#value' => 'RandomNumber',
+      );
+      break;
+  }
+
+  /**
+   * Demographics Fields
+   */
+  $demographics = array_filter($form_state['demographics']);
+  foreach ($demographics as $key => &$value) {
+    if (isset($settings['demos'][$key])) {
+      $value = $settings['demos'][$key];
+      switch ($value['data_type']) {
+        case 1:
+          $form[$key . '_label'] = array(
+            '#markup' => $value['name'],
+          );
+          $form[$key] = array(
+            '#type' => 'date',
+            '#required' => $value['required'],
+          );
+          break;
+        default:
+          if (empty($value['values'])) {
+            $form[$key] = array(
+              '#type' => 'textfield',
+              '#title' => $value['name'],
+              '#required' => $value['required'],
+              '#size' => 35,
+            );
+          }
+          else {
+            $list_options = explode(',,', $value['values']);
+            $multiple = FALSE;
+
+            if (strpos($value['values'], ',,,') !== FALSE) {
+              $list_options = explode(',,,', $value['values']);
+              $multiple = TRUE;
+            }
+
+            $list_options = array_flip($list_options);
+            foreach ($list_options as $list_key => &$list_value) {
+              $list_value = $list_key;
+            }
+            $form[$key] = array(
+              '#type' => 'select',
+              '#title' => $value['name'],
+              '#required' => $value['required'],
+              '#options' => $list_options,
+              '#multiple' => $multiple,
+              '#size' => $multiple ? 5 : 1,
+              '#chosen' => $settings['chosen'],
+            );
+          }
+          break;
+      }
+    }
+  }
+
+  // Dislay the subscription list in desired format
+  // Also includes a hidden field to indicate to enewsletter how to read.
+  switch ($form_state['list_format']) {
+    case 'checkboxes':
+      $form['list_markup'] = array(
+        '#markup' => t('Select a Newsletter'),
+      );
+      $form['JoinType'] = array(
+        '#type' => 'hidden',
+        '#value' => 'Check',
+      );
+      foreach ($form_state['list'] as $id => $label) {
+        $form['list_set']['NewsletterListID_' . $id] = array(
+          '#type' => 'checkbox',
+          '#title' => t($label),
+          '#return_value' => 'ON',
+        );
+      }
+      break;
+    case 'radios':
+      $form['list_markup'] = array(
+        '#markup' => t('Select a Newsletter'),
+      );
+      $form['NewsletterListID'] = array(
+        '#type' => $form_state['list_format'],
+        '#options' => $form_state['list'],
+        '#required' => TRUE,
+      );
+      $form['JoinType'] = array(
+        '#type' => 'hidden',
+        '#value' => 'Radio',
+      );
+      break;
+    case 'select':
+      $form['NewsletterListID'] = array(
+        '#type' => $form_state['list_format'],
+        '#title' => t('Select a Newsletter'),
+        '#options' => $form_state['list'],
+        '#required' => TRUE,
+        '#chosen' => $settings['chosen'],
+      );
+      $form['JoinType'] = array(
+        '#type' => 'hidden',
+        '#value' => 'Menu',
+      );
+      break;
+    case 'hidden':
+      $form['JoinType'] = array(
+        '#type' => 'hidden',
+        '#value' => 'Check',
+      );
+      foreach ($form_state['list'] as $id => $label) {
+        $form['NewsletterListID_' . $id] = array(
+          '#type' => 'hidden',
+          '#value' => 'ON',
+        );
+      }
+      break;
+  }
+
+  // Show or hide delivery format
+  if ($form_state['hide_delivery_format']) {
+    $form['DeliveryFormat'] = array(
+      '#type' => 'hidden',
+      '#value' => 'HTML',
+    );
+  }
+  else {
+    $form['DeliveryFormat'] = array(
+      '#type' => 'select',
+      '#title' => t('Delivery Format'),
+      '#options' => array(
+        'HTML' => 'HTML',
+        'TEXT' => 'Plain Text',
+        'AOL' => 'AOL Text',
+      ),
+      '#default_value' => 'HTML',
+      '#chosen' => $settings['chosen'],
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  // Manage subscription link
+  if ($form_state['include_link']) {
+    $form['link'] = array(
+      '#markup' => l($form_state['link_text'], 'https://enewsletter.az.gov/members.aspx?SID=' . $form_state['sid'])
+    );
+  }
+
+  // Hidden Fields
+  $form['IDList'] = array(
+    '#type' => 'hidden',
+    '#value' => implode(',', array_keys($form_state['list'])),
+  );
+  $form['SID'] = array(
+    '#type' => 'hidden',
+    '#value' => $form_state['sid'],
+  );
+  if ($form_state['dont_require_confirm']) {
+    $form['SendConfirmation'] = array(
+      '#type' => 'hidden',
+      '#value' => 'False',
+    );
+
+    if ($form_state['update_subs']) {
+      $form['UpdateSubscriptionsIfEmailExists'] = array(
+        '#type' => 'hidden',
+        '#value' => 'True',
+      );
+      if ($form_state['update_demo']) {
+        $form['UpdateDemographicsIfSubscriberExists'] = array(
+          '#type' => 'hidden',
+          '#value' => 'True',
+        );
+      }
+    }
+  }
+  else {
+    $form['SendConfirmation'] = array(
+      '#type' => 'hidden',
+      '#value' => 'True',
+    );
+  }
+  if ($form_state['dont_send_message']) {
+    $form['SendSuccessfulOptInMessage'] = array(
+      '#type' => 'hidden',
+      '#value' => 'False',
+    );
+  }
+  else {
+    $form['SendSuccessfulOptInMessage'] = array(
+      '#type' => 'hidden',
+      '#value' => 'True',
+    );
+  }
+  $form['B1'] = array(
+    '#type' => 'hidden',
+    '#value' => 'Subscribe',
+  );
+  honeypot_add_form_protection($form, $form_state, array(
+    'honeypot',
+    'time_restriction'
+  ));
+  return $form;
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ *
+ * Validates all field entries. Email address is valid and re-enter email
+ * matches the initial email address.
+ */
+function feature_enewsletter_subscribe_form_validate($form, &$form_state) {
+  $settings = variable_get('feature_enewsletter');
+  foreach ($settings['demos'] as $key => $value) {
+    if (isset($form_state['values'][$key])) {
+      if (!empty($form_state['values'][$key])) {
+        $input = $form_state['values'][$key];
+        switch ($value['data_type']) {
+          case 2:
+            if (!ctype_digit($input)) {
+              form_set_error($key, t('Please enter a valid number.'));
+            }
+            break;
+          case 3:
+            if (!is_numeric($input)) {
+              form_set_error($key, t('Please enter a valid number.'));
+            }
+            break;
+        }
+      }
+    }
+  }
+
+  if (isset($form_state['input']['Email'])) {
+    $email = $form_state['input']['Email'];
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      form_set_error('Email', t('Please enter a valid Email Address.'));
+    }
+
+    if (isset($form_state['input']['Email_Confirm'])) {
+      if ($form_state['input']['Email_Confirm'] !== $form_state['input']['Email']) {
+        form_set_error('Email_Confirm', t('The emails you entered do not match.'));
+      }
+    }
+  }
+}
+
+/**
+ * @param $form
+ * @param $form_state
+ *
+ * Sends the data to enewsletter pro and obtains the result.
+ * Notifies the user of the appropriate message without going off site.
+ */
+function feature_enewsletter_subscribe_form_submit($form, &$form_state) {
+  foreach ($form_state['values'] as $key => &$value) {
+    if (substr($key, 0, 17) == 'OptionalParameter') {
+      if (is_array($value)) {
+        if (isset($value['month'])) {
+          $value = implode('/', $value);
+        }
+        else {
+          $value = implode(', ', $value);
+        }
+      }
+    }
+  }
+
+  $curl = curl_init();
+  curl_setopt_array($curl, array(
+    CURLOPT_RETURNTRANSFER => 1,
+    CURLOPT_URL => 'https://enewsletter.az.gov/subscribe.aspx?Task=Join',
+    CURLOPT_USERAGENT => 'Codular Sample cURL Request',
+    CURLOPT_POST => 1,
+    CURLOPT_FOLLOWLOCATION => TRUE,
+    CURLOPT_POSTFIELDS => $form_state['values']
+  ));
+  $resp = curl_exec($curl);
+  curl_close($curl);
+
+  if ((strpos($resp, 'We have emailed a confirmation') !== FALSE)) {
+    $message = 'We have emailed a confirmation to ' . $form_state['values']['Email'] . '. Once you receive this message, click the link to complete your subscription.';
+  }
+  elseif (strpos($resp, 'You have been subscribed') !== FALSE) {
+    $message = 'You have been subscribed to the newsletter list(s) as ' . $form_state['values']['Email'] . '. <br>To unsubscribe, please use the link near the end of each newsletter.';
+  }
+  else {
+    $message = 'Your request could not be completed at this time. If the problem continues, please contact the site administrators.';
+  }
+
+  drupal_set_message(t($message));
+}
+

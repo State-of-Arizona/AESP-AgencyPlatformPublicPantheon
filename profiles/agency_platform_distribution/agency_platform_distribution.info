@@ -1,0 +1,63 @@
+; Packaging information for agency_platform_distribution
+name = "Agency Platform Distribution"
+distribution_name = "Agency Platform"
+description = "Arizona's Distribution Platform"
+exclusive = "1"
+version = "7.x-3.7"
+;
+core = "7.x"
+; ----------
+; Dependencies
+; ----------
+; Core
+dependencies[] = block
+dependencies[] = color
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = dblog
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = overlay
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = rdf
+
+;media
+dependencies[] = media
+
+;administrative
+dependencies[] = module_filter
+
+;views
+dependencies[] = views
+dependencies[] = views_ui
+
+;context
+dependencies[] = context_ui
+dependencies[] = context_condition_admin_theme
+dependencies[] = context_condition_theme
+dependencies[] = context_field
+dependencies[] = context_layouts
+dependencies[] = context_bool_field
+
+;features
+dependencies[] = feature_basic_config
+dependencies[] = feature_basic_content
+dependencies[] = feature_sliver
+
+;others
+dependencies[] = extlink
+dependencies[] = pathauto
+dependencies[] = colorbox
+dependencies[] = node_expanded_menu
+dependencies[] = media_displays
+dependencies[] = media_display_migrate
+dependencies[] = environment_indicator

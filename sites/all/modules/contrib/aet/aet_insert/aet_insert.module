@@ -1,0 +1,228 @@
+<?php
+/**
+ * @page The module file for AET Insert.
+ *
+ * Contains all the main functions for AET Insert.
+ */
+
+/******************************* DEFENITIONS **********************************/
+
+define('AET_INSERT_FIELD_AJAX_PATH', 'aet_insert/ajax/field');
+
+/********************************** HOOKS *************************************/
+
+/**
+ * Implementation of hook_menu().
+ */
+function aet_insert_menu() {
+  $items = array();
+
+  $items[AET_INSERT_FIELD_AJAX_PATH] = array(
+    'page callback' => 'aet_insert_field_ajax',
+    'access callback' => 'aet_insert_ajax_access',
+    'access arguments' => array('ajax', array('field')),
+    'file' => 'aet_insert.ajax.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_permission().
+ */
+function aet_insert_permission() {
+  return array(
+    'administer AET Insert' => array(
+      'title' => t('Administer AET Insert'),
+      'description' => t('Administration tasks for AET Insert.'),
+      'restrict access' => TRUE,
+    ),
+    'use AET Insert' => array(
+      'title' => t('Use AET Insert'),
+      'description' => t('Using the AET Insert field.'),
+    ),
+  );
+}
+
+/**
+ * The access callback for aet_insert_field_ajax().
+ */
+function aet_insert_ajax_access($type, $args) {
+  return user_access('use AET Insert');
+}
+
+/**
+ * implementation of hook_init().
+ *
+ * Sends the settings array to the javascript file.
+ */
+function aet_insert_init() {
+  drupal_add_js(array('aet_insert'
+    => array('ajax_path' => base_path() . AET_INSERT_FIELD_AJAX_PATH)), 'setting');
+}
+
+/**
+ * implementation of hook_element_info().
+ */
+function aet_insert_element_info() {
+  $types = array();
+
+  $types['aet_insert_field'] = array(
+    '#input' => TRUE,
+    '#pre_render' => array('aet_insert_field_pre_render'),
+  );
+
+  return $types;
+}
+
+/**
+ * implementation of hook_theme().
+ */
+function aet_insert_theme($existing, $type, $theme, $path) {
+  $themes = array();
+
+  $themes['aet_insert_field'] = array(
+    'render element' => 'element',
+    'file' => 'aet_insert.theme',
+  );
+
+  return $themes;
+}
+
+/**
+ * implementation of hook_form_BASE_FORM_ID_alter
+ *
+ * Adds AET Insert options to field_ui_field_edit_form.
+ */
+function aet_insert_form_field_ui_field_edit_form_alter(&$form,
+  &$form_state, $form_id) {
+
+  if (user_access('administer AET Insert')) {
+
+    $form['group_aet_insert'] = array(
+      '#title' => t('AET Insert Settings'),
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+    );
+
+    $entity_type = $form['#instance']['entity_type'];
+    $field_name = $form['#instance']['field_name'];
+
+    // The $field_identifier is composed of the entity type bundle and the field
+    // name. It is used as part of the AET Insert field id & variable name.
+    $field_identifier = $entity_type . '_' . $field_name;
+
+    $query = db_select('aet_insert', 'ai')
+    ->fields('ai', array('entity_type', 'field_name'))
+    ->condition('ai.entity_type', $entity_type, '=')
+    ->condition('ai.field_name', $field_name, '=');
+    $results = $query->execute();
+    $exists = FALSE;
+    foreach($results as $result) {
+      $exists = TRUE;
+    }
+
+    $form['group_aet_insert']['aet_insert_use_' . $field_identifier] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Use AET Insert with this field.'),
+      '#default_value' => $exists,
+      '#description'
+      => t('Check this box if you want that the AET Insert field will be used'
+        . ' with this one.'),
+    );
+
+    $form['#submit'][] = 'aet_insert_form_field_ui_field_edit_form_submit';
+
+  }
+}
+
+/**
+ * implementation of hook_form_alter
+ *
+ * Adds AET Insert field if requested in the above form.
+ */
+function aet_insert_form_alter(&$form, &$form_state, $form_id) {
+
+  // Only add this field if the user has access.
+  if (user_access('use AET Insert') && isset($form['#entity']) && !empty($form_state['field'])) {
+
+    $entity = $form['#entity'];
+
+    $entity_type = $form['#entity_type'];
+
+    $entity_info = entity_get_info($entity_type);
+
+    $id_key = $entity_info['entity keys']['id'];
+
+    $id = isset($entity->{$id_key}) ? $entity->{$id_key} : FALSE;
+
+    $bundle_key = !empty($entity_info['budle keys']) ? $entity_info['budle keys']['bundle'] : FALSE;
+
+    $bundle = ($bundle_key && isset($entity->{$bundle_key})) ? $entity->{$bundle_key} : FALSE;
+
+    $query = db_select('aet_insert', 'ai')
+    ->fields('ai', array('entity_type', 'field_name'))
+    ->condition('ai.entity_type', $entity_type, '=');
+    $results = $query->execute();
+    $field_names = array();
+    foreach($results as $result) {
+      $field_names[] = $result->field_name;
+    }
+
+    foreach($field_names as $field_name) {
+      if (isset($form_state['field'][$field_name]) && !empty($form[$field_name])) {
+        $lang = $form[$field_name]['#language'];
+        for ($delta = 0; $delta < count($form[$field_name][$lang]) && isset($form[$field_name][$lang][$delta]); $delta++) {
+          $form[$field_name][$lang][$delta]['aet_insert_field'] = array(
+            '#type' => 'aet_insert_field',
+            '#theme' => 'aet_insert_field',
+            '#weight' => 999,
+            '#target' => 'edit-' . str_replace("_", "-", $field_name) . '-'. $lang .'-' . $delta . '-value',
+            '#entity_type' => $entity_type,
+            '#entity_id' => $id,
+          );
+        }
+      }
+    }
+  }
+}
+
+/*********************************** MISC *************************************/
+
+/**
+ * The pre-render callback for the AET Insert field.
+ */
+function aet_insert_field_pre_render($element) {
+
+  // aet_insert.fields.inc is where _aet_insert_field_pre_render exists.
+  module_load_include('inc', 'aet_insert', 'aet_insert.fields');
+
+  // Call the internal function that handles the pre render.
+  $element = _aet_insert_field_pre_render($element);
+
+  // Allow other modules to modify the element.
+  $element += module_invoke_all('hook_aet_insert_field_pre_render', $element);
+
+  return $element;
+}
+
+/**
+ * Custom submit function for field_ui_field_edit_form to save the aet_insert
+ * variable.
+ */
+function aet_insert_form_field_ui_field_edit_form_submit($form, &$form_state) {
+  $entity_type = $form['#instance']['entity_type'];
+  $field_name = $form['#instance']['field_name'];
+
+  $field_identifier = $entity_type . '_' . $field_name;
+
+  if (isset($form_state['values']['aet_insert_use_' . $field_identifier])) {
+    db_insert('aet_insert') // Table name no longer needs {}
+    ->fields(array(
+      'entity_type' => $entity_type,
+      'field_name' => $field_name,
+    ))
+    ->execute();
+  }
+}

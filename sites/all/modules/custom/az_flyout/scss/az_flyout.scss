@@ -1,0 +1,158 @@
+#top-nav {
+  width: 100%;
+  background: #f0f0f0;
+  color: #000;
+  position: fixed;
+  z-index: 99;
+  top: -100px;
+  .logo img {
+    max-height: 40px;
+  }
+  .site-name h2 {
+    border-bottom: none;
+    padding: 0;
+    a {
+      color: #000;
+      text-transform: none;
+    }
+  }
+  .fa {
+    font-size: 35px;
+    cursor: pointer;
+    padding: 5px 20px;
+    &:hover {
+      color: red;
+    }
+  }
+  .wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    > div {
+      float: left;
+
+      &.top-menu {
+        float: right;
+        ul.menu {
+          display: table;
+          > li {
+            display: table-cell;
+            padding-right: 10px;
+            text-align: center;
+            &:last-child {
+              padding-right: 0;
+            }
+            a {
+              color: #fff;
+              background: #024385;
+              font-size: 17px;
+              font-weight: 300;
+              &:hover {
+                color: #ffd046;
+              }
+            }
+          }
+          ul {
+            display: none !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+#slide-nav {
+  background: #fff;
+  position: absolute;
+  z-index: 99;
+  width: 280px;
+  display: none;
+  overflow-y: scroll;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.7);
+  .close-slide-nav {
+    cursor: pointer;
+    font-size: 35px;
+    z-index: 9999;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    &:hover {
+      color: red;
+    }
+  }
+  .slide-nav-menu {
+    padding-top: 50px;
+    border-bottom: 1px solid #ccc;
+  }
+  .contact-info {
+    padding-bottom: 20px;
+    margin-top: 20px;
+    text-align: center;
+    h3.contact-title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    .agency-name {
+      font-weight: 600;
+    }
+    .contact-map-link {
+      margin-top: 20px;
+    }
+  }
+
+  ul.menu {
+    margin-top: 5px;
+    li {
+      font-size: 18px;
+      margin-bottom: 5px;
+      .fa {
+        position: absolute;
+        z-index: 120;
+        right: 10px;
+        font-size: 35px;
+        cursor: pointer;
+        &:hover {
+          color: red;
+        }
+      }
+      a {
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        margin-left: .5em;
+        color: #000;
+        padding: 5px 0;
+      }
+      ul {
+        padding-left: 20px;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+@media(max-width: 768px) {
+  #top-nav {
+    display: block !important;
+    position: relative;
+    top: 0;
+    .top-menu {
+      width: 100%;
+      ul.menu {
+        width: 100%;
+        li {
+          padding: 0 !important;
+        }
+      }
+    }
+  }
+  #slide-nav {
+    position: fixed;
+  }
+
+  .region-menu.hide-mobile {
+    display: none !important;
+  }
+  #mobile-menu {
+    display: none;
+  }
+}

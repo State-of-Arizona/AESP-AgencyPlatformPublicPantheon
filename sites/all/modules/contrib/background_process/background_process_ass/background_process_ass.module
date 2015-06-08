@@ -1,0 +1,384 @@
+<?php
+/**
+ * @file
+ *
+ * @todo Implement admin interface.
+ * @todo Fix runtime check of running process.
+ */
+
+/**
+ * Default max age before unlock process.
+ */
+define('BACKGROUND_PROCESS_ASS_MAX_AGE', 30);
+
+/**
+ * Implements hook_menu().
+ */
+function background_process_ass_menu() {
+  $items = array();
+  $items['admin/config/system/background-process/ass'] = array(
+    'type' => MENU_LOCAL_TASK,
+    'title' => 'Apache Server Status',
+    'description' => 'Administer background process apache server status',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('background_process_ass_settings_form'),
+    'access arguments' => array('administer background process'),
+    'file' => 'background_process_ass.admin.inc',
+    'weight' => 3,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_cron().
+ */
+function background_process_ass_cron() {
+  // Don't use more than 30 seconds to unlock
+  @set_time_limit(30);
+  background_process_ass_auto_unlock();
+}
+
+/**
+ * Implements hook_cronapi().
+ */
+function background_process_ass_cronapi($op, $job = NULL) {
+  switch ($op) {
+    case 'list':
+      return array('background_process_ass_cron' => t('Unlock dead processes'));
+    case 'rule':
+      return '* * * * *';
+    case 'configure':
+      return 'admin/config/system/background-process/ass';
+  }
+}
+
+/**
+ * Implements hook_cron_alter().
+ */
+function background_process_ass_cron_alter(&$items) {
+  $items['background_process_ass_cron']['override_congestion_protection'] = TRUE;
+  // Unlock background if too old.
+  // @todo Move to some access handler or pre-execute?
+  if ($process = background_process_get_process('uc:background_process_ass_cron')) {
+    if ($process->start + 30 < time()) {
+      background_process_unlock($process->handle, t('Self unlocking stale lock'));
+    }
+  }
+}
+
+/**
+ * Implements hook_service_group().
+ */
+function background_process_ass_service_group() {
+  $info = array();
+  $info['methods']['background_process_ass_service_group_idle'] = t('Idle workers');
+  return $info;
+}
+
+/**
+ * Determine host with most idle workers and claim it.
+ *
+ * @param $service_group
+ *   Service group to check
+ * @return
+ *   Claimed service host on success, NULL if none found
+ */
+function background_process_ass_service_group_idle($service_group, $reload = FALSE) {
+  $result = NULL;
+  $max = 0;
+  $msg = "";
+  $workers = &drupal_static('background_process_ass_idle_workers', array());
+
+  // Load idle worker status for all hosts
+  foreach ($service_group['hosts'] as $idx => $host) {
+    $name = $host . '_ass';
+
+    if ($reload || !isset($workers[$name])) {
+      $workers[$name] = background_process_ass_get_server_status($name, TRUE, $reload);
+    }
+
+    // Reload apache server status for all hosts, if any is fully loaded
+    if ($workers[$name] <= 0 && !$reload) {
+      return background_process_ass_service_group_idle($service_group, TRUE);
+    }
+
+    if ($max < $workers[$name]) {
+      $result = $host;
+      $max = $workers[$name];
+    }
+  }
+
+  if (isset($result)) {
+    // Claim host and tell caller
+    $workers[$result . '_ass']--;
+    return $result;
+  }
+  else {
+    // Could not determine most idle host, fallback to pseudo round robin
+    return background_process_service_group_round_robin($service_group);
+  }
+}
+
+/**
+ * Unlock locked processes that aren't really running.
+ */
+function background_process_ass_auto_unlock() {
+  $processes = background_process_get_processes();
+  $service_hosts = background_process_get_service_hosts();
+  foreach ($processes as $process) {
+    // Don't even dare try determining state, if not properly configured.
+    if (!$process->service_host) {
+      continue;
+    }
+
+    // Naming convention suffix "_ass" for a given service hosts defines the
+    // host to use for server-status.
+    if (!isset($service_hosts[$process->service_host . '_ass'])) {
+      continue;
+    }
+    if (!isset($service_hosts[$process->service_host])) {
+      continue;
+    }
+    list($url, $headers) = background_process_build_request('bgp-start/' . rawurlencode($process->handle), $process->service_host);
+
+    $process->http_host = $headers['Host'];
+
+    // Locate our connection
+    $url = parse_url($url);
+    $path = $url['path'] . (isset($url['query']) ? '?' . $url['query'] : '');
+    if (strlen("POST $path") > 64) {
+      // Request is larger than 64 characters, which is the max length of
+      // requests in the extended Apache Server Status. We cannot determine
+      // if it's running or not ... skip this process!
+      continue;
+    }
+
+    if ($process->status != BACKGROUND_PROCESS_STATUS_RUNNING) {
+      // Not ready for unlock yet
+      continue;
+    }
+
+    if ($process->start > time() - variable_get('background_process_ass_max_age', BACKGROUND_PROCESS_ASS_MAX_AGE)) {
+      // Not ready for unlock yet
+      continue;
+    }
+
+    $server_status = background_process_ass_get_server_status($process->service_host . '_ass');
+    if ($server_status) {
+      if (!background_process_ass_check_process($process, $server_status, $path)) {
+        _background_process_ass_unlock($process);
+      }
+    }
+  }
+}
+
+/**
+ * Check if process is really running.
+ *
+ * @param $process
+ *   Process object
+ * @param $server_status
+ *   Server status data
+ * @return boolean
+ *   TRUE if running, FALSE if not.
+ */
+function background_process_ass_check_process($process, $server_status, $path) {
+  $active = TRUE;
+  // Is status reliable?
+  if ($server_status && $server_status['status']['Current Timestamp'] > $process->start) {
+    // Check if process is in the server status
+    if (!empty($server_status['connections'])) {
+      $active = FALSE;
+      foreach ($server_status['connections'] as $conn) {
+        if ($conn['M'] == 'R') {
+          // We cannot rely on the server status, assume connection is still
+          // active, and bail out.
+          watchdog('bg_process', 'Found reading state ...', array(), WATCHDOG_WARNING);
+          $active = TRUE;
+          break;
+        }
+
+        // Empty connections, skip them
+        if ($conn['M'] == '.' || $conn['M'] == '_') {
+          continue;
+        }
+
+        if (
+          $conn['VHost'] == $process->http_host &&
+          strpos($conn['Request'], 'POST ' . $path) === 0
+        ) {
+          $active = TRUE;
+          break;
+        }
+      }
+    }
+  }
+  return $active;
+}
+
+function _background_process_ass_unlock($process) {
+  watchdog('bg_process', 'Unlocking: ' . $process->handle);
+  if ($process->status == BACKGROUND_PROCESS_STATUS_RUNNING) {
+    $msg = t('Died unexpectedly (auto unlock due to missing connection)');
+    // Unlock the process
+    if (background_process_unlock($process->handle, $msg, $process->start)) {
+      drupal_set_message(t("%handle unlocked: !msg", array('%handle' => $process->handle, '!msg' => $msg)));
+    }
+  }
+}
+
+/**
+ * Get apache extended server status.
+ *
+ * @staticvar $server_status
+ *   Cached statically to avoid multiple requests to server-status.
+ * @param $name
+ *   Name of service host for server-status.
+ * @param $auto
+ *   Load only idle workers, not entire server status.
+ * @param $reload
+ *   Don't load from cache.
+ * @return array
+ *   Server status data.
+ */
+function background_process_ass_get_server_status($name, $auto = FALSE, $reload = FALSE) {
+  // Sanity check ...
+  if (!$name) {
+    return;
+  }
+
+  $service_hosts = variable_get('background_process_service_hosts', array());
+  if (empty($service_hosts[$name])) {
+    return;
+  }
+  $service_host = $service_hosts[$name];
+
+  // Static caching.
+  $cache = &drupal_static('background_process_ass_server_status', array());
+  if (!$reload && isset($cache[$name][$auto])) {
+    return $cache[$name][$auto];
+  }
+  $server_status = array();
+
+  $options = array();
+  if ($auto) {
+    $options['query']['auto'] = 1;
+  }
+  list($url, $headers) = background_process_build_request('', $name, $options);
+
+  $timestamp = time();
+  $response = drupal_http_request($url, array('headers' => $headers));
+
+  if ($response->code != 200) {
+    watchdog('bg_process', 'Could not acquire server status from %url - error: %error', array('%url' => $url, '%error' => $response->error), WATCHDOG_ERROR);
+    return NULL;
+  }
+
+  // If "auto" only collect idle workers
+  if ($auto) {
+    preg_match('/IdleWorkers:\s+(\d+)/', $response->data, $matches);
+    $server_status = $matches[1];
+  }
+  else {
+    $tables = _background_process_ass_parse_table($response->data);
+    $dls = _background_process_ass_parse_definition_list($response->data);
+    $server_status = array(
+      'response' => $response,
+      'connections' => $tables[0],
+      'status' => $dls[1],
+    );
+
+    preg_match('/.*?,\s+(\d+-.*?-\d+\s+\d+:\d+:\d+)/', $server_status['status']['Restart Time'], $matches);
+    // @hack Convert monthly names from Danish to English for strtotime() to work
+    str_replace('Maj', 'May', $matches[1]);
+    str_replace('May', 'Oct', $matches[1]);
+    $server_status['status']['Restart Timestamp'] = strtotime($matches[1]);
+    $server_status['status']['Current Timestamp'] = $timestamp;
+  }
+  $cache[$name][$auto] = $server_status;
+
+  return $server_status;
+}
+
+/**
+ * Converts an HTML table into an associative array.
+ *
+ * @param $html
+ *   HTML containing table.
+ * @return array
+ *   Table data.
+ */
+function _background_process_ass_parse_table($html) {
+  // Find the table
+  preg_match_all("/<table.*?>.*?<\/[\s]*table>/s", $html, $table_htmls);
+
+  $tables = array();
+  foreach ($table_htmls[0] as $table_html) {
+
+    // Get title for each row
+    preg_match_all("/<th.*?>(.*?)<\/[\s]*th>/s", $table_html, $matches);
+    $row_headers = $matches[1];
+
+    // Iterate each row
+    preg_match_all("/<tr.*?>(.*?)<\/[\s]*tr>/s", $table_html, $matches);
+
+    $table = array();
+
+    foreach ($matches[1] as $row_html) {
+      $row_html = preg_replace("/\r|\n/", '', $row_html);
+      preg_match_all("/<td.*?>(.*?)<\/[\s]*td>/", $row_html, $td_matches);
+
+      $row = array();
+      for ($i=0; $i<count($td_matches[1]); $i++) {
+        $td = strip_tags(html_entity_decode($td_matches[1][$i]));
+        $i2 = isset($row_headers[$i]) ? $row_headers[$i] : $i;
+        $row[$i2] = $td;
+      }
+
+      if (count($row) > 0) {
+        $table[] = $row;
+      }
+    }
+
+    $tables[] = $table;
+  }
+
+  return $tables;
+}
+
+/**
+ * Converts an HTML table into an associative array.
+ *
+ * @param $html
+ *   HTML containing table.
+ * @return array
+ *   Table data.
+ */
+function _background_process_ass_parse_definition_list($html) {
+  // Find the table
+  preg_match_all("/<dl.*?>.*?<\/[\s]*dl>/s", $html, $dl_htmls);
+
+  $dls = array();
+  foreach ($dl_htmls[0] as $dl_html) {
+    // Get title for each row
+    preg_match_all("/<dl.*?>(.*?)<\/[\s]*dl>/s", $dl_html, $matches);
+
+    $dl = array();
+
+    foreach ($matches[1] as $row_html) {
+      $row_html = preg_replace("/\r|\n/", '', $row_html);
+      preg_match_all("/<dt.*?>(.*?)<\/[\s]*dt>/", $row_html, $dt_matches);
+
+      $row = array();
+      for ($i=0; $i<count($dt_matches[1]); $i++) {
+        $dt = strip_tags(html_entity_decode($dt_matches[1][$i]));
+        if (strpos($dt, ':') !== FALSE) {
+          list($key, $value) = explode(': ', $dt, 2);
+          $dl[$key] = $value;
+        }
+      }
+    }
+    $dls[] = $dl;
+  }
+  return $dls;
+}

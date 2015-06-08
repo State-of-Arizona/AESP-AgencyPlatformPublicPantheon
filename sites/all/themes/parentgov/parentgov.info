@@ -1,0 +1,7 @@
+name = 'Parent Government'
+description = 'A theme to contain styles for all themes. Based on <a href="http://drupal.org/project/omega">Omega</a>.'
+core = '7.x'
+base theme = 'omega'
+
+stylesheets[all][] = css/main.css
+scripts[] = js/main.js

@@ -1,0 +1,4 @@
+name = Ajaxified Views Reset
+core = 7.x
+package = Custom
+dependencies[] = views

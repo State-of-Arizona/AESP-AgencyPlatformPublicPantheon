@@ -1,0 +1,8 @@
+.accordion .glyphicon {
+  cursor: pointer;
+  margin-right:5px;
+}
+.accordion .accordion-clicker {
+  cursor:pointer;
+  text-decoration: underline;
+}

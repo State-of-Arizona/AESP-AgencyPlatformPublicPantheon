@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Agency Platform Services feature.
+ */
+
+include_once 'agency_platform_services.features.inc';

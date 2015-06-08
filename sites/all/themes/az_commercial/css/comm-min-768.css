@@ -1,0 +1,60 @@
+#zone-branding .region-menu {
+  background: none;
+}
+
+#page #breadcrumb {
+  background: none;
+  box-shadow: none;
+}
+#page #breadcrumb a, #page #breadcrumb li + li::before {
+  color: #fff;
+  font-size: 14px;
+}
+
+#page #zone-header .region {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+#postscript-group .mbp-defaults-row {
+  margin: 0 5px 0;
+}
+#postscript-group .mbp-defaults-row:first-child {
+  margin: 0 5px 0 0;
+}
+#postscript-group .mbp-defaults-row:last-child {
+  margin: 0 0 0 5px;
+}
+#postscript-group .mbp-defaults-row:only-child {
+  margin: 0;
+}
+#postscript-group .postscript {
+  display: flex;
+}
+#postscript-group .postscript > div {
+  width: 100%;
+}
+#postscript-group .postscript > .region.menu-block-placement-doesnt-exist {
+  margin: 0 5px;
+}
+
+#zone-branding {
+  box-shadow: none;
+}
+#zone-branding .site-details a.logo img {
+  width: auto;
+}
+#zone-branding .region-menu .content > ul.menu > li:hover {
+  border-top: 2px solid #ffd046;
+  margin-top: -2px;
+}
+#zone-branding .region-menu .content > ul.menu > li.menu-li-home:hover {
+  border-top: 0;
+  margin-top: 0;
+}
+#zone-branding .region-menu .content > ul.menu > li > a {
+  padding: 10px;
+}
+#zone-branding .region-menu .content > ul.menu > li > a:hover {
+  background: transparent;
+}

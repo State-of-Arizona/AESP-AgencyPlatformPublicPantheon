@@ -1,0 +1,13 @@
+diff --git a/modules/media_wysiwyg/js/media_wysiwyg.filter.js b/modules/media_wysiwyg/js/media_wysiwyg.filter.js
+index 5ac10ec..2415a4d 100644
+--- a/modules/media_wysiwyg/js/media_wysiwyg.filter.js
++++ b/modules/media_wysiwyg/js/media_wysiwyg.filter.js
+@@ -112,7 +112,7 @@
+ 
+       // Parse out link wrappers. They will be re-applied when the image is
+       // rendered on the front-end.
+-      if (element.is('a')) {
++      if (element.is('a') && element.children().length > 0) {
+         element = element.children();
+       }
+ 

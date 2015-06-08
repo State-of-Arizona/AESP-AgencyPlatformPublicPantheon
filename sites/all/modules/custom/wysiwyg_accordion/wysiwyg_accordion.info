@@ -1,0 +1,9 @@
+name = WYSIWYG Accordion Plugin
+description = Insert an Accordion markup into the WYSIWYG body.
+core = 7.x
+package = AZ Custom
+version = 1.00
+dependencies[] = wysiwyg
+
+scripts[] = wysiwyg_accordion.js
+stylesheets[all][] = wysiwyg_accordion.css

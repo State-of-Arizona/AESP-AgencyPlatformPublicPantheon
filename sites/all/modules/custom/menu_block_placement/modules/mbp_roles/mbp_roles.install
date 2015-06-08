@@ -1,0 +1,23 @@
+<?php
+/**
+ * @file
+ *
+ * Sets module weight and deletes variable
+ */
+
+/**
+ * Implements hook_install().
+ */
+function mbp_roles_install() {
+  db_update('system')
+    ->fields(array('weight' => 5))
+    ->condition('name', 'mbp_roles', '=')
+    ->execute();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function mbp_roles_uninstall() {
+  variable_del('mbp_roles');
+}

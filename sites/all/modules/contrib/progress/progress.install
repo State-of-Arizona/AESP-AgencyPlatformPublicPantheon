@@ -1,0 +1,104 @@
+<?php
+/**
+ * @file
+ *
+ * Installation file for the Progress module
+ *
+ */
+
+function progress_schema() {
+  $schema = array();
+
+  $schema['progress'] = array(
+    'description' => 'Progress',
+    'fields' => array(
+      'name' => array(
+        'description' => 'Name of progress',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'progress' => array(
+        'description' => 'Progress status',
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'message' => array(
+        'description' => 'Message for current progress',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'start_stamp' => array(
+        'description' => 'Start time in unix timestamp',
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'end_stamp' => array(
+        'description' => 'End time in unix timestamp',
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'current_stamp' => array(
+        'description' => 'Current time in unix timestamp',
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('name'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Major version upgrade of Drupal
+ */
+function progress_update_7000(&$context) {
+  $schema_version = db_query("SELECT schema_version FROM {system} WHERE name = 'progress'")->fetchField();
+  if ($schema_version > 0 && $schema_version < 7000) {
+    $context['sandbox']['major_version_upgrade'] = array(
+      7101 => TRUE,
+    );
+  }
+}
+
+/**
+ * Change schema to SQL 99 compliance
+ */
+function progress_update_7101(&$context) {
+  if (!empty($context['sandbox']['major_version_upgrade'][7101])) {
+    // This udate is already part of latest 6.x
+    return;
+  }
+  db_change_field('progress', 'start', 'start_stamp', array(
+    'description' => 'Start time in unix timestamp',
+    'type' => 'float',
+    'size' => 'big',
+    'not null' => TRUE,
+    'default' => 0
+  ));
+  db_change_field('progress', 'end', 'end_stamp', array(
+    'description' => 'End time in unix timestamp',
+    'type' => 'float',
+    'size' => 'big',
+    'not null' => TRUE,
+    'default' => 0
+  ));
+  db_change_field('progress', 'current', 'current_stamp', array(
+    'description' => 'Current time in unix timestamp',
+    'type' => 'float',
+    'size' => 'big',
+    'not null' => TRUE,
+    'default' => 0
+  ));
+}
+

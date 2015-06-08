@@ -1,0 +1,97 @@
+diff --git a/modules/media_wysiwyg/js/wysiwyg-media.js b/modules/media_wysiwyg/js/wysiwyg-media.js
+index a98d29c..3013d8f 100644
+--- a/modules/media_wysiwyg/js/wysiwyg-media.js
++++ b/modules/media_wysiwyg/js/wysiwyg-media.js
+@@ -62,7 +62,38 @@ Drupal.wysiwyg.plugins.media = {
+    * that will show in the editor.
+    */
+   attach: function (content, settings, instanceId) {
++    var matches = content.match(/\[\[.*?\]\]/g);
++    var data = [];
++    if (matches != null) {
++      for (var i = 0; i < matches.length; i++) {
++        var token = matches[i].replace('[[', '').replace(']]', '');
++        try {
++          var json = JSON.parse(token);
++          if (json['direct_download']) {
++            content = content.replace(matches[i], '[direct_download=' + i + ']')
++          }
++        } catch (e) {
++        }
++      }
++    }
++
+     content = Drupal.media.filter.replaceTokenWithPlaceholder(content);
++
++    if (matches != null) {
++      for (i = 0; i < matches.length; i++) {
++        token = matches[i].replace('[[', '').replace(']]', '');
++
++        try {
++          json = JSON.parse(token);
++          if (json['direct_download']) {
++            var text = json['fields']['link_text'];
++            content = content.replace('[direct_download=' + [i] + ']', '<a title="' + json['fields']['title'] + '" data-type="direct-download" data-fid="' + json['fid'] + '" href="/file/' + json['fid'] + '">' + text + '</a>')
++          }
++        } catch (e) {
++        }
++      }
++    }
++
+     return content;
+   },
+ 
+@@ -70,6 +101,53 @@ Drupal.wysiwyg.plugins.media = {
+    * Detach function, called when a rich text editor detaches
+    */
+   detach: function (content, settings, instanceId) {
++
++    var matches = content.match(/<span.*?(<\/span)>/g);
++    if (matches != null) {
++      for (var i = 0; i < matches.length; i++) {
++        var $string = $($.parseHTML(matches[i]));
++
++        if ($string.find('a').attr('data-type') == 'direct-download') {
++          var token = {
++            'fid': $string.find('a').attr('data-fid'),
++            'direct_download': 'true',
++            'type': 'media',
++            'fields': {
++              'link_text': $string.find('a').html(),
++              'title': $string.find('a').attr('title')
++            },
++            'attributes': {}
++          };
++          token = '[[' + JSON.stringify(token) + ']]';
++          content = content.replace(matches[i], token);
++        }
++      }
++    }
++
++
++    matches = content.match(/<a.*?(<\/a)>/g);
++    if (matches != null) {
++      for (i = 0; i < matches.length; i++) {
++        $string = $($.parseHTML(matches[i]));
++
++        if ($string.attr('data-type') == 'direct-download') {
++          token = {
++            'fid': $string.attr('data-fid'),
++            'direct_download': 'true',
++            'type': 'media',
++            'fields': {
++              'link_text': $string.html(),
++              'title': $string.attr('title')
++            },
++            'attributes': {}
++          };
++          token = '[[' + JSON.stringify(token) + ']]';
++
++          content = content.replace(matches[i], token);
++        }
++      }
++    }
++
+     content = Drupal.media.filter.replacePlaceholderWithToken(content);
+     return content;
+   }

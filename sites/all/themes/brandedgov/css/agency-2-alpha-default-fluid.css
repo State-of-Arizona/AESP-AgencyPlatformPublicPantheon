@@ -1,0 +1,185 @@
+/* all and (min-width: 600px) */
+
+
+
+.logo-img {
+  float: left;
+  text-align:left;
+  margin-right: 10px;
+}
+.site-name-slogan {
+  float: left;
+  text-align: left;
+  width: auto;
+}
+
+/* show navigation that was hidden for mobile. */
+#block-search-form {
+       /*NB - swichted float to right to move search box to right side of screen*/  
+       float: right;
+       /*end custom*/
+}
+#block-system-main-menu {
+	float: left;
+}
+.navigation ul {
+  padding: 10px 0 0 10px;
+}
+#region-branding,
+.container-12 .grid-5 {
+/*  This is causing issues with layout when Sidebar 1 is populated. */
+  	width: 98% !important;
+ /* */
+}
+
+.branding-data {
+	float:left;
+	width: 100%;
+}
+#zone-preface #region-preface-first,
+#zone-preface #region-preface-second,
+#zone-preface #region-preface-third  {
+	margin-left: 1% ;
+	margin-right: 1%;
+}
+
+#zone-preface #region-preface-first {
+    width: 31.3%;
+}
+#zone-preface #region-preface-second {
+	width:31.3%;
+}
+#zone-preface #region-preface-third {
+    width: 31.3%;
+}
+#zone-content .grid-8 {
+	width: 64.667%;
+	margin-left: 1%;
+    margin-right: 1%;
+}
+#zone-content #region-sidebar-second {
+	margin-left: 1%;
+    margin-right: 1%;
+}
+.home-rotator-text-block {
+  float: left;
+  margin: 0 1%;
+  padding: 0;
+  width: 40.5%;
+  height: 278px;
+}
+/*.home-rotator-photo img, .home-rotator-slide img {
+  margin: 0 2%;
+}*/
+.home-rotator-photo {
+  float: right;
+  width: 54.5%;
+  overflow: hidden;
+  margin: 0 1%;
+}
+
+#home-top-numbers {
+	position:absolute;
+	bottom: 10px;
+}
+#home-top-read-more {
+  position: absolute;
+  bottom: 50px;
+}
+
+.footer-branding {
+	float: none;
+	min-height: 90px;
+	width: 100%;
+}
+
+#footer-subscribe {
+  position: absolute;
+  right: -10px;
+  top: 5px;
+  padding: 10px 0 0;
+  width: 380px;
+}
+#zone-footer #stay-connected h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 1em; 
+  float: none;
+  margin: 0px;
+  margin-bottom: 5px;
+}
+
+#zone-footer #stay-connected ul {
+  float: none;
+}
+
+#footer-tab-icon {
+	width: 100%;
+	margin: 0 auto;
+}
+#footer-tab-icon img{
+	padding: 3px 20px;
+}
+.footer-menu-wrapper {
+	width: 100%;
+}
+#footer-nav-wrapper {
+	width: auto;
+}
+#block-nodeblock-agency-footer-branding {
+    width: 100%;
+	padding-top: 0px;
+}
+#block-nodeblock-contact-us {
+	float: left;
+	width: 100%;
+} 
+.group_address {
+	width: auto;
+	margin-right: 20px;
+}
+.group_column1{
+	float:left;
+}
+
+.field-name-field-map-image {
+	float: left;
+	margin-top: 0px;
+}
+#footer-info, #footer-tab-icon {
+    margin: 0 auto;
+    width: 100%;
+}
+.footer-utility li,
+.footer-nav ul.menu li {
+  float: none;
+}
+.footer-nav ul.menu {
+	display:block;
+}
+
+.footer-nav ul.menu li li {
+	float: left;
+}
+
+#footer-utility {
+  float: right;
+  padding: 20px 0 0;
+  text-align: left;
+  margin-bottom: 20px;
+}
+#footer-utility li {
+  font-family: Arial,sans-serif;
+  font-weight: 400;
+  margin: 0 0 10px;
+  padding-top: 0;
+  text-transform: uppercase;
+  float:none;
+  display: block;
+}
+
+
+/* Changes made to allow sidebar 1st to be displayed */
+#zone-postscript {
+	width: 100%;
+}

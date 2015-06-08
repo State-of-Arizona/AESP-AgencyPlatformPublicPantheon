@@ -1,0 +1,92 @@
+body {
+  background-color: #d2c0ac;
+  color: #333333;
+  a, #sidebar-second .glyphicon {
+    color: #ed5c2d;
+  }
+  a:visited {
+    color: #ad4321;
+  }
+}
+
+#content-wrapper aside .region,
+#content,
+#footer-branding,
+#footer-contact,
+.single-postscript .mbp-defaults-row,
+.single-postscript .region.menu-block-placement-doesnt-exist,
+.two-postscript .region,
+.threee-postscript .region,
+.four-postscript .region {
+  background-color: #eae5d7;
+}
+
+#zone-branding {
+  @media (max-width: 600px) {
+    background-color: #5c8984;
+  }
+  .region-menu {
+    .content > ul.menu > li > a {
+      color: #000009;
+    }
+    ul.menu ul {
+      a:hover {
+        background-color: #5c8984 !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+}
+
+#zone-footer {
+  background-color: #5e8a85;
+  p, div, span {
+    color: #ffffff;
+  }
+  a {
+    color: #eeeeee;
+  }
+  #region-footer-second {
+    background-color: #8b8175;
+  }
+  #footer-contact a {
+    color: #ed5c2d;
+  }
+}
+
+#zone-header .region {
+  background-color: #494949;
+}
+
+#zone-header .region {
+  color: #ffffff;
+}
+
+#preface-group {
+  h2.title, .block-title {
+    color: #333333;
+  }
+}
+
+#preface-group .menu-block-placement-doesnt-exist {
+  background-color: #c5d8db;
+}
+
+#preface-group .mbp-defaults-row > div {
+  background-color: #c5d8db;
+}
+
+p.file, div.file, span.file, a.file, div.more-link, a.more-link, .read-more a, a.views-more-link {
+  background-color: #d9cfc6 !important;
+}
+
+.node-basic-slideshow {
+  .field-slideshow-pager {
+    a {
+      background-color: #c5d8db;
+    }
+    a.activeSlide {
+      background-color: #6d9591;
+    }
+  }
+}

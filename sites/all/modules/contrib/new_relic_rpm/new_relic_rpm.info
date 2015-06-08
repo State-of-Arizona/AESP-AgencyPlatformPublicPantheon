@@ -1,0 +1,10 @@
+name = New Relic RPM
+description = Integration with the New Relic RPM reporting and optimization system.
+core = 7.x
+
+; Information added by Drupal.org packaging script on 2014-11-04
+version = "7.x-1.0-alpha2"
+core = "7.x"
+project = "new_relic_rpm"
+datestamp = "1415130782"
+

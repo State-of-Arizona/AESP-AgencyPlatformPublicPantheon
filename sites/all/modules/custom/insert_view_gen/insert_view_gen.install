@@ -20,7 +20,6 @@ function insert_view_gen_field_schema($field) {
  */
 function insert_view_gen_uninstall() {
   GLOBAL $conf;
-  dpm($conf);
   foreach ($conf as $key => $value) {
     if (substr($key, 0, 12) == 'insert_view_' && substr($key, strlen($key) - 9) == '_displays') {
       variable_del($key);

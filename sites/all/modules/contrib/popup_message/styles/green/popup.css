@@ -1,0 +1,53 @@
+#popup-message-background {
+  display: none;
+  position: fixed;
+  _position: absolute; /* hack for internet explorer 6*/
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  background: #000000;
+  border: 1px solid #cecece;
+  z-index: 1;
+}
+
+#popup-message-window {
+  display: none;
+  position: fixed;
+  _position: absolute; /* hack for internet explorer 6*/
+  overflow: auto;
+  background: #ffffff;
+  border: 2px solid #60a174;
+  border-radius: 2px 2px 2px 2px;
+  z-index: 200;
+  padding: 0px;
+  font-size: 13px;
+}
+
+#popup-message-window h1.popup-message-title {
+  text-align: left;
+  color: black;
+  background: transparent url(img/bg1.gif) repeat-x top left;
+  font-size: 16px;
+  font-weight: 700;
+  border-bottom: 1px dotted #60a174;
+  padding: 0px 10px;
+  margin: 0 0 20px 0;
+}
+
+#popup-message-close {
+  background: transparent url(img/close.png) no-repeat top left;
+  text-indent: -1000px;
+  width: 16px;
+  height: 16px;
+  font-size: 0px;
+  right: 6px;
+  top: 4px;
+  position: absolute;
+  display: block;
+  cursor: pointer;
+}
+
+#popup-message-content {
+  padding: 10px;
+}

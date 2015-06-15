@@ -129,24 +129,30 @@ function _media_displays_filter($text) {
     $token = str_replace('[[', '', $match[0]);
     $token = str_replace(']]', '', $token);
     $json = json_decode($token, TRUE);
+    $not_this_display = TRUE;
 
-    if ((isset($json['direct_download']) && $json['direct_download'])) {
+    if (isset($json['view_mode'])) {
       $file = file_load($json['fid']);
-      $url = file_create_url($file->uri);
-      $options = array('attributes' => isset($json['attributes']) ? $json['attributes'] : array());
-      $options['attributes']['title'] = $json['fields']['title'];
-      $text = str_replace($match, l($json['fields']['link_text'], $url, $options), $text);
+      $displays = file_displays_load($file->type, $json['view_mode'], TRUE);
+      if (isset($displays['file_field_direct_download_alt']) && $displays['file_field_direct_download_alt']->status) {
+          $url = file_create_url($file->uri);
+          $options = array(
+            'attributes' => array_merge(array(
+              'title' => isset($json['fields']['field_document_title[und][0][value]']) ? $json['fields']['field_document_title[und][0][value]'] : '',
+            ), $json['attributes']),
+          );
+
+          $link_text = isset($json['link_text']) ? $json['link_text'] : $json['fields']['field_alt_text[und][0][value]'];
+
+          $text = str_replace($match, l(html_entity_decode($link_text), $url, $options), $text);
+          $not_this_display = FALSE;
+        }
     }
-    elseif ($json['view_mode'] == 'default' && isset($json['fields']['field_alt_text[und][0][value]'])) {
-      $file = file_load($json['fid']);
-      $url = file_create_url($file->uri);
-      $options = array('attributes' => isset($json['attributes']) ? $json['attributes'] : array());
-      $options['attributes']['title'] = $json['fields']['field_alt_text[und][0][value]'];
-      $text = str_replace($match, l($json['fields']['field_alt_text[und][0][value]'], $url, $options), $text);
-    }
-    else {
+
+    if ($not_this_display) {
       $offset = strpos($text, $match[0], $offset) + strlen($match[0]);
     }
+
   }
   $text = media_wysiwyg_filter($text);
   return $text;

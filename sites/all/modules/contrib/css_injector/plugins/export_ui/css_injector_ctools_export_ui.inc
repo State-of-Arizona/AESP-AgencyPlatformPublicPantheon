@@ -38,6 +38,8 @@ function css_injector_ctools_export_ui_form(&$form, &$form_state) {
   // Alter the name field (this is set by the default export_ui class).
   $form['info']['name']['#title'] = t('Friendly name');
   $form['info']['name']['#description'] = t('This is the unique ID for this rule. Only alphanumeric characters, spaces, underscores and dashes are allowed.');
+  $form['info']['name']['#disabled'] = FALSE;
+  unset($form['info']['name']['#value']);
 
   // Alter the admin_description field (this is set by the default export_ui
   // class).
@@ -153,7 +155,7 @@ function css_injector_ctools_export_ui_form_validate($form, &$form_state) {
     $form_state['values']['inline'] = 0;
   }
   // Ensure the name field only contains URL safe characters.
-  if (preg_match('/[^A-Za-z0-9_\-\ ]+/', $form_state['values']['name'])) {
+  if ($form_state['triggering_element']['#value'] != 'Delete' && preg_match('/[^A-Za-z0-9_\-\ ]+/', $form_state['values']['name'])) {
     form_set_error('name', t('Illegal characters found in the friendly name, please remove them.'));
   }
 
@@ -171,6 +173,5 @@ function css_injector_ctools_export_ui_form_validate($form, &$form_state) {
  * Submit handler for the preset edit form.
  */
 function css_injector_ctools_export_ui_form_submit($form, &$form_state) {
-  // not used
   $form_state['values']['rule_themes'] = serialize($form_state['values']['rule_themes']);
 }

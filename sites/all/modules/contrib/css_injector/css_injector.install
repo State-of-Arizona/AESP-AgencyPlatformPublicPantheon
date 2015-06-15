@@ -57,7 +57,8 @@ function css_injector_schema() {
       'rule_themes' => array(
         'description' => 'Themes that CSS rule will be applied to',
         'type' => 'text',
-        'not null' => TRUE),
+        'not null' => TRUE
+      ),
       'preprocess' => array(
         'description' => 'Boolean indicating whether the injection should be aggregated.',
         'type' => 'int',
@@ -152,7 +153,6 @@ function css_injector_prepare_directory() {
 }
 
 
-
 /**
  * Change the title field to name in css_injector_rule table
  */
@@ -173,39 +173,39 @@ function css_injector_update_7201(&$sandbox) {
 function css_injector_update_7202(&$sandbox) {
 
   // add field so schema supports 
-  
-	//   1.x
-	//   crid
-	//   title
-	//   rule_type
-	//   rule_conditions
-	//   rule_themes
-	//   media
-	//   preprocess
-	//   enabled
-	//    
-	// 	2.x
-	// 	crid
-	// 	name
-	// 	admin_description
-	// 	css
-	// 	media
+
+  //   1.x
+  //   crid
+  //   title
+  //   rule_type
+  //   rule_conditions
+  //   rule_themes
+  //   media
+  //   preprocess
+  //   enabled
+  //
+  // 	2.x
+  // 	crid
+  // 	name
+  // 	admin_description
+  // 	css
+  // 	media
   //  theme
-	// 	preprocess
-	// 	inline
-	// 	page_visibility
-	// 	page_visibility_pages
-	//   
-	//   //changes
-	//   title -> name (in previous hook)
-	//   add css
-	//   rule_conditions -> page_visibility and page_visibility_pages?
-	//   
-	//   //what to do with
-	//   rule_type?
-	//   rule_themes? 
-  
-  
+  // 	preprocess
+  // 	inline
+  // 	page_visibility
+  // 	page_visibility_pages
+  //
+  //   //changes
+  //   title -> name (in previous hook)
+  //   add css
+  //   rule_conditions -> page_visibility and page_visibility_pages?
+  //
+  //   //what to do with
+  //   rule_type?
+  //   rule_themes?
+
+
   $fields = array(
     'admin_description' => array(
       'type' => 'varchar',
@@ -217,7 +217,7 @@ function css_injector_update_7202(&$sandbox) {
       'size' => 'big',
       'description' => 'The actual code.',
     ),
-    'inline'=> array(
+    'inline' => array(
       'description' => 'Boolean indicating whether the rules should be inline (cannot be aggregated).',
       'type' => 'int',
       'not null' => TRUE,
@@ -235,12 +235,12 @@ function css_injector_update_7202(&$sandbox) {
       'description' => 'A list of pages to either hide or show the CSS.',
     ),
   );
-  foreach ($fields as $key => $field)  {
+  foreach ($fields as $key => $field) {
     if (!db_field_exists('css_injector_rule', $key)) {
       db_add_field('css_injector_rule', $key, $field);
     }
   }
-} 
+}
 
 /**
  * Import the 1.x rules to the new 2.x structure
@@ -248,12 +248,13 @@ function css_injector_update_7202(&$sandbox) {
 function css_injector_update_7203(&$sandbox) {
   module_load_include('inc', 'ctools', 'includes/export');
   $results = db_query("SELECT * FROM {css_injector_rule}", array(), array('fetch' => PDO::FETCH_ASSOC))->fetchAllAssoc('crid');
-  
+
   foreach ($results as $id => $rule) {
     $path = _css_injector_rule_uri($rule['crid']);
     if (file_exists($path)) {
       $css = file_get_contents($path);
-    } else {
+    }
+    else {
       $css = NULL;
       drupal_set_message(t('CSS Injector was unable to import CSS from file for @var 
       during the update.  The structure of the rule was updated, but the CSS field will be empty.
@@ -281,3 +282,37 @@ function css_injector_update_7205(&$sandbox) {
   }
 }
 
+/**
+ * Moves legacy page data to new fields
+ */
+function css_injector_update_7206(&$sandbox) {
+  if (
+    db_field_exists('css_injector_rule', 'page_visibility') &&
+    db_field_exists('css_injector_rule', 'rule_type') &&
+    db_field_exists('css_injector_rule', 'page_visibility_pages') &&
+    db_field_exists('css_injector_rule', 'rule_conditions')
+  ) {
+    $query = db_select('css_injector_rule', 'c')
+      ->fields('c')
+      ->execute();
+    while ($row = $query->fetchAssoc()) {
+      if (is_null($row['page_visibility_pages']) && $row['rule_conditions']) {
+        db_update('css_injector_rule')
+          ->condition('crid', $row['crid'])
+          ->fields(array(
+            'page_visibility' => $row['rule_type'],
+            'page_visibility_pages' => $row['rule_conditions'],
+          ))
+          ->execute();
+      }
+      if(is_null($row['admin_description'])){
+        db_update('css_injector_rule')
+          ->condition('crid', $row['crid'])
+          ->fields(array('admin_description' => $row['name']))
+          ->execute();
+      }
+    }
+    db_drop_field('css_injector_rule', 'rule_type');
+    db_drop_field('css_injector_rule', 'rule_conditions');
+  }
+}

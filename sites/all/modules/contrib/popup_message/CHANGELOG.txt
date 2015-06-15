@@ -1,0 +1,9 @@
+Popup Message 6.x-7.1, 2011-11-27
+----------------------
+- Option to disable popup.
+- Option to disable cookie check.
+- Option to select popup style.
+
+Popup Message 7.x-1.0, 2011-11-01
+----------------------
+- First release.

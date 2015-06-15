@@ -153,7 +153,7 @@ function feature_enewsletter_node_view($node, $view_mode, $langcode) {
       }
     }
 
-    // build form for either subscripotion or unsubscripe form
+    // build form for either subscription or un-subscribe form
     if ($vars['create_form'] == 'in') {
       $form = drupal_build_form('feature_enewsletter_subscribe_form', $vars);
     }

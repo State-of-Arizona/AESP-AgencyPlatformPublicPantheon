@@ -245,6 +245,9 @@ html, body {
       }
     }
   }
+  .captcha-admin-links {
+    display: none;
+  }
   a {
     color: #fff;
     text-decoration: none;
@@ -252,6 +255,7 @@ html, body {
   input {
     width: 100%;
   }
+
   .region-menu {
     h2.block-title {
       display: none;

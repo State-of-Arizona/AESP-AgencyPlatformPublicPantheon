@@ -585,7 +585,7 @@ html, body {
   background-color: transparent;
 }
 #breadcrumb ul.breadcrumb > li + li:before {
-  content: " ┬╗ ";
+  content: " » ";
 }
 #breadcrumb ul.breadcrumb a.active {
   color: #ccc;
@@ -718,7 +718,7 @@ body.front #page-title, body.front #block-system-main {
   height: 0;
   overflow: hidden;
 }
-#page .media-youtube-video iframe, #page .media-youtube-video ┬áobject, #page .media-youtube-video ┬áembed┬á {
+#page .media-youtube-video iframe, #page .media-youtube-video  object, #page .media-youtube-video  embed  {
   position: absolute;
   top: 0;
   left: 0;

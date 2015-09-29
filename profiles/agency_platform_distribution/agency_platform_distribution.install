@@ -209,7 +209,7 @@ function agency_platform_distribution_install() {
   $node->status = 1;
   $node->title = "Access Denied";
   $node->body['und'][0]['format'] = 'basic_html';
-  $node->body['und'][0]['value'] = '<h2 style="text-align: center;">We Appologize.</h2><p style="text-align: center;">You currently do not have permission to view this page.<br>If you believe you have encountered this by mistake, please contact the site administrators.</p><p style="text-align: center;">Thank You.</p>';
+  $node->body['und'][0]['value'] = '<h2 style="text-align: center;">We Apologize.</h2><p style="text-align: center;">You currently do not have permission to view this page.<br>If you believe you have encountered this by mistake, please contact the site administrators.</p><p style="text-align: center;">Thank You.</p>';
   node_save($node);
 
   //Creates Initial 404 Page using the Basic Page type
@@ -218,7 +218,7 @@ function agency_platform_distribution_install() {
   $node->status = 1;
   $node->title = "Page Not Found";
   $node->body['und'][0]['format'] = 'basic_html';
-  $node->body['und'][0]['value'] = '<h2 style="text-align: center;">We Appologize.</h2><p style="text-align: center;">This page can not be found. Please check the URL and try again.</p><p style="text-align: center;">Thank You.</p>';
+  $node->body['und'][0]['value'] = '<h2 style="text-align: center;">We Apologize.</h2><p style="text-align: center;">This page cannot be found. Please check the URL and try again.</p><p style="text-align: center;">Thank You.</p>';
   node_save($node);
 
   //sets the 403 & 404 variables for the first nodes created above.

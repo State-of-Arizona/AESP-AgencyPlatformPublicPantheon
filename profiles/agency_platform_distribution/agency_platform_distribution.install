@@ -15,7 +15,7 @@ function agency_platform_distribution_install() {
     //'comm_theme' => 'comm',
   ));
   variable_set('theme_default', 'az_gov');
-  variable_set('admin_theme', 'rubik');
+  variable_set('admin_theme', 'seven');
   variable_set('node_admin_theme', '1');
   theme_disable(array('bartik'));
 

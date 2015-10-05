@@ -218,7 +218,7 @@ html, body {
   float: left;
   width: 80%;
 }
-#zone-branding .site-details .site-info .site-name h1 {
+#zone-branding .site-details .site-info .site-name {
   font-size: 26px;
   font-family: "Times New Roman",Georgia,Times,serif;
   color: #FFF;
@@ -230,8 +230,23 @@ html, body {
   letter-spacing: 1px;
   text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
 }
-#zone-branding .captcha-admin-links {
-  display: none;
+#zone-branding #block-menu-menu-secondary-nav > div > div.content > ul, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul {
+  display: flex;
+  float: right;
+}
+#zone-branding #block-menu-menu-secondary-nav > div > div.content > ul li:hover a, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul li:hover a {
+  color: #000;
+  background: #fff;
+}
+#zone-branding #block-menu-menu-secondary-nav > div > div.content > ul > li, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul > li {
+  display: inline;
+  top: -10px;
+  float: left;
+}
+#zone-branding #block-menu-menu-secondary-nav > div > div.content > ul > li a, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul > li a {
+  font-size: 12px;
+  border-radius: 5px;
+  text-transform: uppercase;
 }
 #zone-branding a {
   color: #fff;

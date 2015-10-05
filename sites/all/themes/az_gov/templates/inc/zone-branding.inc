@@ -14,11 +14,9 @@
             <div class="site-info">
               <?php if ($site_name): ?>
                 <div class="site-name">
-                  <h1>
-                    <a href="/">
+                    <a  href="/">
                       <?php echo $site_name; ?>
                     </a>
-                  </h1>
                 </div>
               <?php endif; ?>
               <?php if ($site_slogan): ?>

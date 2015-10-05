@@ -231,7 +231,7 @@ html, body {
       padding: 0 15px;
       float: left;
       width: 80%;
-      .site-name h1 {
+      .site-name {
         font-size:26px;
         font-family: "Times New Roman",Georgia,Times,serif;
         color: #FFF;
@@ -245,9 +245,27 @@ html, body {
       }
     }
   }
-  .captcha-admin-links {
-    display: none;
+  #block-menu-menu-secondary-nav > div > div.content > ul, #block-menu-menu-secondary-navigation > div > div.content > ul{
+    display:flex;
+    float:right;
+    li:hover{
+      a{
+        color: #000;
+        background: #fff;
+      }
+    }
   }
+  #block-menu-menu-secondary-nav > div > div.content > ul > li, #block-menu-menu-secondary-navigation > div > div.content > ul> li{
+    display: inline;
+    top: -10px;
+    float: left;
+    a{
+      font-size: 12px;
+      border-radius: 5px;
+      text-transform: uppercase;
+    }
+  }
+
   a {
     color: #fff;
     text-decoration: none;
@@ -255,7 +273,6 @@ html, body {
   input {
     width: 100%;
   }
-
   .region-menu {
     h2.block-title {
       display: none;

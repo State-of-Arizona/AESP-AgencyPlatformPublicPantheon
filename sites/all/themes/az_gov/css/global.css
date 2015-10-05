@@ -240,7 +240,6 @@ html, body {
 }
 #zone-branding #block-menu-menu-secondary-nav > div > div.content > ul > li, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul > li {
   display: inline;
-  top: -10px;
   float: left;
 }
 #zone-branding #block-menu-menu-secondary-nav > div > div.content > ul > li a, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul > li a {

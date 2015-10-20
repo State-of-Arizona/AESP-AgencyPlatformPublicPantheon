@@ -61,3 +61,8 @@ dependencies[] = node_expanded_menu
 dependencies[] = media_displays
 dependencies[] = media_display_migrate
 dependencies[] = environment_indicator
+
+;pantheon
+dependencies[] = pantheon_api
+dependencies[] = pantheon_login
+dependencies[] = pantheon_apachesolr

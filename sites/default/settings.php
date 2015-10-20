@@ -577,7 +577,7 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
 
 if (defined('PANTHEON_ENVIRONMENT')) {
   if (PANTHEON_ENVIRONMENT == 'dev') {
-      //$base_url = 'http://dev-sitename.gotpantheon.com'; // NO trailing slash!
+      //$base_url = 'http://dev-sitename.pantheon.io'; // NO trailing slash!
       $conf['environment_indicator_overwrite'] = TRUE;
       $conf['environment_indicator_overwritten_name'] = 'Development Environment';
       $conf['environment_indicator_overwritten_color'] = '#FF0000';
@@ -591,7 +591,7 @@ if (defined('PANTHEON_ENVIRONMENT')) {
       $conf['preprocess_js'] = 0;
       }
       else if (PANTHEON_ENVIRONMENT == 'test') {
-        //$baseurl = 'http://test-sitename.gotpantheon.com'; // NO trailing slash!
+        //$base_url = 'http://test-sitename.pantheon.io'; // NO trailing slash!
         $conf['environment_indicator_overwrite'] = TRUE;
         $conf['environment_indicator_overwritten_name'] = 'Testing Environment';
         $conf['environment_indicator_overwritten_color'] = '#FF9500';
@@ -605,8 +605,8 @@ if (defined('PANTHEON_ENVIRONMENT')) {
         $conf['cache_lifetime'] = 0;
         $conf['page_compression'] = 0;
       }
-      else  if (PANTHEON_ENVIRONMENT == 'live') {
-        //$baseurl = 'http://www.domain.tld'; // NO trailing slash!
+      else if (PANTHEON_ENVIRONMENT == 'live') {
+        //$base_url = 'https://www.domain.tld'; // NO trailing slash!
         $conf['environment_indicator_overwrite'] = FALSE;
         $conf['preprocess_css'] = 1;
         $conf['preprocess_js'] = 1;

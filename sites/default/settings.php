@@ -584,6 +584,12 @@ if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
       $conf['environment_indicator_overwritten_color'] = '#FF0000';
       $conf['environment_indicator_overwritten_position'] = 'bottom';
       $conf['environment_indicator_overwritten_fixed'] = TRUE;
+      $conf['cache'] = 0;
+      $conf['block_cache'] = 0;
+      $conf['page_cache_maximum_age'] = 0;
+      $conf['page_compression'] = 0;
+      $conf['preprocess_css'] = 0;
+      $conf['preprocess_js'] = 0;
       break;
     case 'test':
       //$baseurl = 'http://test-sitename.gotpantheon.com'; // NO trailing slash!
@@ -596,7 +602,9 @@ if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
       $conf['preprocess_js'] = 1;
       $conf['block_cache'] = 1;
       $conf['cache'] = 1;
-      $conf['page_cache_maximum_age'] = 1800;
+      $conf['page_cache_maximum_age'] = 900;
+      $conf['cache_lifetime'] = 0;
+      $conf['page_compression'] = 0;
       break;
     case 'live':
       //$baseurl = 'http://www.domain.tld'; // NO trailing slash!
@@ -605,7 +613,9 @@ if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
       $conf['preprocess_js'] = 1;
       $conf['block_cache'] = 1;
       $conf['cache'] = 1;
-      $conf['page_cache_maximum_age'] = 1800;
+      $conf['page_cache_maximum_age'] = 900;
+      $conf['cache_lifetime'] = 0;
+      $conf['page_compression'] = 0;
       /**
        * Redirect to Common domain and require SSL
        */
@@ -617,11 +627,11 @@ if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
       /**
        * Redirect to Common domain
        */
-      if ($_SERVER['HTTP_HOST'] != 'www.domain.tld') {
+//      if ($_SERVER['HTTP_HOST'] != 'www.domain.tld') {
 //        header('HTTP/1.0 301 Moved Permanently');
 //        header('Location: http://www.domain.tld' . $_SERVER['REQUEST_URI']);
 //        exit();
-      }
+//      }
       break;
   }
 }

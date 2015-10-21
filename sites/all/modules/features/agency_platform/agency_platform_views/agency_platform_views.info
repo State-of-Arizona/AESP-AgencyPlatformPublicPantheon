@@ -1,0 +1,10 @@
+name = Agency Platform Views
+description = Feature for the AZ Views overrides
+core = 7.x
+package = State of Arizona
+version = 7.x-1.0-beta1
+features[ctools][] = views:views_default:3.0
+features[features_api][] = api:2
+features[views_view][] = az_glossary
+features_exclude[dependencies][views] = views
+project path = sites/default/modules/features

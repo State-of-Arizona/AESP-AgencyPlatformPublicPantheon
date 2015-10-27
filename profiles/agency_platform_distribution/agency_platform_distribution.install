@@ -19,6 +19,8 @@ function agency_platform_distribution_install() {
   variable_set('node_admin_theme', '1');
   theme_disable(array('bartik'));
 
+  // sets image quality to 100%
+  variable_set('image_jpeg_quality', 100);
 
   //Rebuilds all enabled features
   features_revert();

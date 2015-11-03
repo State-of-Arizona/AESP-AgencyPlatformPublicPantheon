@@ -245,6 +245,9 @@ html, body {
       }
     }
   }
+  .captcha-admin-links {
+      display: none;
+  }
   #block-menu-menu-secondary-nav > div > div.content > ul, #block-menu-menu-secondary-navigation > div > div.content > ul{
     display:flex;
     float:right;

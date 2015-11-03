@@ -230,6 +230,9 @@ html, body {
   letter-spacing: 1px;
   text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
 }
+#zone-branding .captcha-admin-links {
+  display: none;
+}
 #zone-branding #block-menu-menu-secondary-nav > div > div.content > ul, #zone-branding #block-menu-menu-secondary-navigation > div > div.content > ul {
   display: flex;
   float: right;

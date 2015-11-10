@@ -632,3 +632,6 @@ else {
   $conf['environment_indicator_overwritten_position'] = 'bottom';
   $conf['environment_indicator_overwritten_fixed'] = TRUE;
 }
+
+// Only allowing administrators to authorize account creation
+$conf['user_register'] = 0;

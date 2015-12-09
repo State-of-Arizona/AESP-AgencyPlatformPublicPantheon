@@ -139,15 +139,11 @@
         });
       });
 
+      //toggles the mobile menu when you click the hamburger icon
       $('#mobile-menu').once(function () {
-        if ($(window).width() > 768) {
-          $('.region-menu').show();
-        } else {
-          $('.region-menu').hide();
-        }
         $(this).click(function () {
           $('.region-menu').slideToggle('slow');
-        });
+        })
       });
 
       //if child menu items are too far to the right in the window, moves them to the left

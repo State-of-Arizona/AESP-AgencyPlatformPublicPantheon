@@ -9,6 +9,7 @@
 }
 
 #zone-branding .region-menu {
+  display: block !important;
   padding: 0;
 }
 #zone-branding .region-menu .glyphicon {

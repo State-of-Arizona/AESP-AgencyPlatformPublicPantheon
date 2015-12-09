@@ -145,6 +145,10 @@
           $('.region-menu').slideToggle('slow');
         })
       });
+      //Hides mobile menu on load
+      window.onload = function () {
+        $('.region-menu').hide();
+      };
 
       //if child menu items are too far to the right in the window, moves them to the left
       var resized = function () {

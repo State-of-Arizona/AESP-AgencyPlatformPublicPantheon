@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Drupal site-specific configuration file.
@@ -575,55 +574,52 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
  */
 # $conf['pressflow_smart_start'] = TRUE;
 
+//fills out settings.php with the site name.  Only use if the site is using the az-sitename naming convention.
+//enter site name below and remove // at lines 579, 583, 598, 613, and 636-642.
+//$sitename = '';
+
 if (defined('PANTHEON_ENVIRONMENT')) {
   if (PANTHEON_ENVIRONMENT == 'dev') {
-      //$base_url = 'http://dev-sitename.pantheon.io'; // NO trailing slash!
-      $conf['environment_indicator_overwrite'] = TRUE;
-      $conf['environment_indicator_overwritten_name'] = 'Development Environment';
-      $conf['environment_indicator_overwritten_color'] = '#FF0000';
-      $conf['environment_indicator_overwritten_position'] = 'bottom';
-      $conf['environment_indicator_overwritten_fixed'] = TRUE;
-      $conf['cache'] = 0;
-      $conf['block_cache'] = 0;
-      $conf['page_cache_maximum_age'] = 0;
-      $conf['page_compression'] = 0;
-      $conf['preprocess_css'] = 0;
-      $conf['preprocess_js'] = 0;
-      }
-      else if (PANTHEON_ENVIRONMENT == 'test') {
-        //$base_url = 'http://test-sitename.pantheon.io'; // NO trailing slash!
-        $conf['environment_indicator_overwrite'] = TRUE;
-        $conf['environment_indicator_overwritten_name'] = 'Testing Environment';
-        $conf['environment_indicator_overwritten_color'] = '#FF9500';
-        $conf['environment_indicator_overwritten_position'] = 'bottom';
-        $conf['environment_indicator_overwritten_fixed'] = TRUE;
-        $conf['preprocess_css'] = 1;
-        $conf['preprocess_js'] = 1;
-        $conf['block_cache'] = 1;
-        $conf['cache'] = 1;
-        $conf['page_cache_maximum_age'] = 900;
-        $conf['cache_lifetime'] = 0;
-        $conf['page_compression'] = 0;
-      }
-      else if (PANTHEON_ENVIRONMENT == 'live') {
-        //$base_url = 'https://www.domain.tld'; // NO trailing slash!
-        $conf['environment_indicator_overwrite'] = FALSE;
-        $conf['preprocess_css'] = 1;
-        $conf['preprocess_js'] = 1;
-        $conf['block_cache'] = 1;
-        $conf['cache'] = 1;
-        $conf['page_cache_maximum_age'] = 900;
-        $conf['cache_lifetime'] = 0;
-        $conf['page_compression'] = 0;
-        /**
-         * Redirect to Common domain and require SSL
-         */
-        if ($_SERVER['HTTP_HOST'] != 'www.domain.tld' || !isset($_SERVER['HTTP_X_SSL']) || $_SERVER['HTTP_X_SSL'] != 'ON') {
-//        header('HTTP/1.0 301 Moved Permanently');
-//        header('Location: https://www.domain.tld' . $_SERVER['REQUEST_URI']);
-//        exit();
-        }
-      }
+    //$base_url = 'http://dev-qa-'. $sitename . '.pantheon.io'; // NO trailing slash!
+    $conf['environment_indicator_overwrite'] = TRUE;
+    $conf['environment_indicator_overwritten_name'] = 'Development Environment';
+    $conf['environment_indicator_overwritten_color'] = '#FF0000';
+    $conf['environment_indicator_overwritten_position'] = 'bottom';
+    $conf['environment_indicator_overwritten_fixed'] = TRUE;
+    $conf['cache'] = 0;
+    $conf['block_cache'] = 0;
+    $conf['page_cache_maximum_age'] = 0;
+    $conf['page_compression'] = 0;
+    $conf['preprocess_css'] = 0;
+    $conf['preprocess_js'] = 0;
+    $conf['cache_lifetime'] = 0;
+  }
+  else if (PANTHEON_ENVIRONMENT == 'test') {
+    //$base_url = 'http://test-qa-'. $sitename . '.pantheon.io'; // NO trailing slash!
+    $conf['environment_indicator_overwrite'] = TRUE;
+    $conf['environment_indicator_overwritten_name'] = 'Testing Environment';
+    $conf['environment_indicator_overwritten_color'] = '#FF9500';
+    $conf['environment_indicator_overwritten_position'] = 'bottom';
+    $conf['environment_indicator_overwritten_fixed'] = TRUE;
+    $conf['preprocess_css'] = 1;
+    $conf['preprocess_js'] = 1;
+    $conf['block_cache'] = 1;
+    $conf['cache'] = 1;
+    $conf['page_cache_maximum_age'] = 900;
+    $conf['cache_lifetime'] = 0;
+    $conf['page_compression'] = 0;
+  }
+  else if (PANTHEON_ENVIRONMENT == 'live') {
+    //$base_url = 'https://'. $sitename . '.az.gov'; // NO trailing slash!
+    $conf['environment_indicator_overwrite'] = FALSE;
+    $conf['preprocess_css'] = 1;
+    $conf['preprocess_js'] = 1;
+    $conf['block_cache'] = 1;
+    $conf['cache'] = 1;
+    $conf['page_cache_maximum_age'] = 900;
+    $conf['cache_lifetime'] = 0;
+    $conf['page_compression'] = 0;
+  }
 }
 else {
   $conf['environment_indicator_overwrite'] = TRUE;
@@ -635,3 +631,12 @@ else {
 
 // Only allowing administrators to authorize account creation
 $conf['user_register'] = 0;
+
+// Require HTTPS.
+//if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' && $_SERVER['HTTPS'] === 'OFF') {
+//  if ($_SERVER['HTTP_HOST'] !=  $sitename . '.az.gov' || !isset($_SERVER['HTTP_X_SSL']) || $_SERVER['HTTP_X_SSL'] != 'ON') {
+//    header('HTTP/1.0 301 Moved Permanently');
+//    header('Location: https://'. $sitename . '.az.gov' . $_SERVER['REQUEST_URI']);
+//    exit();
+//  }
+//}

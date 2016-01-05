@@ -21,7 +21,7 @@ body a:visited {
   background-color: #eae5d7;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   #zone-branding {
     background-color: #5c8984;
   }

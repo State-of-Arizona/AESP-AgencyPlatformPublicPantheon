@@ -12,11 +12,11 @@
       <div class="site-name-slogan<?php print $class; ?>">        
         <?php if ($site_name): ?>
         <?php $class = $site_name_hidden ? ' element-invisible' : ''; ?>
-        <h1 class="site-name<?php print $class; ?>"><?php print $linked_site_name; ?></h1>
+        <div class="site-name<?php print $class; ?>"><?php print $linked_site_name; ?></div>
         <?php endif; ?>
         <?php if ($site_slogan): ?>
         <?php $class = $site_slogan_hidden ? ' element-invisible' : ''; ?>
-        <h6 class="site-slogan<?php print $class; ?>"><?php print $site_slogan; ?></h6>
+        <div class="site-slogan<?php print $class; ?>"><?php print $site_slogan; ?></div>
         <?php endif; ?>
       </div>
       <?php endif; ?>

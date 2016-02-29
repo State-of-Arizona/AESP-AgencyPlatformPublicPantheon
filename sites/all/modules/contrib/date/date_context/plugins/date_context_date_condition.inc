@@ -1,20 +1,10 @@
 <?php
 
 /**
- * @file
- * Context date condition plugin.
- */
-
-/**
  * Expose term views/term forms by vocabulary as a context condition.
  */
-// @codingStandardsIgnoreStart
 class date_context_date_condition extends context_condition_node {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function condition_values() {
+  function condition_values() {
     $values = array();
     $fields = field_info_fields();
     foreach ($fields as $field_name => $field) {
@@ -25,13 +15,10 @@ class date_context_date_condition extends context_condition_node {
     return $values;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function options_form($context) {
+  function options_form($context) {
     $defaults = $this->fetch_from_context($context, 'options');
     $options = array(
-      '<' => t('Is less than'),
+      '<' =>  t('Is less than'),
       '<=' => t('Is less than or equal to'),
       '>=' => t('Is greater than or equal to'),
       '>' => t('Is greater than'),
@@ -40,8 +27,6 @@ class date_context_date_condition extends context_condition_node {
       'empty' => t('Is empty'),
       'not empty' => t('Is not Empty'),
     );
-    $dependency_options = array('<', '<=', '>', '>=', '=', '!=');
-
     $form['operation'] = array(
       '#title' => t('Operation'),
       '#type' => 'select',
@@ -56,15 +41,12 @@ class date_context_date_condition extends context_condition_node {
       '#description' => t("The value the field should contain to meet the condition. This can either be an absolute date in ISO format (YYYY-MM-DDTHH:MM:SS) or a relative string like '12AM today'. Examples: 2011-12-31T00:00:00, now, now +1 day, 12AM today, Monday next week. <a href=\"@relative_format\">More examples of relative date formats in the PHP documentation</a>.", array('@relative_format' => 'http://www.php.net/manual/en/datetime.formats.relative.php')),
       '#default_value' => isset($defaults['value']) ? $defaults['value'] : '',
       '#process' => array('ctools_dependent_process'),
-      '#dependency' => array('edit-conditions-plugins-date-context-date-condition-options-operation' => $dependency_options),
+      '#dependency' => array('edit-conditions-plugins-date-context-date-condition-options-operation' => array('<', '<=', '>', '>=', '=', '!=')),
     );
     return $form;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function execute($entity, $op) {
+  function execute($entity, $op) {
     if (in_array($op, array('view', 'form'))) {
       foreach ($this->get_contexts() as $context) {
         $options = $this->fetch_from_context($context, 'options');
@@ -109,37 +91,32 @@ class date_context_date_condition extends context_condition_node {
               str_replace('now', 'today', $options['value']);
               $date = date_create($options['value'], date_default_timezone_object());
               $compdate = $date->format(DATE_FORMAT_DATETIME);
-              switch ($options['operation']) {
+              switch($options['operation']) {
                 case '=':
                   if ($date2 >= $compdate && $date1 <= $compdate) {
                     $this->condition_met($context, $field_name);
                   }
                   break;
-
                 case '>':
                   if ($date1 > $compdate) {
                     $this->condition_met($context, $field_name);
                   }
                   break;
-
                 case '>=':
                   if ($date1 >= $compdate) {
                     $this->condition_met($context, $field_name);
                   }
                   break;
-
                 case '<':
                   if ($date2 < $compdate) {
                     $this->condition_met($context, $field_name);
                   }
                   break;
-
                 case '<=':
                   if ($date2 <= $compdate) {
                     $this->condition_met($context, $field_name);
                   }
                   break;
-
                 case '!=':
                   if ($date1 < $compdate || $date2 > $compdate) {
                     $this->condition_met($context, $field_name);
@@ -153,4 +130,3 @@ class date_context_date_condition extends context_condition_node {
     }
   }
 }
-// @codingStandardsIgnoreEnd

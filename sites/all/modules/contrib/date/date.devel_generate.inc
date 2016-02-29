@@ -15,14 +15,8 @@ function date_devel_generate($entity, $field, $instance, $bundle) {
   $entity_field = array();
   if (isset($instance['widget']['settings']['year_range'])) {
     $split = explode(':', $instance['widget']['settings']['year_range']);
-    // Determine how much to go back and forward depending on whether a relative
-    // number of years (with - or + sign) or an absolute year is given.
-    $back = strpos($split[0], '-') === 0
-      ? str_replace('-', '', $split[0])
-      : date_format(date_now(), 'Y') - $split[0];
-    $forward = strpos($split[1], '+') === 0
-      ? str_replace('+', '', $split[1])
-      : $split[1] - date_format(date_now(), 'Y');
+    $back = str_replace('-', '', $split[0]);
+    $forward = str_replace('+', '', $split[1]);
   }
   else {
     $back = 2;
@@ -67,11 +61,9 @@ function date_devel_generate($entity, $field, $instance, $bundle) {
     case 'date':
       $format = DATE_FORMAT_ISO;
       break;
-
     case 'datestamp':
       $format = DATE_FORMAT_UNIX;
       break;
-
     case 'datetime':
       $format = DATE_FORMAT_DATETIME;
       break;

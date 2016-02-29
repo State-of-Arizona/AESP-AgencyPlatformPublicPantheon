@@ -1,8 +1,5 @@
 <?php
 /**
- * @file
- * Add an option to set/not set the context on forms vs views.
- *
  * @TODO
  *
  * Currently only implemented for nodes. Need to add $plugin->execute()
@@ -11,6 +8,8 @@
  * Cache the date processing, perhaps cache the formatted, timezone-adjusted
  * date strings for each entity (would have to be cached differently for each
  * timezone, based on the tz_handling method for the date).
+ *
+ * Add an option to set/not set the context on forms vs views.
  */
 
 /**
@@ -23,7 +22,7 @@ function date_context_context_node_condition_alter($node, $op) {
 }
 
 /**
- * Implements hook_context_plugins().
+ * Implements hook_context_plugins()
  */
 function date_context_context_plugins() {
   $plugins = array();
@@ -39,7 +38,7 @@ function date_context_context_plugins() {
 }
 
 /**
- * Implements hook_context_registry().
+ * Implements hook_context_registry()
  */
 function date_context_context_registry() {
   return array(
@@ -52,3 +51,4 @@ function date_context_context_registry() {
     ),
   );
 }
+

@@ -633,7 +633,7 @@ else {
 $conf['user_register'] = 0;
 
 // Require HTTPS.
-//if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' && $_SERVER['HTTPS'] === 'OFF') {
+//if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' ) {
 //  if ($_SERVER['HTTP_HOST'] !=  $sitename . '.az.gov' || !isset($_SERVER['HTTP_X_SSL']) || $_SERVER['HTTP_X_SSL'] != 'ON') {
 //    header('HTTP/1.0 301 Moved Permanently');
 //    header('Location: https://'. $sitename . '.az.gov' . $_SERVER['REQUEST_URI']);

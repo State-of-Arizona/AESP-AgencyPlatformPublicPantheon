@@ -36,6 +36,7 @@
             $('.node-basic-slideshow .field-slideshow-caption').css('max-height', $($('.node-basic-slideshow .field-slideshow-image')[0]).height() - 20);
           }
           $('.node-basic-slideshow .field-slideshow').css('min-height', $('.node-basic-slideshow .field-slideshow img').height());
+          $('.view-home-page-feature-rotator').css('height', $('.home-rotator-slide').css('height')).height("+=10");
         };
         //invokes the slideshow height match function above
         slideshow_heights();

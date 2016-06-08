@@ -811,6 +811,22 @@ body.front #page-title, body.front #block-system-main {
   }
 }
 
+@media (max-width: 600px) {
+  #page .view-home-page-feature-rotator .home-rotator-slide {
+    position: absolute !important;
+    padding: 11px;
+  }
+
+  .view-home-page-feature-rotator {
+    height: 500px;
+  }
+}
+@media (max-width: 380px) {
+  .view-home-page-feature-rotator .home-rotator-text-block .home-top-intro {
+    height: 250px;
+    max-height: 250px;
+  }
+}
 .no-sidebars #content {
   width: 100%;
 }

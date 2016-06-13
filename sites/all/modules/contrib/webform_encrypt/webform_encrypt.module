@@ -90,12 +90,32 @@ function webform_encrypt_webform_component_presave(&$component) {
 function webform_encrypt_webform_submission_presave($node, &$submission) {
   foreach ($submission->data as $cid => $entry) {
     if (!empty($node->webform['components'][$cid]['extra']['encrypt'])) {
-      foreach ($submission->data[$cid]['value'] as $delta => $value) {
-        $submission->data[$cid]['value'][$delta] = encrypt($entry['value'][$delta], array('base64' => TRUE));
+      foreach ($submission->data[$cid] as $delta => $value) {
+        $submission->data[$cid][$delta] = encrypt($entry[$delta], array('base64' => TRUE));
       }
     }
   }
 }
+
+/**
+ * Implementation of hook_webform_submission_load().
+ * Decrypt values if encrypted
+ */
+function webform_encrypt_webform_submission_load($submissions) {
+  foreach ($submissions as $submission) {
+    $node = node_load($submission->nid);
+    foreach ($submission->data as $cid => $entry) {
+      if (!empty($node->webform['components'][$cid]['extra']['encrypt'])) {
+        foreach ($submission->data[$cid] as $delta => $value) {
+          if (!empty($entry[$delta]) && @unserialize($entry[$delta]) !== FALSE) {
+            $submission->data[$cid][$delta] = user_access('view encrypted values') ? decrypt($entry[$delta], array('base64' => TRUE)) : t('[Value Encrypted]');
+          }
+        }
+      }
+    }
+  }
+}
+
 
 /**
  * Implementation of hook_webform_submission_render_alter().
@@ -117,24 +137,6 @@ function webform_encrypt_webform_submission_render_alter(&$renderable) {
 }
 
 /**
- * Preprocess for theme('webform_results_table').
- *
- * Decrypt webform values in the table display.
- */
-function webform_encrypt_preprocess_webform_results_table(&$vars) {
-  foreach ($vars['submissions'] as $sid => &$submission) {
-    foreach ($submission->data as $cid => &$item) {
-      $component = $vars['components'][$cid];
-      if (!empty($component['extra']['encrypt'])) {
-        foreach ($item['value'] as &$value) {
-          $value = user_access('view encrypted values') ? decrypt($value, array('base64' => TRUE)) : t('[Value Encrypted]');
-        }
-      }
-    }
-  }
-}
-
-/**
  * Helper function to recursively decrypt values in a webform structure.
  */
 function _webform_encrypt_decrypt_nested_values(&$element, $key = '#default_value', $restrict = array()) {
@@ -147,11 +149,11 @@ function _webform_encrypt_decrypt_nested_values(&$element, $key = '#default_valu
     if (!empty($component['#webform_component']['extra']['encrypt'])) {
       if (is_array($component[$key])) {
         foreach ($component[$key] as &$value) {
-          $value = $access ? decrypt($value, array('base64' => TRUE)) : t('[Value Encrypted]');
+          $value = $access ? $value : t('[Value Encrypted]');
         }
       }
       else {
-        $component[$key] = $access ? decrypt($component[$key], array('base64' => TRUE)) : t('[Value Encrypted]');
+        $component[$key] = $access ? $component[$key] : t('[Value Encrypted]');
       }
     }
 

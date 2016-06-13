@@ -1,0 +1,17 @@
+name = Webform Encrypt
+description = Provides encryption for webform components
+core = 7.x
+package = Webform
+
+files[] = webform_encrypt.module
+files[] = webform_encrypt.install
+
+dependencies[] = encrypt
+dependencies[] = webform
+
+; Information added by drupal.org packaging script on 2013-10-26
+version = "7.x-1.0+10-dev"
+core = "7.x"
+project = "webform_encrypt"
+datestamp = "1382755730"
+

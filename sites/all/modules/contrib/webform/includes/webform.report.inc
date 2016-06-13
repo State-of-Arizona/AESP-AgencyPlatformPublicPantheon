@@ -870,7 +870,10 @@ function webform_export_batch_size($node) {
  * Returns a temporary export filename.
  */
 function _webform_export_tempname() {
-  return drupal_tempnam(variable_get('webform_export_path', 'temporary://'), 'webform_');
+  if ( variable_get('webform_export_path') && !is_dir(variable_get('webform_export_path'))) {
+    mkdir(variable_get('webform_export_path'), 0777, true);
+  }
+  return variable_get('webform_export_path', 'temporary://'). 'webform_'.uniqid();
 }
 
 /**

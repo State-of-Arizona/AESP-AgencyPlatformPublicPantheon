@@ -28,6 +28,5 @@ function feature_basic_config_menu_default_menu_custom() {
   t('Footer Nav');
   t('Sticky Nav');
 
-
   return $menus;
 }

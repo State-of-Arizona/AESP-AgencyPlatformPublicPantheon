@@ -10,7 +10,7 @@
 function feature_basic_config_menu_default_menu_links() {
   $menu_links = array();
 
-  // Exported menu link: main-menu_home:<front>
+  // Exported menu link: main-menu_home:<front>.
   $menu_links['main-menu_home:<front>'] = array(
     'menu_name' => 'main-menu',
     'link_path' => '<front>',
@@ -30,7 +30,7 @@ function feature_basic_config_menu_default_menu_links() {
     'weight' => -50,
     'customized' => 1,
   );
-  // Exported menu link: menu-footer-nav_site-map:sitemap
+  // Exported menu link: menu-footer-nav_site-map:sitemap.
   $menu_links['menu-footer-nav_site-map:sitemap'] = array(
     'menu_name' => 'menu-footer-nav',
     'link_path' => 'sitemap',
@@ -50,7 +50,7 @@ function feature_basic_config_menu_default_menu_links() {
     'weight' => 0,
     'customized' => 1,
   );
-  // Exported menu link: menu-footer-nav_statewide-policies:http://az.gov/policies
+  // Exported menu link: menu-footer-nav_statewide-policies:http://az.gov/policies.
   $menu_links['menu-footer-nav_statewide-policies:http://az.gov/policies'] = array(
     'menu_name' => 'menu-footer-nav',
     'link_path' => 'http://az.gov/policies',
@@ -70,7 +70,7 @@ function feature_basic_config_menu_default_menu_links() {
     'weight' => -25,
     'customized' => 1,
   );
-  // Exported menu link: menu-sticky-nav_home:<front>
+  // Exported menu link: menu-sticky-nav_home:<front>.
   $menu_links['menu-sticky-nav_home:<front>'] = array(
     'menu_name' => 'menu-sticky-nav',
     'link_path' => '<front>',
@@ -90,12 +90,12 @@ function feature_basic_config_menu_default_menu_links() {
     'weight' => 0,
     'customized' => 1,
   );
+
   // Translatables
   // Included for use with string extractors like potx.
   t('Home');
   t('Site Map');
   t('Statewide Policies');
-
 
   return $menu_links;
 }

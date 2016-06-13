@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Contains install- and update-related functions for the Webform Encrypt
+ * module.
+ */
+
+/**
+ * Implementation of hook_disable().
+ */
+function webform_encrypt_disable() {
+  drupal_set_message(t('Webform Encrypt has been disabled. However, all submitted data is still encrypted. Please !link to decrypt all data.', array(
+    '!link' => l(t('uninstall the module'), 'admin/modules/uninstall'),
+  )));
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function webform_encrypt_uninstall() {
+  variable_del('webform_encrypt_match_user');
+
+  // Decrypt all encrypted form values.
+  $components = array();
+  $results = db_query('SELECT nid, cid, extra FROM {webform_component}')->fetchAll();
+  foreach ($results as $row) {
+    $components[$row->nid . ':' . $row->cid] = unserialize($row->extra);
+  }
+  $data = db_query('SELECT nid, sid, cid, data FROM {webform_submitted_data}')->fetchAll();
+  foreach ($data as $row) {
+    $key = $row->nid . ':' . $row->cid;
+    if (!empty($components[$key]['encrypt']) && is_array(@unserialize($row->data))) {
+      db_update('webform_submitted_data')
+        ->fields(array(
+          'data' => decrypt($row->data, array('base64' => TRUE)),
+        ))
+        ->condition('nid', $row->nid)
+        ->condition('sid', $row->sid)
+        ->condition('cid', $row->cid)
+        ->execute();
+    }
+  }
+}

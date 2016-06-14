@@ -61,6 +61,7 @@ dependencies[] = node_expanded_menu
 dependencies[] = media_displays
 dependencies[] = media_display_migrate
 dependencies[] = environment_indicator
+dependencies[] = touch_icons
 
 ;pantheon
 dependencies[] = pantheon_api

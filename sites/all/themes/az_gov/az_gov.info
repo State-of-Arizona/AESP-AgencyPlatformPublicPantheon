@@ -68,5 +68,5 @@ settings[menu_block_placement][content] = 1
 settings[menu_block_placement][sidebar_second] = 1
 settings[menu_block_placement][postscript_first] = 1
 
-settings[toggle_touch_icon_plain]= 1;
-settings[default_touch_icon_plain]=1;
+settings[toggle_touch_icon_plain]= 1
+settings[default_touch_icon_plain]=1

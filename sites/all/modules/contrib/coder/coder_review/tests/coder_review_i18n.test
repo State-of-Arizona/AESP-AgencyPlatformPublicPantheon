@@ -4,21 +4,35 @@
  * @file
  * Set of simpletests for the internationalization standards review.
  */
+
 require_once dirname(__FILE__) . '/coder_review_test_case.tinc';
 
-class CoderReviewI18NTest extends CoderReviewTestCase {
+/**
+ * Tests the Coder_review detection of internationalization functionality.
+ */
+class CoderReviewI18nTest extends CoderReviewTestCase {
+
+  /**
+   * Constructs a CoderReviewI18nTest instance.
+   *
+   * @param string|null $id
+   *   (optional) An identifier for this test run. Defaults to NULL.
+   */
   function __construct($id = NULL) {
     parent::__construct('i18n', $id);
   }
 
   public static function getInfo() {
     return array(
-      'name' => t('Coder I18N Tests'),
-      'description' => t('Tests for the coder I18N review.'),
-      'group' => t('Coder'),
+      'name' => 'Coder Review I18N Tests',
+      'description' => 'Tests for the coder I18N review.',
+      'group' => 'CoderReview',
     );
   }
 
+  /**
+   * Tests functionality to detect correct use of spaces in t() function.
+   */
   function testI18NSpaces() {
     $this->assertCoderReviewPass('  $var = t("Your rating");');
     $this->assertCoderReviewFail('  $var = t(" Your rating");');
@@ -51,9 +65,13 @@ class CoderReviewI18NTest extends CoderReviewTestCase {
     $this->assertCoderReviewFail("  \$description[] = t('except !dates ', array('!dates' => implode(', ', \$values)));");
   }
 
+  /**
+   * Tests functionality to detect multiple incorrect use of t() function.
+   */
   function testExtraTs() {
     $this->assertCoderReviewPass("  watchdog('name', 'Your message.');");
     $this->assertCoderReviewFail("  watchdog('name', t('Your message.'));");
     $this->assertCoderReviewFail("  watchdog('name', st('Your message.'));");
   }
+
 }

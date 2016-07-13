@@ -2,8 +2,10 @@
 
 /**
  * @file
- * This include file implements coder functionality to check for
- * Internationalization issues in translation files.
+ * Provides coder_reviews for internationalization translation file issues.
+
+ * This include file implements coder review functionality to check for
+ * Internationalization issues in translation (.po) files.
  */
 
 /**
@@ -11,23 +13,25 @@
  */
 function coder_review_i18n_po_reviews() {
   $argex = '(((\$?)[a-zA-Z_]+((\([^)]*\))|\[[^\]]*\])?)|[0-9]+(\.[0-9]*)?|\'\'|"")';
-  $rules = array(
-    array(
-      '#type' => 'callback',
-      '#filename' => array('po'),
-      '#value' => '_coder_review_translation_callback',
-    ),
+
+  $rules[] = array(
+    '#type' => 'callback',
+    '#filename' => array('po'),
+    '#value' => '_coder_review_translation_callback',
   );
+
   $review = array(
-    '#title' => t('Translation files'),
+    '#title' => 'Translation files',
     '#rules' => $rules,
-    '#description' => t('experimental'),
+    '#description' => 'Checks for .po translation issues, this is somewhat experimental',
+    '#version' => 2,
+    '#image' => 'images/po.png',
   );
   return array('i18n_po' => $review);
 }
 
 /**
- * Define the rule callbacks for style.
+ * Rule callback: Defines how to check for issues in translation files.
  */
 function _coder_review_translation_callback(&$coder_args, $review, $rule, $lines, &$results) {
   $severity_name = _coder_review_severity_name($coder_args, $review, $rule);
@@ -53,39 +57,37 @@ function _coder_review_translation_callback(&$coder_args, $review, $rule, $lines
 
     // Check the translation first capitable letter.
     if (!empty($msgstr)) {
-      if (ctype_upper($msgid[0]) != ctype_upper($msgstr[0])) {
-        $rule = array(
-          '#warning' => "The first letter in the translation text should have the same capitalization as it's original text.",
-        );
-        _coder_review_error($results, $rule, $severity_name, $lineno, $msgstr);
+      $msgid0 = _substr($msgid, 0, 1);
+      $msgstr0 = _substr($msgstr, 0, 1);
+      if (($msgid0 == _strtoupper($msgid0) && $msgstr0 != _strtoupper($msgstr0)) || ($msgid0 == _strtolower($msgid0) && $msgstr0 != _strtolower($msgstr0))) {
+        $tmprule = $rule;
+        $tmprule['#warning'] = "The first letter in the translation text should have the same capitalization as it's original text.";
+        _coder_review_error($results, $tmprule, $severity_name, $lineno, $msgstr);
       }
 
       // Check the translation trailing periods.
-      if (drupal_substr($msgid, -1, 1) == '.' && !drupal_substr($msgstr, -1, 1) != '.') {
-        $rule = array(
-          '#warning' => 'The translation text should end in a period when the same original text also ends in a period.',
-        );
-        _coder_review_error($results, $rule, $severity_name, $lineno, $msgstr);
+      if (_substr($msgid, -1, 1) == '.' && !_substr($msgstr, -1, 1) != '.') {
+        $tmprule = $rule;
+        $tmprule['#warning'] = 'The translation text should end in a period when the same original text also ends in a period.';
+        _coder_review_error($results, $tmprule, $severity_name, $lineno, $msgstr);
       }
 
       // Check punctuation characters.
       if (preg_match_all('/[\.,:;?!]/', $msgid, $matches)) {
         foreach ($matches[0] as $html) {
           if (stripos($msgstr, $html) === FALSE) {
-            $rule = array(
-              '#warning' => 'Punctuation characters (.,:;?!) from the original text should exist in the translation.',
-            );
-            _coder_review_error($results, $rule, $severity_name, $lineno, $msgstr);
+            $tmprule = $rule;
+            $tmprule['#warning'] = 'Punctuation characters (.,:;?!) from the original text should exist in the translation.';
+            _coder_review_error($results, $tmprule, $severity_name, $lineno, $msgstr);
           }
         }
       }
       if (preg_match_all('/[\.,:;?!]/', $msgstr, $matches)) {
         foreach ($matches[0] as $html) {
           if (stripos($msgid, $html) === FALSE) {
-            $rule = array(
-              '#warning' => 'Punctuations characters (.,:;?!) in the translation should also exist in the original text.',
-            );
-            _coder_review_error($results, $rule, $severity_name, $lineno, $msgstr);
+            $tmprule = $rule;
+            $tmprule['#warning'] = 'Punctuations characters (.,:;?!) in the translation should also exist in the original text.';
+            _coder_review_error($results, $tmprule, $severity_name, $lineno, $msgstr);
           }
         }
       }
@@ -94,10 +96,9 @@ function _coder_review_translation_callback(&$coder_args, $review, $rule, $lines
       if (preg_match_all('/<[^>]*>/', $msgid, $matches)) {
         foreach ($matches[0] as $html) {
           if (stripos($msgstr, $html) === FALSE) {
-            $rule = array(
-              '#warning' => 'HTML from the original text should also exist in the translation.'
-            );
-            _coder_review_error($results, $rule, $severity_name, $lineno, $msgstr);
+            $tmprule = $rule;
+            $tmprule['#warning'] = 'HTML from the original text should also exist in the translation.';
+            _coder_review_error($results, $tmprule, $severity_name, $lineno, $msgstr);
           }
         }
       }
@@ -106,10 +107,9 @@ function _coder_review_translation_callback(&$coder_args, $review, $rule, $lines
       if (preg_match_all('/[\!\@\%]\w+/', $msgid, $matches)) {
         foreach ($matches[0] as $placeholder) {
           if (stripos($msgstr, $placeholder) === FALSE) {
-            $rule = array(
-              '#warning' => 'If placeholders like !name, @name or %name exist in the original text, they must also exist in the translation.',
-            );
-            _coder_review_error($results, $rule, $severity_name, $lineno, $msgstr);
+            $tmprule = $rule;
+            $rule['#warning'] = 'If placeholders like !name, @name or %name exist in the original text, they must also exist in the translation.';
+            _coder_review_error($results, $tmprule, $severity_name, $lineno, $msgstr);
           }
         }
       }

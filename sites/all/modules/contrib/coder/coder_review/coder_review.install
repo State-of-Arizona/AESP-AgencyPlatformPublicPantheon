@@ -31,34 +31,26 @@ function coder_review_schema() {
 }
 
 /**
- * Clear the cache.
+ * Implements hook_requirements().
  */
-function coder_review_update_1() {
-  $ret = array();
-  // This update adds a theming function, so we need to clear the entire cache.
-  $ret[] = update_sql("DELETE FROM {cache}");
-  return $ret;
-}
+function coder_review_requirements($phase) {
+  $requirements = array();
 
-/**
- * Create the cache_coder table.
- */
-function coder_review_update_2() {
-  $ret = array();
-  // Create the new coder_review cache table.
-  $schema = drupal_get_schema_unprocessed('system', 'cache');
-  db_create_table($ret, 'cache_coder', $schema);
-  // Clear coder_review entries from the default cache.
-  cache_clear_all('coder:', 'cache', TRUE);
-  return $ret;
-}
+  if ($phase == 'runtime') {
 
-/**
- * Remove deprecated coder_review variables from the 'variable' table.
- */
-function coder_review_update_3() {
-  $ret = array();
-  $ret[] = update_sql("DELETE FROM {variable} WHERE name LIKE 'coder_modules-%' OR name LIKE 'coder_themes-%'");
-  cache_clear_all('variables', 'cache');
-  return $ret;
+    // Load the primary PHP CodeSniffer class.
+    if (!@include_once 'PHP/CodeSniffer.php') {
+      $missing = TRUE;
+    }
+
+    $t = get_t();
+    $requirements['coder_review-sniffer'] = array(
+      'title' => t('Coder Review'),
+      'value' => empty($missing) ? $t('PHP_CodeSniffer installed.') : $t('PHP_CodeSniffer not installed.'),
+      'description' => $t('Coder review uses <a href="!php-url">PHP_CodeSniffer</a> to perform better code review checks; Code_Sniffer is not a requirement, but it is helpful. Use "<a href="!drush-url">drush</a> install-php-code-sniffer" to help install.', array('!php-url' => 'http://pear.php.net/package/PHP_CodeSniffer', '!drush-url' => 'http://drupal.org/project/drush')),
+      'severity' => empty($missing) ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+    );
+  }
+
+  return $requirements;
 }

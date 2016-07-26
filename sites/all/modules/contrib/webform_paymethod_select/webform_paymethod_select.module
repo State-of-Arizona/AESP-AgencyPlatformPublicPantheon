@@ -1,0 +1,514 @@
+<?php
+/**
+ * @file
+ */
+
+use \Drupal\webform_paymethod_select\WebformPaymentContext;
+use \Drupal\webform_paymethod_select\PaymentRecurrentController;
+use \Drupal\webform_paymethod_select\Component;
+use \Drupal\little_helpers\Webform\Submission;
+use \Drupal\little_helpers\Webform\FormState;
+use \Drupal\little_helpers\Webform\Webform;
+
+if (module_exists('form_builder_webform') == TRUE) {
+  require_once dirname(__FILE__) . '/webform_paymethod_select.form_builder.inc';
+  require_once drupal_get_path('module', 'form_builder') . '/includes/form_builder.properties.inc';
+}
+require_once dirname(__FILE__) . '/webform_paymethod_select.line_item.inc';
+require_once dirname(__FILE__) . '/webform_paymethod_select.webform.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function webform_paymethod_select_menu() {
+  $menu['node/%node/webform-continue/%webform_menu_submission/%'] = array(
+    'title callback' => 'node_page_title',
+    'title arguments' => array(1),
+    'page callback' => 'webform_paymethod_select_continue',
+    'page arguments' => array(1, 3, 4),
+    'access callback' => 'webform_paymethod_select_continue_access',
+    'access arguments' => array(1, 3, 4),
+    'load arguments' => array(1),
+    'type' => MENU_CALLBACK,
+    'file' => 'webform_paymethod_select.pages.inc',
+  );
+  return $menu;
+}
+
+function _webform_paymethod_select_reenter_hash($nid, $sid, $page_num) {
+  $key = drupal_get_hash_salt() . __FILE__;
+  return drupal_hmac_base64("$nid:$sid:$page_num", $key);
+}
+
+function webform_paymethod_select_continue_access($node, $submission, $page_num) {
+  if (empty($node->webform) || empty($node->webform['components'])) {
+    return FALSE;
+  }
+  $last_component = end($node->webform['components']);
+  if (((int) $page_num) != $page_num || $page_num < 0 || $page_num > $last_component['page_num']) {
+    return FALSE;
+  }
+  $hash = _webform_paymethod_select_reenter_hash($node->nid, $submission->sid, $page_num);
+  return isset($_GET['hash']) && $_GET['hash'] == $hash;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function webform_paymethod_select_theme() {
+  $options = array(
+    'render element' => 'element',
+    'file' => 'webform_paymethod_select.theme.inc',
+  );
+  $hooks['webform_paymethod_select_component'] = $options;
+  $hooks['webform_paymethod_select_placeholder'] = $options;
+  $hooks['webform_paymethod_select_already_paid'] = $options;
+  return $hooks;
+}
+
+/**
+ * Implements hook_webform_component_info().
+ */
+function webform_paymethod_select_webform_component_info() {
+  $components['paymethod_select'] = array(
+    'label'       => t('Payment Selector'),
+    'description' => t('Provides a selectable list of payment methods for a webform.'),
+    'features'    => array(
+      'default_value' => FALSE,
+      'required'      => TRUE,
+      'csv'           => FALSE,
+    ),
+    'file' => 'webform_paymethod_select.webform.inc',
+  );
+
+  return $components;
+}
+
+
+/**
+ * Payment finish callback function specified as an argument to
+ * the Payment constructor used for the paymethod_select component
+ */
+function webform_paymethod_select_payment_finish(Payment $payment) {
+  $status = $payment->getStatus()->status;
+  if (payment_status_is_or_has_ancestor($status, PAYMENT_STATUS_SUCCESS)) {
+    $payment->contextObj->statusSuccess($payment);
+  }
+  else {
+    $payment->contextObj->redirectToStatus($payment);
+  }
+}
+
+/**
+ * Element validate function for our webform component.
+ */
+function webform_paymethod_select_component_element_validate(array $element, array &$form_state) {
+  $component = $form_state['webform_paymethod_select'][$element['#cid']];
+  $component->validate($element, $form_state);
+}
+
+/**
+ * Helper function to get the current node object
+ */
+function webform_paymethod_select_get_node(&$form = NULL, &$form_state = NULL) {
+  static $node = NULL;
+
+  if ($node == NULL) {
+    if (!empty($form['#node'])) {
+      $node = $form['#node'];
+    }
+    elseif (!empty($form['nid']['#value'])) {
+      $node = node_load($form['nid']['#value']);
+    }
+    elseif (isset($form_state['build_info']) && $form_state['build_info']['form_id'] == 'form_builder_field_configure') {
+      $node = node_load($form_state['build_info']['args'][1]);
+    }
+    elseif (isset($form['#form_builder']) && $form['#form_builder']['form_type'] == 'webform') {
+      $node = node_load($form['#form_builder']['form_id']);
+    }
+    else {
+      if (($node = menu_get_object()) == NULL) {
+        $get = NULL;
+        if (isset($_GET['destination']) == TRUE) {
+          $get = $_GET['destination'];
+        }
+        elseif (isset($_GET['q']) == TRUE) {
+          $get = $_GET['q'];
+        }
+        if (   $get != NULL
+            && is_numeric(($nid = preg_replace('/^.*node\/(\d+)\/.*$/', '$1', $get))) == TRUE) {
+          $node = node_load($nid);
+        }
+      }
+    }
+  }
+  return $node;
+}
+
+/**
+ * Implements hook_form_<BASE form ID>_alter().
+ *
+ * Actual rendering of the paymethod_select components.
+ */
+function webform_paymethod_select_form_webform_client_form_alter(&$form, &$form_state, $form_id) {
+  $webform = new Webform($form['#node']);
+  $components = $webform->componentsByType('paymethod_select');
+  if (count($components)) {
+    // Add our submit handler right before webform_client_form_submit.
+    $position = array_search('webform_client_form_submit', $form['#submit']);
+    if ($position !== FALSE) {
+      array_splice($form['#submit'], $position, 0, 'webform_paymethod_select_form_submit');
+    }
+    else {
+      $form['#submit'][] = 'webform_paymethod_select_form_submit';
+    }
+  }
+
+  // Initialize all component objects in the $form_state if needed.
+  if (!isset($form_state['webform_paymethod_select'])) {
+    for ($i = 1; $i <= $form_state['webform']['page_count']; $i++) {
+      $form_state['webform_paymethod_select']['pages'][$i] = array();
+    }
+    foreach ($components as $cid => $component) {
+      $page_num = $component['page_num'];
+      $form_state['webform_paymethod_select'][$cid] = new Component($component);
+      $form_state['webform_paymethod_select']['pages'][$page_num][] = $cid;
+    }
+  }
+
+  // Render all components for the current page.
+  $page_num = $form_state['webform']['page_num'];
+  foreach ($form_state['webform_paymethod_select']['pages'][$page_num] as $cid) {
+    $componentObj = $form_state['webform_paymethod_select'][$cid];
+    $parents = $componentObj->parents($webform);
+    $element = &drupal_array_get_nested_value($form['submitted'], $parents);
+    $componentObj->render($element, $form, $form_state);
+  }
+
+  // Monkey-patch webform_ajax to allow us to redirect from any page of a
+  // multi-page webform.
+  foreach (array('previous', 'next', 'submit', 'draft') as $button) {
+    if (isset($form['actions'][$button]['#ajax'])) {
+      if ($form['actions'][$button]['#ajax']['callback'] == 'webform_ajax_callback') {
+        $form['actions'][$button]['#ajax']['callback'] = 'webform_paymethod_select_ajax_callback';
+      }
+    }
+  }
+}
+
+/**
+ * Form submit handler added in hook_form_webform_client_form_alter() containing
+ * the paymethod_select webform component
+ *
+ * it's main purpose is to call the execute method of the payment object
+ * (which in turn calls the execute method of the payment method controller)
+ * that also saves the payment into the DB
+ */
+function webform_paymethod_select_form_submit($form, &$form_state) {
+  $button = end($form_state['clicked_button']['#parents']);
+  if ($button != 'next' && $button != 'submit') {
+    return;
+  }
+  $page_num = $form_state['webform']['page_num'];
+  if (!empty($form_state['webform_paymethod_select']['pages'][$page_num])) {
+    $draft = !empty($form_state['save_draft']);
+    $form_state['save_draft'] = TRUE;
+    webform_client_form_submit($form, $form_state);
+    $submission = Submission::load($form['#node']->nid, $form_state['values']['details']['sid']);
+
+    $success = TRUE;
+    $pending = TRUE;
+    foreach ($form_state['webform_paymethod_select']['pages'][$page_num] as $cid) {
+      $component = $form_state['webform_paymethod_select'][$cid];
+      $component->submit($form, $form_state, $submission);
+      $pending = $pending && $component->statusIsOneOf(PAYMENT_STATUS_PENDING, PAYMENT_STATUS_SUCCESS);
+      $success = $success && $component->statusIsOneOf(PAYMENT_STATUS_SUCCESS);
+    }
+    // Restore draft flag when all payments were successful.
+    if ($success) {
+      $form_state['save_draft'] = $draft;
+    }
+    else {
+      // Avoid running webform_client_form_submit().
+      $form_state['webform_completed'] = FALSE;
+      unset($form_state['save_draft']);
+      // Display the same step again instead of another one.
+      // Completely repopulate the $form_state['storage'] if needed.
+      if (!isset($form_state['storage'])) {
+        $form_state['storage']['component_tree'] = $form_state['webform']['component_tree'];
+        $form_state['storage']['page_count'] = $form_state['webform']['page_count'];
+        $form_state['storage']['preview'] = !empty($form_state['webform']['preview']);
+      }
+      $form_state['storage']['page_num'] = $page_num;
+
+      // Redirect instead of rebuild if all non-success-components are pending.
+      if ($pending) {
+        $form_state['rebuild'] = FALSE;
+      }
+      else {
+        $form_state['rebuild'] = TRUE;
+      }
+    }
+  }
+}
+
+/**
+ * AJAX callback for Webform Prev/Next page and Submit buttons.
+ *
+ * Returns the new computed webform, unless it has been completed or redirected.
+ *
+ * This is a copy of @see webform_ajax_callback() that allows us to redirect
+ * the user from any page of a multi-page webform.
+ */
+function webform_paymethod_select_ajax_callback($form, &$form_state) {
+  $output = array();
+  // If user completed his submission, determine what to do.
+  if (!empty($form_state['webform_completed']) && empty($form_state['save_draft'])) {
+    $output = _webform_ajax_callback_completed($form, $form_state);
+  }
+  // The user is redirected by a payment controller.
+  elseif (!empty($form_state['redirect'])) {
+    $output = _webform_ajax_callback_completed($form, $form_state);
+  }
+  // Else, we're just switching page, or saving draft.
+  else {
+    $output = $form;
+  }
+  return $output;
+}
+
+
+/**
+ * Implements hook_webform_submission_presave().
+ *
+ * We don't want to save sensitive payment information.
+ */
+function webform_paymethod_select_webform_submission_presave($node, &$submission) {
+  $webform = new Webform($node);
+  foreach(array_keys($webform->componentsByType('paymethod_select')) as $cid) {
+    $value = &$submission->data[$cid];
+    if (!function_exists('webform_replace_tokens')) {
+      $value = &$value['value'];
+    }
+    if (!is_array($value) || !isset($value[0]) || !is_numeric($value[0]) || count($value) > 1) {
+      $value = array(NULL);
+    }
+  }
+}
+
+/**
+ * Implements hook_FORM_ID_alter().
+ * Implements hook_form_form_builder_field_configure_alter().
+ *
+ * Generate a list of all available components that might be used as amount_source
+ * and make it available for @see webform_paymethod_select_element_process_line_item().
+ */
+function webform_paymethod_select_form_form_builder_field_configure_alter(&$form, &$form_state) {
+  if ($form['#_edit_element']['#form_builder']['element_type'] != 'paymethod_select') {
+    return;
+  }
+
+  $element = &$form['#_edit_element'];
+  $build_info = &$form_state['build_info'];
+  $other_components = NULL;
+  if ($build_info['form_id'] == 'form_builder_field_configure') {
+    $cache = form_builder_cache_load($build_info['args'][0], $build_info['args'][1]);
+    $cache['#depth'] = -1;
+    $felements[] = &$cache;
+    $other_components = array();
+    while (!empty($felements)) {
+      $felem = array_shift($felements);
+      foreach (array_reverse(element_children($felem, TRUE)) as $key) {
+        $felem[$key]['#depth'] = $felem['#depth'] + 1;
+        array_unshift($felements, $felem[$key]);
+      }
+      if (!empty($felem['#form_builder']['element_id']) && $felem['#form_builder']['element_id'] != $element['#form_builder']['element_id']) {
+        $other_components[$felem['#form_builder']['element_id']] = str_repeat('-', $felem['#depth']) . ' ' . $felem['#title'];
+      }
+    }
+  }
+  $form_state['payment_line_item_other_components'] = $other_components;
+}
+
+/**
+ * Implements hook_node_presave().
+ *
+ * Transform form_builder-element_id's in ->amount_component
+ * into webform component IDs.
+ */
+function webform_paymethod_select_node_presave($node) {
+  if (!module_exists('form_builder_webform') || !isset($node->webform) || !isset($node->nid)) {
+    return;
+  }
+  require_once drupal_get_path('module', 'form_builder') . '/includes/form_builder.cache.inc';
+  if (!($cache = form_builder_cache_load('webform', $node->nid))) {
+    return;
+  }
+
+  $webform = new Webform($node);
+  foreach ($webform->componentsByType('paymethod_select') as $component) {
+    // The items sub-array is only present if the component has been edited.
+    if (!isset($component['extra']['line_items']['items'])) {
+      continue;
+    }
+    foreach ($component['extra']['line_items']['items'] as $item) {
+      if (!empty($item->amount_component) && !is_numeric($item->amount_component)) {
+        if (strpos($item->amount_component, 'cid_') === 0) {
+          $item->amount_component = (int) substr($item->amount_component, 4);
+        }
+        elseif (strpos($item->amount_component, 'new_') === 0) {
+          $element = form_builder_get_element($cache, $item->amount_component);
+          $item->amount_component = $element['#webform_component']['cid'];
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Implements hook_form_form_builder_webform_save_form_alter().
+ */
+function webform_paymethod_select_form_form_builder_webform_save_form_alter(&$form, &$form_state) {
+  $form['#attached']['js'][] = 'misc/ajax.js';
+  $form['#attached']['js'][] = 'misc/states.js';
+}
+
+/**
+ * Implements hook_webform_submission_load().
+ *
+ * Add payment objects to their submissions. The objects will be accessible
+ * under $submission->payments[$cid].
+ */
+function webform_paymethod_select_webform_submission_load(&$submissions) {
+  static $recursion = FALSE;
+  if ($recursion) {
+    return;
+  }
+  $recursion = TRUE;
+  $cids = array();
+  $pids = array();
+
+  // Create a list of all stored pids mapped to submissions and cids.
+  foreach ($submissions as $sid => $submission) {
+    $nid = $submission->nid;
+    if (!isset($cids[$nid])) {
+      $webform = new Webform(node_load($nid));
+      $cids[$nid] = array_keys($webform->componentsByType('paymethod_select'));
+    }
+    elseif (!$cids[$nid]) {
+      continue;
+    }
+
+    $submission->payments = array();
+
+    foreach ($cids[$nid] as $cid) {
+      $submission->payments[$cid] = NULL;
+      if (isset($submission->data[$cid]) && !empty($submission->data[$cid]['value'])) {
+        $maybe_pid = $submission->data[$cid]['value'][0];
+        if (($pid = (int) $maybe_pid) == $maybe_pid) {
+          if (!isset($pids[$pid])) {
+            $pids[$pid] = array();
+          }
+          $pids[$pid][$sid][] = $cid;
+        }
+      }
+    }
+  }
+
+  // Load payment objects and add them to the submission objects.
+  $payments = entity_load('payment', array_keys($pids));
+  foreach ($payments as $pid => $payment) {
+    foreach ($pids[$pid] as $sid => $cids) {
+      foreach ($cids as $cid) {
+        $submissions[$sid]->payments[$cid] = $payment;
+      }
+    }
+  }
+  $recursion = FALSE;
+}
+
+/**
+ * Check if a payment controller implements the results data interface.
+ *
+ * We can't use interfaces here since we also want the payment controllers
+ * to work without webform_paymethod_select.
+ * We could use a subclass of the controller in that case but doesn't scale beyond
+ * one optional class since 2^(number of extensions)-1 sub-classes would be needed.
+ * Perhaps we should do a payment_extensions module instead that declares all the
+ * interfaces.
+ *
+ * FTW we use duck-typing instead.
+ *
+ * @param stdclass $object
+ *   Object to check.
+ *
+ * @return bool
+ *   True if the objects implements the webformData interface.
+ */
+function webform_paymethod_select_implements_data_interface($object) {
+  return method_exists($object, 'webformDataInfo') && method_exists($object, 'webformData');
+}
+
+/**
+ * Implements hook_webform_results_download_submission_information_info().
+ */
+/*
+function webform_paymethod_select_webform_results_download_submission_information_info($node, $options) {
+  $webform = new Webform($node);
+  $info = array();
+  $components = $webform->componentsByType('paymethod_select');
+  $single_cid = count($components) == 1;
+  foreach ($components as $cid => $component) {
+    $componentObj = new Component($component);
+    $pfx = $single_cid ? 'payment_' : "payment_{$cid}_";
+    $info[$pfx . 'pid'] = t('Payment ID');
+    $info[$pfx . 'method'] = t('Payment method');
+    $info[$pfx . 'status'] = t('Payment status');
+    foreach ($componentObj->selectedMethods() as $payment_method) {
+      if (webform_paymethod_select_implements_data_interface($payment_method->controller)) {
+        foreach ($payment_method->controller->webformDataInfo() as $key => $data) {
+          $info[$pfx . $key] = $data;
+        }
+      }
+    }
+  }
+  return $info;
+}*/
+
+
+/**
+ * Implements hook_webform_results_download_submission_information_data().
+ */
+/*Patch created to remove this functionality causing errors
+function webform_paymethod_select_webform_results_download_submission_information_data($submission, array $options, $serial_start, $row_count) {
+  $data = array();
+  if (empty($submission->payments)) {
+    return $data;
+  }
+  $single_cid = count($submission->payments) == 1;
+  foreach ($submission->payments as $cid => $payment) {
+    if (!$payment) {
+      continue;
+    }
+    $pfx = $single_cid ? 'payment_' : "payment_{$cid}_";
+    $data[$pfx . 'pid'] = $payment->pid;
+    $data[$pfx . 'method'] = $payment->method->title_specific;
+    $data[$pfx . 'status'] = $payment->getStatus()->status;
+    if (webform_paymethod_select_implements_data_interface($payment->method->controller)) {
+      foreach ($payment->method->controller->webformData($payment) as $key => $v) {
+        $data[$pfx . $key] = $v;
+      }
+    }
+  }
+  return $data;
+}*/
+
+
+/**
+ * Implements hook_payment_context_info().
+ */
+function webform_paymethod_select_payment_context_info() {
+  $classes['webform_paymethod_select'] = '\\Drupal\\webform_paymethod_select\\WebformPaymentContext';
+  return $classes;
+}

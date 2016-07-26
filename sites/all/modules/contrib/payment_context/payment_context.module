@@ -1,0 +1,55 @@
+<?php
+
+use \Drupal\payment_context\PaymentContextInterface;
+use \Drupal\payment_context\NullPaymentContext;
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function payment_context_entity_info_alter(&$info) {
+  $info['payment']['entity class'] = '\\Drupal\\payment_context\\Payment';
+}
+
+/**
+ * Implements hook_payment_context_info().
+ */
+function payment_context_payment_context_info() {
+  $classes['null'] = '\\Drupal\\payment_context\\NullPaymentContext';
+  return $classes;
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function payment_context_entity_presave($payment, $type) {
+  if ($type != 'payment') {
+    return;
+  }
+  if ($payment->contextObj instanceof PaymentContextInterface) {
+    $payment->context_data = $payment->contextObj->toContextData() + $payment->context_data;
+    $payment->context = $payment->contextObj->name();
+  }
+}
+
+/**
+ * Implements hook_entity_load().
+ */
+function payment_context_entity_load($entities, $type) {
+  if ($type != 'payment') {
+    return;
+  }
+
+  $classes = &drupal_static(__FUNCTION__);
+  if (!$classes) {
+    $classes = module_invoke_all('payment_context_info');
+  }
+
+  foreach ($entities as $payment) {
+    if (isset($classes[$payment->context])) {
+      $payment->contextObj = $classes[$payment->context]::fromContextData($payment->context_data);
+    }
+    if (!$payment->contextObj) {
+      $payment->contextObj = new NullPaymentContext();
+    }
+  }
+}

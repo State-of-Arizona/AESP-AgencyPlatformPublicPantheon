@@ -1,0 +1,14 @@
+name = Webform paymethod select test payment method
+description = A dummy payment method specifically designed for testing payment contexts.
+core = 7.x
+
+dependencies[] = payment
+dependencies[] = payment_context
+dependencies[] = psr0
+
+; Information added by Drupal.org packaging script on 2015-09-01
+version = "7.x-1.5"
+core = "7.x"
+project = "webform_paymethod_select"
+datestamp = "1441130206"
+

@@ -1,0 +1,89 @@
+<?php
+/**
+ * @file
+ */
+
+use \Drupal\webform_paymethod_select\WebformPaymentContext;
+
+/**
+ * Implements hook_enable().
+ *
+ * we're setting the module weight in order to have hook_form_alter
+ * being called *after* the same hook from the webform module
+ * we want this to ensure our form submit handler is set *after*
+ * the webform submit handler so our payment methods can redirect
+ * in the payment->execute() call
+ *
+ * @TODO is this really still needed?
+ */
+function webform_paymethod_select_enable() {
+  db_query("UPDATE {system} a INNER JOIN {system} b ON a.name = 'webform_paymethod_select' AND b.name = 'webform' SET a.weight = b.weight + 1");
+}
+
+/**
+ * Update / unify payment context data.
+ */
+function webform_paymethod_select_update_1() {
+  module_enable(array('payment_context'));
+  $last_pid = 0;
+  // Get the first paymethod_select component for each node with payments.
+  // We need them later to map context data without cid.
+  $sql = "SELECT nid, cid FROM {webform_component} WHERE type='paymethod_select' GROUP BY nid ORDER BY cid";
+  $cid_by_nid = db_query($sql)->fetchAssoc();
+
+  // Loop over all stored payments.
+  $sql = 'SELECT pid FROM {payment} WHERE pid>:last_pid LIMIT 100';
+  while ($pids = db_query($sql, array(':last_pid' => $last_pid))->fetchCol()) {
+    foreach ($pids as $pid) {
+      try {
+        $payment = entity_load_single('payment', $pid);
+      }
+      catch (\UnexpectedValueException $e) {
+        watchdog('webform_paymethod_select', 'Cannot load payment: !message', array('!message' => $e->getMessage(), WATCHDOG_WARNING));
+        // Node or submission have vanished. We need to parse the serialized data
+        // to extract the nid and sid because the payment can't be loaded.
+        $cd_string = db_query('SELECT context_data FROM {payment} WHERE pid=:pid', array(':pid' => $pid))->fetchField();
+        $cd = array();
+        if (($p = strpos($cd_string, 's:3:"nid";')) !== FALSE) {
+          $p += 10;
+          $end = strpos($cd_string, ';', $p);
+          $cd['nid'] = (int) unserialize(substr($cd_string, $p, $end - $p + 1));
+        }
+        if (($p = strpos($cd_string, 's:3:"sid";')) !== FALSE) {
+          $p += 10;
+          $end = strpos($cd_string, ';', $p);
+          $cd['sid'] = (int) unserialize(substr($cd_string, $p, $end - $p + 1));
+        }
+        $fields = array();
+        if (isset($cd['nid']) && isset($cd['sid'])) {
+          $cd['cid'] = $cid_by_nid[$cd['nid']];
+          $fields['context'] = 'webform_paymethod_select';
+        }
+        $fields['context_data'] = serialize($cd);
+        db_update('payment')->fields($fields)->condition('pid', $pid)->execute();
+        continue;
+      }
+      $cd = &$payment->context_data;
+      if ($payment->contextObj instanceof WebformPaymentContext) {
+        // Everything is perfect - nothing to do.
+      }
+      // Try to get the context from ->context_data['context'].
+      elseif (!empty($cd['context']) && $cd['context'] instanceof WebformPaymentContext) {
+        $payment->contextObj = $cd['context'];
+        unset($cd['context']);
+        entity_save('payment', $payment);
+      }
+      // Try to get the context data from an array containing nid and sid.
+      elseif (is_array($cd) && !empty($cd['nid']) && !empty($cd['sid'])) {
+        if (!isset($cd['cid']) && isset($cid_by_nid[$cd['nid']])) {
+          $cd['cid'] = $cid_by_nid[$cd['nid']];
+        }
+        if (!empty($cd['cid'])) {
+          $payment->contextObj = WebformPaymentContext::fromContextData($cd);
+          entity_save('payment', $payment);
+        }
+      }
+      $last_pid = $pid;
+    }
+  }
+}

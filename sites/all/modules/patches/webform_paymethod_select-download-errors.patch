@@ -1,0 +1,37 @@
+diff --git a/sites/all/modules/contrib/webform_paymethod_select/webform_paymethod_select.module b/sites/all/modules/contrib/webform_paymethod_select/webform_paymethod_select.module
+index a028e55..32fa6d1 100644
+--- a/sites/all/modules/contrib/webform_paymethod_select/webform_paymethod_select.module
++++ b/sites/all/modules/contrib/webform_paymethod_select/webform_paymethod_select.module
+@@ -453,6 +453,7 @@ function webform_paymethod_select_implements_data_interface($object) {
+ /**
+  * Implements hook_webform_results_download_submission_information_info().
+  */
++/*
+ function webform_paymethod_select_webform_results_download_submission_information_info($node, $options) {
+   $webform = new Webform($node);
+   $info = array();
+@@ -473,11 +474,13 @@ function webform_paymethod_select_webform_results_download_submission_informatio
+     }
+   }
+   return $info;
+-}
++}*/
++
+ 
+ /**
+  * Implements hook_webform_results_download_submission_information_data().
+  */
++/*Patch created to remove this functionality causing errors
+ function webform_paymethod_select_webform_results_download_submission_information_data($submission, array $options, $serial_start, $row_count) {
+   $data = array();
+   if (empty($submission->payments)) {
+@@ -499,7 +502,8 @@ function webform_paymethod_select_webform_results_download_submission_informatio
+     }
+   }
+   return $data;
+-}
++}*/
++
+ 
+ /**
+  * Implements hook_payment_context_info().

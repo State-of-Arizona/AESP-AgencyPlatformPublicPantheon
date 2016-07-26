@@ -1,0 +1,13 @@
+name = Payment Context
+description = Extends payments handling of contexts to be actually usefull.
+core = 7.x
+
+dependencies[] = payment
+dependencies[] = psr0
+
+; Information added by Drupal.org packaging script on 2015-02-18
+version = "7.x-1.0-rc2"
+core = "7.x"
+project = "payment_context"
+datestamp = "1424288583"
+

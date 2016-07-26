@@ -1,0 +1,75 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  webform_component_paymethod_select.webform.inc: n/a
+#  webform_component_paymethod_select.module: n/a
+#  webform_component_paymethod_select.info: n/a
+#
+# Roman Zimmermann <roman@more-onion.com>, 2013.
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2013-09-20 09:53+0000\n"
+"PO-Revision-Date: 2013-09-20 13:28+0200\n"
+"Last-Translator: Roman Zimmermann <roman@more-onion.com>\n"
+"Language-Team: British English <kde-i18n-doc@kde.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en_GB\n"
+"X-Generator: Lokalize 1.5\n"
+
+#: webform_component_paymethod_select.webform.inc:54
+msgid "Payment Description"
+msgstr "Zahlungsbeschreibung"
+
+#: webform_component_paymethod_select.webform.inc:62
+msgid "Available Payment Methods"
+msgstr "Verfügbare Zahlungsmethoden"
+
+#: webform_component_paymethod_select.webform.inc:88;98
+msgid "Available payment methods"
+msgstr "Verfügbare Zahlungsmethoden"
+
+#: webform_component_paymethod_select.webform.inc:100
+msgid ""
+"There are no payment methods available for selection. Please also check "
+"/admin/config/services/payment/method wether you need to define a payment "
+"method."
+msgstr ""
+"Es sind keine Zahlungsmethoden konfiguriert. Unter "
+"/admin/config/services/payment/method können Zahlungsmethoden konfiguriert "
+"werden."
+
+#: webform_component_paymethod_select.module:18
+msgid "Donation Payment Selector"
+msgstr "Wahl der Zahlungsmethoden"
+
+#: webform_component_paymethod_select.module:19
+msgid "Adds a selectable list of payment methods for a donation webform."
+msgstr "Liste von Zahlungsmethoden für ein Spendenformular"
+
+#: webform_component_paymethod_select.module:57;65
+msgid "Donation"
+msgstr "Spende"
+
+#: webform_component_paymethod_select.module:156
+msgid ""
+"There are no payment methods, check the options of this webform element to "
+"enable methods."
+msgstr ""
+"Keine Zahlungsmethoden verfügbar. Bitte prüfen Sie die Einstellungen für "
+"dieses Formular-Element."
+
+#: webform_component_paymethod_select.info:0
+msgid "Webform Component: Donation Payment Method Select"
+msgstr ""
+
+#: webform_component_paymethod_select.info:0
+msgid "Provides a webform component for selecting donation payment methods"
+msgstr ""
+
+

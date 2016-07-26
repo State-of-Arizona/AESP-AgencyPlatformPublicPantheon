@@ -1,0 +1,15 @@
+name = Little helpers
+core = 7.x
+project = little_helpers
+
+dependencies[] = field
+dependencies[] = psr0
+
+
+
+; Information added by Drupal.org packaging script on 2015-10-04
+version = "7.x-1.0-rc2"
+core = "7.x"
+project = "little_helpers"
+datestamp = "1443980046"
+

@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * Form callback for webform_component_paymethod_select.
+ *
+ * This callback has to be set in the payment method definition.
+ */
+function payment_forms_method_form(array &$element, array &$form_state, \Payment $payment = NULL) {
+  if (empty($payment->method->controller->form)) {
+    throw new Exception(t("Payment Method @name has no form set.",
+        array('@name' => $payment->method->title_specific)));
+  } else {
+    return $payment->method->controller->form->getForm($element, $form_state, $payment);
+  }
+}
+
+/**
+ * Callback for form validation.
+ *
+ * The function name is automatically derived from the
+ * form callback name.
+ */
+function payment_forms_method_form_validate(&$element, &$form_state, \Payment $payment = NULL) {
+  $payment_form = &$payment->method->controller->form;
+  $payment_form->validateForm($element, $form_state, $payment);
+}

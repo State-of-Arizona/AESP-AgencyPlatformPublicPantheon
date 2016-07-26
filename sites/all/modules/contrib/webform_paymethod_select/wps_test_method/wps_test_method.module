@@ -1,0 +1,35 @@
+<?php
+
+define('WPS_TEST_PAYMENT_REDIRECT_URL', 'wps-test-redirect/');
+
+/**
+ * Implements hook_menu().
+ */
+function wps_test_method_menu() {
+  $menu[WPS_TEST_PAYMENT_REDIRECT_URL . '%entity_object'] = array(
+    'load arguments' => array('payment'),
+    'page arguments' => array(1),
+    'page callback' => 'wps_test_method_redirect',
+    'type' => MENU_CALLBACK,
+    'access callback' => TRUE,
+  );
+  return $menu;
+}
+
+/**
+ * Page callback: finish payment.
+ */
+function wps_test_method_redirect($payment) {
+  $data = &$payment->context_data['method_data'];
+  $payment->setStatus(new \PaymentStatusItem($data['status']));
+  $payment->finish();
+}
+
+/**
+ * Implements hook_payment_method_controller_info().
+ */
+function wps_test_method_payment_method_controller_info() {
+  return array(
+    '\\Drupal\\wps_test_method\\DummyController',
+  );
+}

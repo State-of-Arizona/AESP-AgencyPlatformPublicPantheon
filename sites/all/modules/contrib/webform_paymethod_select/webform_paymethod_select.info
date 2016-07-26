@@ -1,0 +1,23 @@
+name = Webform Payment Method Select
+description = Provides a webform component for selecting payment methods
+core = 7.x
+
+dependencies[] = little_helpers
+dependencies[] = payment (>1.5)
+dependencies[] = payment_context
+dependencies[] = payment_forms
+dependencies[] = psr0
+dependencies[] = webform
+
+stylesheets[all][] = webform_paymethod_select.css
+
+files[] = webform_paymethod_select.webform.inc
+files[] = webform_paymethod_select.form_builder.inc
+files[] = webform_paymethod_select.line_item.inc
+
+; Information added by Drupal.org packaging script on 2015-09-01
+version = "7.x-1.5"
+core = "7.x"
+project = "webform_paymethod_select"
+datestamp = "1441130206"
+

@@ -1,0 +1,11 @@
+name = PSR0
+description = a PSR-0 and PSR-4 autoloader following the KISS principle with built-in early bootstrap.
+core = 7.x
+php = 5.3
+
+; Information added by Drupal.org packaging script on 2014-10-21
+version = "7.x-1.4"
+core = "7.x"
+project = "psr0"
+datestamp = "1413911030"
+

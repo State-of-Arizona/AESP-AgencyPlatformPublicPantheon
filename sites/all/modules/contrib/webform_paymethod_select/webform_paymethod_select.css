@@ -1,0 +1,34 @@
+/**
+ * @file
+ */
+
+#form-builder fieldset.form-builder-group .payment-line-item-container .form-item {
+  float: left;
+  margin: 0 1em 1em;
+  padding: 0;
+}
+
+form .form-wrapper .payment-add-more {
+  clear: both;
+  display: block;
+  margin: 2em 1em 1em;
+}
+
+form .payment-line-item-container.odd {
+    background-color: #F8F8F8;
+}
+
+#form-builder .form-builder-wrapper fieldset.form-builder-group .payment-line-item-container .webform-paymethod-select-amount-option,
+form .payment-line-item-container .webform-paymethod-select-amount-option {
+  clear: both;
+  float: none;
+  margin-left: 2em;
+}
+
+#form-builder .form-builder-wrapper .form-builder-group .payment-line-item-container .webform-paymethod-select-line-item-description,
+form .payment-line-item-container .webform-paymethod-select-line-item-description {
+  float: none;
+  clear: both;
+  display: block;
+  padding-bottom: 2em;
+}

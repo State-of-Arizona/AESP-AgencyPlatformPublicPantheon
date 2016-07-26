@@ -1,0 +1,10 @@
+name = Arizona Cash Payment Method 
+description = Take Cash or Check payment Method
+core = 7.x
+package = AZ Custom
+version = 1.00
+; NEW LINE 
+
+files[] = cash_payment.classes.inc
+
+dependencies[] = payment  

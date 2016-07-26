@@ -1,0 +1,112 @@
+<?php 
+/** 
+* @file
+* The scs_payment.install provide a schema for scs_payment module.
+* 
+*/ 
+/**
+ * Implements hook_schema().
+ */
+function scs_payment_schema() { 
+  $schema['scs_payment_token'] = array(
+    'fields' => array(
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ), 
+      'pid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'token' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('pid'),
+    'unique keys' => array(
+      'token' => array('token'),
+    ),
+  );
+  
+  $schema['scs_payment_method'] = array(
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'number' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'service' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ), 
+      'gao_batch_agency' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ), 
+      'gao_doc_no_agency' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'pmid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'server' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ),
+      'debug' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ), 
+    ),
+    'primary key' => array('pmid'),
+    'unique keys' => array(
+      'pmid' => array('pmid'),
+    ),
+  );
+  
+  $schema['payment_transaction_details'] = array( 
+    'fields' => array( 
+      'pid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ), 
+      'message' => array(
+        'type' => 'text',
+        'size' => 'big',
+      ),
+      //This is also call Payment Method
+      'pmid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ), 
+    ),
+    'primary key' => array('pid'),
+    'unique keys' => array(
+      'pid' => array('pid'),
+    ),
+  ); 
+  
+  return $schema;
+}
+ 

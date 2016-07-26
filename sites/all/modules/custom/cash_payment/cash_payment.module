@@ -1,0 +1,268 @@
+<?php
+
+/** * @file
+ * The cash_payment.module provide a payment method which admin could use for both cash and check.
+ * 
+ */
+
+  
+/*
+ * Confirmation page that the return URL will send the user too.
+ * The user will not get here unless there is a valid payment entity
+ * and a valid token for security measures.
+ *
+ * @$payment is a Payment Object
+ *
+ */
+function cash_payment_confirmation($payment) { 
+  global $user; 
+   
+  $payment->setStatus(new PaymentStatusItem('payment_status_success')); 
+  $payment->finish(); 
+}
+   
+
+/*
+ * Processes the webform confirmation page.
+ */
+function cash_payment_webform_confirmation($payment) {
+  $node = node_load($payment->context_data['nid']);
+  // @TODO: Need to pass the payment object off to the webform for token replacements.
+  $node->payment = $payment;
+  return _webform_confirmation($node);
+}
+  
+
+ 
+//Need to use this hook below to get the new payment method 
+
+function cash_payment_payment_method_controller_info() {
+  return array(
+    'PaymentMethodCashController', 
+  );
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ */
+function cash_payment_payment_method_insert(PaymentMethod $payment_method) {
+  if ($payment_method->controller->name == 'PaymentMethodCashController') {
+    $values = $payment_method->controller_data += $payment_method->controller->controller_data_defaults;
+    $values['pmid'] = $payment_method->pmid; 
+    drupal_write_record('cash_payment_method', $values);
+  }
+}
+
+
+/**
+ * Implements hook_entity_load().
+ */
+function cash_payment_entity_load(array $entities, $entity_type) { 
+  if ($entity_type == 'payment_method') {
+    $pmids = array();
+    foreach ($entities as $payment_method) {
+      if ($payment_method->controller->name == 'PaymentMethodCashController') {
+        $pmids[] = $payment_method->pmid;
+      }
+    }
+    if ($pmids) {
+      $query = db_select('cash_payment_method')
+        ->fields('cash_payment_method')
+        ->condition('pmid', $pmids);
+      $result = $query->execute();
+      while ($data = $result->fetchAssoc()) {
+        $payment_method = $entities[$data['pmid']];
+        $payment_method->controller_data = (array) $data;
+        $payment_method->controller_data['debug'] = (int) $payment_method->controller_data['debug'];
+        unset($payment_method->controller_data['pmid']);
+      }
+    }
+  }  
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ */
+function cash_payment_payment_method_update(PaymentMethod $payment_method) {
+  if ($payment_method->controller->name == 'PaymentMethodCashController') {
+    $values = $payment_method->controller_data += $payment_method->controller->controller_data_defaults;
+    $values['pmid'] = $payment_method->pmid;
+    drupal_write_record('cash_payment_method', $values, 'pmid');
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ */
+function cash_payment_payment_method_delete($entity) {
+  if ($entity->controller->name == 'PaymentMethodCashController') {
+    db_delete('cash_payment_method')
+      ->condition('pmid', $entity->pmid)
+      ->execute();
+  }
+}
+
+/**
+ * Form build callback: implements
+ * PaymentMethodController::payment_method_configuration_form_elements_callback.
+ */
+function cash_payment_payment_method_configuration_form_elements(array $form, array &$form_state) {
+ 
+  $payment_method = $form_state['payment_method'];
+  $controller = $payment_method->controller;
+  $controller_data = $payment_method->controller_data + $controller->controller_data_defaults;
+  $form = array();
+
+  $form['cash_information'] = array(
+    '#title' => t('Cash Information'),
+    '#type' => 'fieldset',
+  ); 
+  
+  $form['cash_information']['debug'] = array(
+    '#default_value' => $controller_data['debug'], 
+    '#type' => 'checkbox', 
+    '#title' => t('Turn on Debug Mode'),
+  );
+   
+  return $form;
+  
+}
+
+/**
+ * Implements form validate callback for
+ * paypal_payment_ec_payment_method_configuration_form_elements().
+ */
+function cash_payment_payment_method_configuration_form_elements_validate(array $form, array &$form_state) { 
+  $values = drupal_array_get_nested_value($form_state['values'], $form['#parents']);
+  $controller_data = array();
+  $controller_data = &$form_state['payment_method']->controller_data; 
+  $controller_data['debug'] = $values['cash_information']['debug'];  
+}
+ 
+ 
+/**
+ * Implements
+ * PaymentMethodController::payment_configuration_form_elements_callback.
+ * $element is passing over by reference, all other contribute modules is not passing over by reference and that is why none of them work.
+ */
+
+function cash_payment_payment_configuration_form_elements(&$element, array &$form_state) {   
+  $element['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Payment Note'),
+    '#default' => '', 
+  );  
+
+  return $element;
+}
+
+/**
+ * hook_payment_method_controller_info_alter
+ * model after this hook to unset the payment method for anonymous user.
+ */
+function cash_payment_payment_method_controller_info_alter(array &$controllers_info) {
+  // Remvove a payment method controller if the user does not have admin or Cash & check role.
+  global $user; 
+  if (!in_array('administrator', $user->roles) && !in_array('Cash and Check', $user->roles)) {
+    unset($controllers_info['PaymentMethodCashController']);
+  }
+	if (!in_array('anonymous user', $user->roles) && !in_array('View Webform Results', $user->roles)) {
+		if (!in_array('administrator', $user->roles)) {
+			unset($controllers_info['PaymentMethodSCSController']);
+		}
+	}
+}
+
+/**
+ * use form alter to display the payment note in the form submission.
+ */
+function cash_payment_form_webform_client_form_alter(&$form, &$form_state, $form_id) { 
+  //Only go in if the sid is available.
+  if (isset($form['#submission']->sid) && !empty($form['#submission']->sid)) {
+    $nid = $form['#submission']->nid;
+    $sid = $form['#submission']->sid;
+    $pid = cash_payment_get_pid_by_sid($nid, $sid);
+    
+    $query = db_select('payment_transaction_details', 't');
+    $query->join('payment_method', 'm', 'm.pmid = t.pmid');
+    $query->condition('t.pid', $pid, '='); 
+    $query->fields('m', array('title_specific'));
+    $query->fields('t', array('message'));
+
+    $message = $query->execute()->fetchObject(); 
+    //Only add in the note if there is one.
+    if (!empty($message)) {
+      $form['payment_note'] = array(
+        '#title' => t('Payment Note:'),
+        '#type' => 'fieldset',
+      );  
+      $form['payment_note']['message'] = array(
+        '#markup' => 'Paid with Payment Method: ' . $message->title_specific . ' </br></br> ' . $message->message
+      ); 
+    }
+  }
+}
+ 
+/**
+ * Get payment id base on nid and sid
+ */
+function cash_payment_get_pid_by_sid($nid, $sid) { 
+  //get submission 
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $submission = webform_get_submission($nid, $sid); 
+  $pid = '';
+  if (is_array($submission->payments) && count($submission->payments) > 0) {
+    $key = $submission->payments; 
+    $index = key($key); 
+    if (isset($submission->data[$index][0]) && !empty($submission->data[$index][0])) {
+      $pid = $submission->data[$index][0]; 
+      return $pid;
+    } 
+    else {  
+      return '';
+    }
+  }
+}
+
+/**
+ * Validate the form element and set the message for the payment
+ */
+function cash_payment_payment_configuration_form_elements_validate(array $form, array &$form_state) { 
+  $message = drupal_array_get_nested_value($form_state['values'], $form['#parents']);
+  if (isset($message['message']) && !empty($message['message'])) {
+    //Set the Payment Message for Cash Payment Method
+    cash_payment_webform_message($message['message']); 
+  }
+} 
+  
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ * Insert in the payment transaction if the payment is Cash Payment Method. 
+ * This transaction message will show up in webform submission result page
+*/
+function cash_payment_payment_insert(Payment $payment) { 
+  if ($payment->method->controller instanceof PaymentMethodCashController) {
+    $status = end($payment->statuses);
+    $values = array(
+      'pid' => $payment->pid,
+      'message' => cash_payment_webform_message(),
+      'pmid' => $payment->pmid, 
+    ); 
+    drupal_write_record('payment_transaction_details', $values);
+  }
+} 
+ 
+/**
+ * use this function to set the message. Tried to look at other hook to stick this message in but none of them work. 
+ * So this one is the last solution. could go back if have time to see if there are any other hook that could do this job.
+ */
+function cash_payment_webform_message($value = '') {
+  $message = &drupal_static(__FUNCTION__);
+  
+  if (!empty($value)) {
+    $message = $value;
+  }
+  
+  return $message;
+  
+} 

@@ -1,0 +1,13 @@
+name = Arizona Webform Config Helper
+description = This module will alter the webform config and added in the Generate PDF field and Use PDF view field.
+core = 7.x
+package = AZ Custom
+version = 1.00
+; NEW LINE 
+ 
+dependencies[] = payment  
+dependencies[] = feature_views_pdf
+dependencies[] = rules  
+dependencies[] = ultimate_cron
+dependencies[] = webform_rules
+dependencies[] = webform

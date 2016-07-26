@@ -1,0 +1,11 @@
+name = Arizona SCS Payment System 
+description = Credit Card Payment System with Arizona SCS.
+core = 7.x
+package = AZ Custom
+version = 1.00
+; NEW LINE
+
+files[] = includes/scs_payment_xml.class.inc
+files[] = scs_payment.classes.inc
+
+dependencies[] = payment  

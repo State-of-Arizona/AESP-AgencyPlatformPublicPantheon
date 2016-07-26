@@ -1,0 +1,497 @@
+<?php
+/** 
+* @file
+* The file provide extra feature for webform config.
+* 
+*/
+  
+/**
+ * hook_form_alter
+ * Use this hook to insert in the two fields that control the PDF generate file.
+ */
+function webform_config_helper_form_alter(&$form, &$form_state, $form_id) {  
+  
+  if ($form_id == 'webform_configure_form') {  
+    //Select default view
+    $query_default = db_select('webform_extra_pdf_config', 'w'); 
+    $query_default->condition('w.nid', $form['nid']['#value'], '='); 
+    $query_default->fields('w', array('generate_pdf', 'pdf_view_name')); ;
+
+    $default_result = $query_default->execute()->fetchObject();
+    $default_checkbox = '';
+    $default_view = 'select_one';
+    
+    if (isset($default_result->generate_pdf) && $default_result->generate_pdf == 1) {
+      $default_checkbox = $default_result->generate_pdf;
+      $default_view = $default_result->pdf_view_name;
+    } 
+    
+    //populate the available views that using the pdf format
+    $query = db_select('views_display', 'v'); 
+    $query->condition('v.display_plugin', 'pdf', '='); 
+    $query->fields('v', array('id', 'display_title'));  
+    $result = $query->execute();
+    
+    //need to query all the PDF view and put it in here.
+    $options = array(
+      'select_one' => '- Select One -'
+    );
+      
+    while ($view = $result->fetchAssoc()) {
+      $options[$view['id']] = $view['display_title'];
+    }
+    
+    $form['advanced']['generate_pdf'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Generate PDF'),
+      '#default_value' => $default_checkbox,
+      '#description' => t('If enabled then the Generate PDF View Must be Selected.'),
+      '#access' => user_access('administer blocks') || user_access('administer site configuration') || user_access('use panels dashboard'),
+    ); 
+    
+    $form['advanced']['generate_pdf_view_name'] = array(
+      '#type' => 'select',
+      '#options' => $options, 
+      '#default_value' => $default_view,
+      '#states' => array(
+        'visible' => array(
+          ':input[name="generate_pdf"]' => array('checked' => TRUE),
+        ),
+      ), 
+    );
+    
+    //Need to validate the generate checkbox and the dropdown values
+    $form['#validate'][] = 'webform_config_helper_validate';
+
+    // Add the submit handler after the existing Webform submit handler,
+    // but before the second Webform handler. Pop off the first one and add
+    // ours second.
+    $first = array_shift($form['#submit']);
+    array_unshift($form['#submit'], $first, 'webform_config_helper_submit');
+  
+    
+    //This is for Submission reminder
+    $nid =& $form['#node']->nid; 
+    $form['#submit'][] = 'webform_auto_renewal_form_webform_configure_form_submit';
+
+    $existing = _webform_auto_renewal_existing_permissions($nid);
+
+    $form['webform_auto_renew_email'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Auto Email Renewal For Permit'),
+      '#weight' => -1.5,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+    );
+
+    $form['webform_auto_renew_email']['enable'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable auto email renewal'),
+      '#default_value' => !empty($existing) ? 1 : 0,
+    );
+
+    $form['webform_auto_renew_email']['container'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(':input[name="webform_auto_renew_email[enable]"]' => array('checked' => TRUE)),
+      ),
+      '#parents' => array('webform_auto_renew_email'),
+      '#attributes' => array('class' => array('container-inline')),
+    );
+    
+    $form['webform_auto_renew_email']['container_components'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(':input[name="webform_auto_renew_email[enable]"]' => array('checked' => TRUE)),
+      ),
+      '#parents' => array('webform_auto_renew_email'),
+    );
+
+    $form['webform_auto_renew_email']['container']['description'] = array(
+      '#markup' => t('Send email to buyer') . " &nbsp;",
+      '#theme_wrappers' => array('container'),
+    );
+
+    $form['webform_auto_renew_email']['container']['count'] = array(
+      '#type' => 'textfield',
+      '#size' => 8,
+      '#default_value' => isset($existing['count']) ? $existing['count'] : 0,
+    );
+
+    $form['webform_auto_renew_email']['container']['units'] = array(
+      '#type' => 'select',
+      '#options' => _webform_submission_reminder_unit_options(),
+      '#default_value' => isset($existing['units']) ? $existing['units'] : 'months',
+    );
+    
+    $form['webform_auto_renew_email']['container']['description_after'] = array(
+      '#markup' => t('before the expired date. NOTE: Permit last for 1 year') . "&nbsp;",
+      '#theme_wrappers' => array('container'),
+    );
+    
+    $email_components = get_webform_components($nid, 'email');
+    
+    $form['webform_auto_renew_email']['container_components']['webform_email_component'] = array(
+      '#type' => 'select',
+      '#description' => 'Please select the Email Component',
+      '#options' => $email_components, 
+      '#default_value' => isset($existing['webform_email_component']) ? $existing['webform_email_component'] : '',  
+    );
+    
+    $date_components = get_webform_components($nid, 'date');
+    
+    $form['webform_auto_renew_email']['container_components']['webform_expired_date_component'] = array(
+      '#type' => 'select',
+      '#description' => 'Please select the Expired Date Component',
+      '#options' => $date_components, 
+      '#default_value' => isset($existing['webform_expired_date_component']) ? $existing['webform_expired_date_component'] : '',  
+    );
+    
+    //This is for Submission reminder 
+    $form['#submit'][] = 'webform_temp_file_expired_configure_form_submit'; 
+    $temp_file_config = _webform_temp_file_expired_existing_config($nid);
+
+    $form['webform_temp_file'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Permit Temp File Config'),
+      '#weight' => -1.5,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+    );
+
+    $form['webform_temp_file']['enable'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Override Permit Temp File Config'),
+      '#default_value' => !empty($temp_file_config) ? 1 : 0,
+    );
+
+    $form['webform_temp_file']['container'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(':input[name="webform_temp_file[enable]"]' => array('checked' => TRUE)),
+      ),
+      '#parents' => array('webform_temp_file'),
+      '#attributes' => array('class' => array('container-inline')),
+    );
+    
+    $form['webform_temp_file']['container_components'] = array(
+      '#type' => 'container',
+      '#states' => array(
+        'visible' => array(':input[name="webform_temp_file[enable]"]' => array('checked' => TRUE)),
+      ),
+      '#parents' => array('webform_temp_file'),
+    );
+
+    $form['webform_temp_file']['container']['description'] = array(
+      '#markup' => t('Number of minutes before delete Permit temp PDF file') . " &nbsp;",
+      '#theme_wrappers' => array('container'),
+    );
+
+    $form['webform_temp_file']['container']['count'] = array(
+      '#type' => 'textfield',
+      '#size' => 8,
+      '#default_value' => isset($temp_file_config['count']) ? $temp_file_config['count'] : 15,
+    );
+
+    $form['webform_temp_file']['container']['units'] = array(
+      '#type' => 'select',
+      '#options' => array(
+        t('Minutes'),
+      ),
+      '#default_value' => isset($temp_file_config['units']) ? $temp_file_config['units'] : 'Minutes',
+    );
+    
+    $form['webform_temp_file']['container']['description_after'] = array(
+      '#markup' => t('Default setting for temporary files is 15 minutes. This is set to run on the next cron job, so there will be some variation based on cron\'s runtime setting.') . "&nbsp;",
+      '#theme_wrappers' => array('container'),
+    );
+     
+  } 
+}
+
+/**
+ * Custom submit handler for webform_configure_form() for Temp file config.
+ */
+function webform_temp_file_expired_configure_form_submit(&$form, &$form_state) {
+  
+  $nid =& $form['#node']->nid;
+
+  db_delete('webform_temp_file_expired_config')
+    ->condition('nid', $nid)
+    ->execute();
+
+  if ($form_state['values']['webform_temp_file']['enable'] && !empty($form_state['values']['webform_temp_file']['count'])) {
+    $query = db_insert('webform_temp_file_expired_config')
+      ->fields(array('nid', 'count', 'units'))
+      ->values(array(
+        'nid' => $nid,
+        'count' => $form_state['values']['webform_temp_file']['count'],
+        'units' => $form_state['values']['webform_temp_file']['units'],
+      ));
+    $query->execute();
+  } 
+}
+
+
+/**
+ * Fetch the Temp File settings for this webform by node ID.
+ *
+ * @param int $nid
+ *   The node ID of this webform.
+ *
+ * @return array 
+ */
+function _webform_temp_file_expired_existing_config($nid) {
+  $result = db_select('webform_temp_file_expired_config', 'a', array('fetch' => PDO::FETCH_ASSOC))
+    ->fields('a')
+    ->condition('a.nid', $nid)
+    ->execute()
+    ->fetchAll();
+  if (!empty($result[0])) {
+    return $result[0];
+  }
+  return $result;
+}
+
+/**
+ * Set the Unit array which might be able to reuse for other functions
+ */
+
+function _webform_submission_reminder_unit_options() {
+  $options = array( 
+    t('days'), 
+  );
+  return drupal_map_assoc($options);
+}
+
+
+/**
+ * Custom submit handler for webform_configure_form().
+ */
+function webform_auto_renewal_form_webform_configure_form_submit(&$form, &$form_state) {
+  
+  $nid =& $form['#node']->nid;
+
+  db_delete('webform_auto_renew_email')
+    ->condition('nid', $nid)
+    ->execute();
+
+  if ($form_state['values']['webform_auto_renew_email']['enable'] && !empty($form_state['values']['webform_auto_renew_email']['count'])) {
+    $query = db_insert('webform_auto_renew_email')
+      ->fields(array('nid', 'count', 'units', 'webform_email_component', 'webform_expired_date_component'))
+      ->values(array(
+        'nid' => $nid,
+        'count' => $form_state['values']['webform_auto_renew_email']['count'],
+        'units' => $form_state['values']['webform_auto_renew_email']['units'],
+        'webform_email_component' => $form_state['values']['webform_auto_renew_email']['webform_email_component'],
+        'webform_expired_date_component' => $form_state['values']['webform_auto_renew_email']['webform_expired_date_component'],
+      ));
+    $query->execute();
+  } 
+}
+
+/**
+ * Fetch the auto renewal settings for this webform by node ID.
+ *
+ * @param int $nid
+ *   The node ID of this webform.
+ *
+ * @return array
+ *   The auto renewal settings for this webform.
+ */
+function _webform_auto_renewal_existing_permissions($nid) {
+  $result = db_select('webform_auto_renew_email', 'a', array('fetch' => PDO::FETCH_ASSOC))
+    ->fields('a')
+    ->condition('a.nid', $nid)
+    ->execute()
+    ->fetchAll();
+  if (!empty($result[0])) {
+    return $result[0];
+  }
+  return $result;
+}
+
+/**
+ * Get all webform components 
+ */
+function get_webform_components($nid, $field_type) {
+  //populate the available views that using the pdf format
+  $query = db_select('webform_component', 'c'); 
+  $query->condition('c.nid', $nid, '='); 
+  $query->condition('c.type', $field_type, '='); 
+  $query->fields('c');  
+  $result = $query->execute();
+
+  //need to query all the PDF view and put it in here.
+  $options = array();
+
+  while ($view = $result->fetchAssoc()) {
+    $options[$view['cid']] = $view['name'];
+  }
+  
+  return $options;
+}
+ 
+/**
+ * Running renew permit reminder
+ */ 
+function running_renewal_reminder() {
+  // get list of webform nodes to check for deletions, nodes that have webform_auto_delete set
+  $nids = _webform_auto_renewal_email_reminder_existing_nids(); 
+  // loop through the nodes
+  foreach ($nids as $nid) {
+    webform_auto_email_reminder_submissions($nid);
+  } 
+}
+/**
+ * Cron job to delete file within certain set time frame
+ * This one will be use in Ultimate Cron module
+ */ 
+
+function webform_config_helper_cronapi($op, $job = NULL) {
+  return array(
+    'webform_config_helper_renewal_reminder' => array(
+      'title' => 'Renewal Reminder Permit Email',
+      'callback' => 'running_renewal_reminder',
+      'scheduler' => array(
+        'name' => 'simple',
+      ),
+    ), 
+  );
+}
+
+function _webform_auto_renewal_email_reminder_existing_nids() {
+  $nids = array();
+  $result = db_select('webform_auto_renew_email', 'a')
+    ->fields('a', array('nid'))
+    ->execute();
+  foreach ($result as $record) {
+    $nids[] = $record->nid;
+  }
+  return $nids;
+}
+
+function webform_auto_email_reminder_submissions($nid) {
+  global $user;
+  //watchdog('$nid1', '<pre>' . print_r($nid, TRUE) . '</pre>');
+  $node = node_load($nid);
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $settings = _webform_auto_renewal_existing_permissions($nid); 
+  $sids = webform_auto_email_reminder_get_old_sids($nid, $settings); 
+  foreach ($sids as $sid) {
+    //check the already sent database, if it had not yet sent, then send. else skip 
+    $result = db_select('webform_reminder_sent', 'w')
+              ->condition('w.sid', $sid, '=')
+              ->fields('w')
+              ->execute();
+    $num_of_results = 0;
+    $num_of_results = $result->rowCount();
+    
+    if ($num_of_results == 0) {
+      //1 load the submission
+      $submission = webform_get_submission($nid, $sid); 
+      //2 invoke the custom rule to email out base on the submission info 
+      $expired_date_cid = $settings['webform_expired_date_component'];
+      $email_cid = $settings['webform_email_component'];
+      $user_email = $submission->data[$email_cid][0];
+      $expired_date = $submission->data[$expired_date_cid][0]; 
+      $user_email = get_user_submission_email($nid, $sid);
+      rules_invoke_event('renewal_reminder_event', $user, $user_email, $expired_date); 
+      //Need to keep this sid in database after email sent, that way it won't send out another one
+      $values = array();
+      $values['nid'] = $nid;
+      $values['sid'] = $sid;
+      $values['reminder_sent_date'] = time();
+      drupal_write_record('webform_reminder_sent', $values);
+    } 
+  }
+}
+
+function webform_auto_email_reminder_get_old_sids($nid, $settings) { 
+  $sids = array(); 
+  $cid = $settings['webform_expired_date_component'];
+  //Only get the sid that contain the date that about to get renewal
+  //count value might need to convert to int first 
+  $num_days = date('Y-m-d H:i:s', time() + (intval($settings['count']) * 86400));
+  $result = db_select('webform_submitted_data', 's')
+    ->fields('s', array('sid'))
+    ->condition('s.nid', $nid)
+    ->condition('s.cid', $cid) 
+    ->condition('s.data', $num_days, '<')
+    ->execute();
+  foreach ($result as $record) {
+    $sids[] = $record->sid;
+  }
+  watchdog('webform auto email reminder', var_export($sids, TRUE), array(), WATCHDOG_DEBUG);
+  return $sids;
+}
+
+
+/**
+ * Get user email base on webform component
+ * @param type $name
+ * @param type $data
+ * @return type
+ */
+function get_user_submission_email($nid, $sid) {
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $submission = webform_get_submission($nid, $sid);
+  $node = node_load($nid);
+  $email = ''; 
+  $email_component = '';
+  //Need to get email field set by the form config
+  //webform_email_component
+  $query = db_select('webform_auto_renew_email', 'w'); 
+  $query->condition('w.nid', $nid, '='); 
+  $query->fields('w', array('webform_email_component')); 
+  $result = $query->execute()->fetchObject(); 
+  //If the view name had been changed after the form config. then we need to check 
+  if (isset($result->webform_email_component) && $result->webform_email_component != '') {
+    $email_component = $result->webform_email_component;
+    return $submission->data[$email_component]['0'];
+  } 
+  else {
+    foreach ($node->webform['components'] as $key => $component) {
+      if ($component['type'] == 'email') {
+        $email = $submission->data[$key]; 
+        return $email['0'];
+      }
+    }
+  }
+}
+
+
+/**
+ * Need to validate the generate pdf checkbox
+ */
+function webform_config_helper_validate($form, $form_state) {
+  if ($form_state['values']['generate_pdf'] == '1' && $form_state['values']['generate_pdf_view_name'] == 'select_one') {
+    form_error($form['advanced']['generate_pdf_view_name'], t('Select the PDF View that Use to Generate PDF file.'));
+  }
+}
+
+/**
+ * Need to store the generate pdf value into a custom table
+ */
+function webform_config_helper_submit($form, $form_state) { 
+  $values = array();
+  $values['nid'] = $form_state['values']['nid'];
+  $values['generate_pdf'] = $form_state['values']['generate_pdf'];
+  $values['pdf_view_name'] = $form_state['values']['generate_pdf'] == 1 ? $form_state['values']['generate_pdf_view_name'] : '';
+  
+  //Select default view
+  $query_default = db_select('webform_extra_pdf_config', 'w'); 
+  $query_default->condition('w.nid', $form_state['values']['nid'], '='); 
+  $query_default->fields('w', array('generate_pdf', 'pdf_view_name'));  
+  $default_result = $query_default->execute()->fetchObject();
+  //insert if empty
+  if (!isset($default_result->generate_pdf)) {
+    drupal_write_record('webform_extra_pdf_config', $values);
+  } 
+  else { 
+    //else update
+    drupal_write_record('webform_extra_pdf_config', $values, 'nid');
+  }
+}

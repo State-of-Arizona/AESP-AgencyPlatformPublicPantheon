@@ -1,0 +1,86 @@
+<?php
+/** 
+* @file
+* The file provide an embed view for the submission result.
+* 
+*/
+  
+function search_webform_submissions_menu_alter(&$item) { 
+
+  $item['node/%webform_menu/webform-search'] = array(
+    'title' => 'Search',
+    'page callback' => 'search_webform_submissions_search_webforms',
+    'page arguments' => array(1),
+    'access callback' => 'search_webform_submissions_search_webforms_access',
+    'access arguments' => array(1),
+    'weight' => -1,
+    'type' => MENU_LOCAL_TASK,
+  );
+	
+}
+
+function search_webform_submissions_search_webforms_access($node) {
+  // check to see if view name exsits, if it doesn't remove menu link access.
+  $nid = $node->nid;
+  $view_name = 'block_' . $nid;
+  $view = views_get_view('scs_search_webform_results');
+  if ($view && $view->access($view_name)) {
+    return webform_results_access($node);
+  }
+  return FALSE;
+}
+
+function search_webform_submissions_search_webforms($node) {
+  //get nid from node then use to call views_embed_view  
+  $nid = $node->nid;
+  $results = views_embed_view('scs_search_webform_results', 'block_' . $nid, $nid);
+  if ($results) {
+    return $results;
+  }
+  //if results don't exsist set error and redirect
+  drupal_set_message(t('No search view has been created for this webform.'), 'error');
+  drupal_goto('node/' . $node->nid . '/webform-results');
+}
+
+
+
+function search_webform_submissions_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'webform_results_download_form') {
+    //dpm($form['components']);
+    $excludes = array('webform_ip_address', 'webform_uid', 'webform_completed_time', 
+    'webform_time', 'webform_modified_time', 'webform_draft' , 'webform_serial', 'webform_username', '12', '15', '2', '6', '16', '13', '3');
+    
+    foreach ($form['components']['#default_value'] as $cid => $component) {
+      if (in_array($component, $excludes)) {
+        unset($form['components']['#default_value'][$cid]);
+      }
+    }
+    
+    
+    //dpm($form['components']);
+  }
+}
+
+function search_webform_submissions_theme_registry_alter(&$theme_registry) {
+  // Override the default webform_submission_page.tpl.php with our own.
+  //dpm($theme_registry);
+  if (isset($theme_registry['webform_submission_page'])) {
+    $module_path = drupal_get_path('module', 'search_webform_submissions');
+    $theme_registry['webform_submission_page']['theme path'] = $module_path;
+    $theme_registry['webform_submission_page']['template'] = $module_path . '/templates/webform-submission-page';
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

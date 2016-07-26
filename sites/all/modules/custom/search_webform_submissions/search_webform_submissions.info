@@ -1,0 +1,5 @@
+name = Search Webform Submissions
+description = Adds logic to views for searching SCS webform submissons
+core = 7.x
+package = AZ Custom
+version = 1.00

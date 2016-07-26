@@ -1,0 +1,126 @@
+<?php 
+/** 
+* @file
+* The file provide a set of schema for the module.
+* 
+*/
+  
+/**
+ * Implements hook_schema().
+ */
+function webform_config_helper_schema() {  
+  
+  $schema['webform_extra_pdf_config'] = array(
+    'fields' => array( 
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ), 
+      'generate_pdf' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ), 
+      'pdf_view_name' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ), 
+    ),
+    'primary key' => array('nid'),
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+  );
+  
+  $schema['webform_auto_renew_email'] = array(
+    'description' => 'Table for storing webform auto renewal settings per webform.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'count' => array(
+        'description' => 'The number of units to wait until email out a submission',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'units' => array(
+        'description' => 'The units of time: hours, days, months, years, etc.',
+        'type' => 'text',
+        'size' => 'small',
+        'not null' => TRUE,
+      ), 
+      'webform_email_component' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),  
+      'webform_expired_date_component' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ), 
+    ),
+    'primary key' => array('nid'),
+  );
+
+  $schema['webform_temp_file_expired_config'] = array(
+    'description' => 'Table for storing webform file token settings per webform.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'count' => array(
+        'description' => 'The number of units to wait until removed PDF file',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'units' => array(
+        'description' => 'The units of time: hours, days, months, years, etc.',
+        'type' => 'text',
+        'size' => 'small',
+        'not null' => TRUE,
+      ),  
+    ),
+    'primary key' => array('nid'),
+  );
+  
+  
+  //table to keep track of sid that email had been sent
+  $schema['webform_reminder_sent'] = array(
+    'description' => 'Table for storing webform auto renewal settings per webform.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'submission id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ), 
+      'reminder_sent_date' => array(
+        'description' => 'reminder sent date',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ), 
+    ),
+    'primary key' => array('sid'),
+  );
+  return $schema;
+}
+ 

@@ -1,0 +1,34 @@
+<?php 
+ 
+/**
+ * Implements hook_schema().
+ */
+function feature_views_pdf_schema() { 
+    
+  $schema['permit_files'] = array( 
+    'fields' => array( 
+      'sid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ), 
+      'fid' => array(
+        'type' => 'text',
+        'size' => 'big',
+      ),
+      //will use this created time to delete the file after 900 seconds
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ), 
+    ),
+    'primary key' => array('sid'),
+    'unique keys' => array(
+      'sid' => array('sid'),
+    ),
+  ); 
+  
+  return $schema;
+}
+ 

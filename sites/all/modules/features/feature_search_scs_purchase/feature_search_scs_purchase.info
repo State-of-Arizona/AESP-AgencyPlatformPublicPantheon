@@ -1,0 +1,17 @@
+name = Feature Search SCS Purchase
+description = For searching SCS webform submissons view, new roles for AZL & module dependencies
+core = 7.x
+package = Payment Features
+version = 7.x-1.1
+dependencies[] = css_injector
+dependencies[] = features
+dependencies[] = search_webform_submissions
+dependencies[] = views
+features[css_injector_rule][] = Padding Region Content - Form submit buttons
+features[css_injector_rule][] = table responsive webform results page
+features[ctools][] = css_injector:css_injector_rules:1
+features[ctools][] = views:views_default:3.0
+features[features_api][] = api:2
+features[user_role][] = Cash and Check
+features[user_role][] = View Webform Results
+features[views_view][] = scs_search_webform_results

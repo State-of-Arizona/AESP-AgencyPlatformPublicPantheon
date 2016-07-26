@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Feature Search SCS Purchase feature.
+ */
+
+include_once 'feature_search_scs_purchase.features.inc';

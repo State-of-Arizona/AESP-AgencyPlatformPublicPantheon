@@ -1,0 +1,385 @@
+<?php
+/**
+ * @file
+ * Code for the Feature Views PDF feature.
+ */
+
+include_once 'feature_views_pdf.features.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function feature_views_pdf_menu() {
+  $items = array();
+ 
+  $items['node/%node/submission/%/view_permit_pdf'] = array(
+    'title' => 'View PDF File',
+    'page callback' => 'view_permit_pdf',
+    'page arguments' => array(1, 3),
+    'access callback' => 'webform_results_access',
+    'access arguments' => array(1), 
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['node/%node/submission/%/resend_permit_pdf'] = array(
+    'title' => 'Resend PDF File',
+    'page callback' => 'resend_permit_pdf',
+    'page arguments' => array(1, 3),
+    'access callback' => 'webform_results_access',
+    'access arguments' => array(1), 
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+
+function feature_views_pdf_payment_pre_finish(Payment $payment) {
+  //use this hook for the pdf  
+  //check to see if the webform do need to generate PDF or not
+  $nid = $payment->context_data['nid'];
+  $query = db_select('webform_extra_pdf_config', 'w'); 
+  $query->condition('w.nid', $nid, '='); 
+  $query->fields('w', array('generate_pdf', 'pdf_view_name')); 
+  $result = $query->execute()->fetchObject();
+  
+  //If the view name had been changed after the form config. then we need to check 
+  if (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == TRUE) { 
+    //Only Generate the PDF If Payment is Success.  
+    if (payment_status_is_or_has_ancestor($payment->getStatus()->status, PAYMENT_STATUS_SUCCESS)) { 
+      drupal_set_message(t('Your payment was successfully completed.'), 'status', FALSE);
+      $url = generate_pdf($result->pdf_view_name, $payment->context_data['sid']); 
+      $public_url = file_create_url($url->uri); 
+    }
+    else {
+      drupal_set_message(t('Your payment was not completed.'));
+    } 
+  } 
+  elseif (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == FALSE) {
+    drupal_set_message(t('Please Check the View Name Under Webform settings: node/' . check_plain($nid) . '/webform/configure'), $type = 'error', $repeat = FALSE);
+    watchdog('Error', 'Please check the webform view setting under node/' . $nid . '/webform/configure ');
+  }
+}
+ 
+/**
+ * Pass over the view name and sid, then this function will return the private url link
+ */
+function generate_pdf($view_display_name, $sid) {
+  global $base_url;
+  // Fetch our pdf for the passed in data.
+  $destination = 'public://payments/';
+  if (file_prepare_directory($destination, FILE_CREATE_DIRECTORY)) {
+    $uri = $destination . md5(date('Y-m-d')) . '-' . $sid . '.pdf';
+    //Replace the 'azl_permit' view name with the custom one you created
+    $view = views_get_view('azl_permit');
+    // Setup our arguments for the PDF display.
+    $view->set_arguments(array($sid));
+
+    // Try to get pdf display
+    if ($view->set_display($view_display_name)) {
+      $view->pre_execute();
+      foreach ($view->display as $id => $display) {
+        if ($display->display_plugin == 'pdf' && isset($display->handler)) {
+          // Remove old file just in case
+          // Add our file to the files table and return our saved file object.
+          $files = file_load_multiple(array(), array('uri' => $uri));
+          foreach ($files as $file) {
+            //dsm($file);
+            file_delete($file, TRUE);
+          }
+
+          if ($display->handler->execute($uri, 'F') !== FALSE) {
+            // Add our file to the files table and return our saved file object.
+            $file = new stdClass();
+            $file->fid = NULL;
+            $file->uri = $uri;
+            $file->filename = file_munge_filename(drupal_basename($uri), 'pdf');
+            $file->filemime = file_get_mimetype($file->uri);
+            $file->uid = 1;
+            $file->status = FILE_STATUS_PERMANENT;
+            $file->display = 1;
+            // Return our File 
+            $file_result = file_save($file);
+            //write to database for record and will be deleted in 900 seconds
+            insert_file_permit($sid, $file_result->fid);
+            return $file_result;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Save this file into record so we could use it to delete after certain amount of time
+ */
+function insert_file_permit($sid, $fid) {
+  $values = array(
+    'sid' => $sid,
+    'fid' => $fid,
+    'created' => REQUEST_TIME, 
+  ); 
+  
+  //Select permit_files
+  $query_permit_files = db_select('permit_files', 'p'); 
+  $query_permit_files->condition('p.sid', $sid, '='); 
+  $query_permit_files->fields('p', array('sid', 'fid'));  
+  $permit_files_result = $query_permit_files->execute()->fetchObject();
+  //insert if empty, don't do the update because the update will change the expired time.
+  if (!isset($permit_files_result->sid)) {
+    $values = array(
+      'sid' => $sid,
+      'fid' => $fid,
+      'created' => REQUEST_TIME, 
+    ); 
+    drupal_write_record('permit_files', $values); 
+  } 
+  else { 
+    $values = array(
+      'sid' => $sid,
+      'fid' => $fid, 
+    ); 
+    //else update but not the time
+    drupal_write_record('permit_files', $values, 'sid'); 
+  }  
+}
+
+/**
+ * Cron job to delete file within certain set time frame
+ * This one will be use in Ultimate Cron module
+ */ 
+
+function feature_views_pdf_cronapi($op, $job = NULL) {
+  return array(
+    'feature_views_pdf_delete_expired_files' => array(
+      'title' => 'Delete Permit File After Time Expired',
+      'callback' => 'delete_expired_files',
+      'scheduler' => array(
+        'name' => 'simple',
+      ),
+    ),
+  );
+}
+
+/**
+ * Check and delete file after time expire is over.
+ */
+function delete_expired_files() { 
+  
+  $query = "select * from {permit_files}";
+  $results = db_query($query);
+  foreach ($results as $file) { 
+    if (isset($file->fid) && !empty($file->fid)) {
+      $default = 900;
+      //use Sid to get Nid
+      $nid = get_nid_by_sid($file->sid);
+      
+      //Get the time setting for nid
+      $nid_config = _webform_temp_file_expired_existing_config($nid);
+      if (isset($nid_config['count']) && $nid_config['count'] != '0') {
+        //get minute * 60 seconds
+        $default = (int)($nid_config['count']) * 60;
+      } 
+      
+      if ((int)($file->created) < (REQUEST_TIME - (int)($default))) { 
+        $delete_file = file_load($file->fid); 
+        //just a double check to make sure 
+        if (is_object($delete_file)) {
+          file_delete($delete_file);
+          //Delete from the permit_file table too
+          $delete_record = db_delete('permit_files')
+            ->condition('sid', $file->sid)
+            ->execute();
+        }
+      } 
+    }
+  }
+}
+
+/**
+ * use SID to get the NID
+ */
+function get_nid_by_sid($sid) {
+  $query = db_select('webform_submissions', 's')
+          ->condition('s.sid', $sid, '=') 
+          ->fields('s', array('nid'));
+
+  $nid = $query->execute()->fetchObject();  
+  if (isset($nid->nid) && $nid->nid != '') {
+    return $nid->nid;
+  } 
+  else {
+    return '';
+  }
+}
+ 
+/**
+ * Provide a list of actions that can be executed on a submission.
+ *
+ * Some actions are displayed in the list of submissions such as edit, view, and
+ * delete. All other actions are displayed only when viewing the submission.
+ * These additional actions may be specified in this hook. Examples included
+ * directly in the Webform module include PDF, print, and resend e-mails. Other
+ * modules may extend this list by using this hook.
+ *
+ * @param $node
+ *   The Webform node on which this submission was made.
+ * @param $submission
+ *   The Webform submission on which the actions may be performed.
+ */
+function feature_views_pdf_webform_submission_actions($node, $submission) {
+  $actions= array(); 
+  //Need to check if the nid have the View Generate or not 
+  //check to see if the webform do need to generate PDF or not
+  $nid = $submission->nid;
+  $query = db_select('webform_extra_pdf_config', 'w'); 
+  $query->condition('w.nid', $nid, '='); 
+  $query->fields('w', array('generate_pdf', 'pdf_view_name'));  
+  $result = $query->execute()->fetchObject(); 
+  
+  //also need to check to see if the submission is in Draft mode or not, Draft mode mean payment is not completed.
+  $query_submission = db_select('webform_submissions', 'w'); 
+  $query_submission->condition('w.sid', $submission->sid, '='); 
+  $query_submission->fields('w', array('is_draft'));  
+  $submission_result = $query_submission->execute()->fetchObject(); 
+  
+  if (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == TRUE && webform_results_access($node) && $submission_result->is_draft == '0') { 
+    $actions['view_permit_pdf'] = array(
+      'title' => t('View Permit PDF'),
+      'attributes' => array('class' => array('permit-link'), 'id' => 'view-permit', 'target' => '_blank'),
+      'href' => 'node/' . $node->nid . '/submission/' . $submission->sid . '/view_permit_pdf', 
+    );  
+    $actions['resend_permit_pdf'] = array(
+      'title' => t('Resend Permit to Buyer'),
+      'attributes' => array('class' => array('permit-link'), 'id' => 'resend-permit'),
+      'href' => 'node/' . $node->nid . '/submission/' . $submission->sid . '/resend_permit_pdf',
+      'query' => drupal_get_destination(), 
+    );
+  } 
+  elseif (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == FALSE && webform_results_access($node)) {
+    drupal_set_message(t('Please Check the View Name Under Webform settings: node/' . check_plain($nid) . '/webform/configure'), $type = 'error', $repeat = FALSE);
+    watchdog('Error', 'Please check the webform view setting under node/' . $nid . '/webform/configure ');
+  }
+  return $actions;
+} 
+
+function view_permit_pdf($node, $sid) {
+  $nid = $node->nid;
+  //Need to check if the nid have the View Generate or not 
+  //check to see if the webform do need to generate PDF or not
+  $query = db_select('webform_extra_pdf_config', 'w'); 
+  $query->condition('w.nid', $nid, '='); 
+  $query->fields('w', array('generate_pdf', 'pdf_view_name'));  
+  $result = $query->execute()->fetchObject(); 
+  
+  //If the view name had been changed after the form config. then we need to check  
+  if (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == TRUE) { 
+    $view_name = $result->pdf_view_name; 
+    $uri = generate_pdf($view_name, $sid); 
+    $url = file_create_url($uri->uri);
+    //give it 4 seconds for the file to generate. might need to have a check after three second, if not finish then wait for more
+    sleep(4);  
+    drupal_goto($url);  
+  } 
+  elseif (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == FALSE) {
+    drupal_set_message(t('Please Check the View Name Under Webform settings: node/' . check_plain($nid) . '/webform/configure'), $type = 'error', $repeat = FALSE);
+    watchdog('Error', 'Please check the webform view setting under node/' . $nid . '/webform/configure ');
+  }
+}
+
+
+function resend_permit_pdf($node, $sid) { 
+  $nid = $node->nid;
+  //Need to check if the nid have the View Generate or not 
+  //check to see if the webform do need to generate PDF or not
+  $query = db_select('webform_extra_pdf_config', 'w'); 
+  $query->condition('w.nid', $nid, '='); 
+  $query->fields('w', array('generate_pdf', 'pdf_view_name'));  
+  $result = $query->execute()->fetchObject(); 
+  
+  //If the view name had been changed after the form config. then we need to check 
+  if (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == TRUE) { 
+    $view_name = $result->pdf_view_name;   
+    //Generate pdf before invoke the Rule
+    //$uri = generate_pdf($view_name, $sid); 
+    //$url = file_create_url($uri->uri);  
+    
+    $pid = get_pid_by_sid($nid, $sid);
+    //get payment 
+    $payment = entity_load_single('payment', $pid);
+    //Invoke the Rule we created manually to send out html email with attachment
+    rules_invoke_event('payment_status_change', $payment, 'PAYMENT_STATUS_SUCCESS');
+    $message = 'Permit had been resent to buyer with Payment ID: ' . check_plain($pid);
+    drupal_set_message(check_plain($message)); 
+    $destination = drupal_get_destination();
+    drupal_goto($destination);
+  } 
+  elseif (isset($result->generate_pdf) && $result->generate_pdf == '1' && check_view_name($result->pdf_view_name) == FALSE) {
+    drupal_set_message(t('Please Check the View Name Under Webform settings: node/' . check_plain($nid) . '/webform/configure'), $type = 'error', $repeat = FALSE);
+    watchdog('Error', 'Please check the webform view setting under node/' . $nid . '/webform/configure ');
+  }
+}
+
+/**
+ * Get payment id base on nid and sid
+ */
+function get_pid_by_sid($nid, $sid) { 
+  //get submission 
+  module_load_include('inc', 'webform', 'includes/webform.submissions');
+  $submission = webform_get_submission($nid, $sid); 
+  $pid = '';
+  if (is_array($submission->payments) && count($submission->payments) > 0) {
+    $key = $submission->payments; 
+    $index = key($key); 
+    if (isset($submission->data[$index][0]) && !empty($submission->data[$index][0])) {
+      $pid = $submission->data[$index][0]; 
+      return $pid;
+    } 
+    else {
+      drupal_set_message(t('Resent Permit Payment Object Error'), 'error'); 
+      return '';
+    }
+  }
+}
+/**
+ * Check to see if the view we set in the webform config still have the same name 
+ * just incase the view name had been changed.
+ */
+function check_view_name($view_name) { 
+  //If the view name had been changed after the form config. then we need to check
+  $query_view_name = db_select('views_display', 'v'); 
+  $query_view_name->condition('v.display_plugin', 'pdf', '='); 
+  $query_view_name->condition('v.id', $view_name, '=');
+  $query_view_name->fields('v', array('id'));  
+  $result_view_name = $query_view_name->execute()->fetchObject();  
+  if (isset($result_view_name->id) && $result_view_name->id == $view_name) { 
+    return TRUE; 
+  } 
+  else {
+    return FALSE;
+  } 
+}
+
+/**
+ * Keep the old pid for each submission prevent user update on payment status.
+ */
+function feature_views_pdf_webform_submission_presave($node, &$submission) {
+  //check for old pid in database webform_submitted_data  
+  foreach ($node->webform['cids'] as $key => $component) {
+    if ($key == 'payment') {
+      //only look for payment component cid if existed
+      $payment_cid = $node->webform['cids'][$key];  
+      //query for old pid 
+      $query = db_select('webform_submitted_data', 'w'); 
+      $query->condition('w.nid', $submission->nid, '='); 
+      $query->condition('w.cid', $payment_cid, '=');
+      $query->condition('w.sid', $submission->sid, '=');
+      $query->fields('w', array('data'));  
+      $result = $query->execute()->fetchObject(); 
+      //reassign to the payment component the initial pid value.
+      if (isset($result->data) && $result->data != '') { 
+        $submission->data[$payment_cid]['0'] = $result->data;
+      } 
+    }
+  } 
+}

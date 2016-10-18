@@ -58,7 +58,10 @@ class PaymentMethodSCSController extends PaymentMethodController {
     $submission = webform_get_submission($payment->context_data['nid'], $payment->context_data['sid']);
     $node = node_load($payment->context_data['nid']); 
     $product_code_value = '';
-    
+		/*dsm('payment');
+		dsm($payment);
+    dsm('submission');
+		dsm($submission);*/
     foreach ($node->webform['cids'] as $key => $component) {
       if ($key == 'product_code') {
         $product_code_cid = $node->webform['cids'][$key];   
@@ -178,23 +181,20 @@ class PaymentMethodSCSController extends PaymentMethodController {
     $xml->push('lineItemList'); 
     // Start Foreach 
     foreach ($payment->line_items as $product) {
+    	dsm($product);
       $xml->push('lineItem');
-      if ($product->amount_source == 'fixed') {
-        $xml->element('gaoProductCode', $product->product_code_id);
-        $xml->element('function', $product->product_function);
-        $xml->element('revenueSource', $product->product_revenue_source);
-        $xml->element('AccountingTemplate', (isset($product->product_accounting_template) ? $product->product_accounting_template : ''));
-        $xml->element('departmentRevenueSource', (isset($product->product_department_revenue_source) ? $product->product_department_revenue_source : ''));
-      } else {
-        $xml->element('gaoProductCode', $payment->product_code);
-        $xml->element('function', $payment->function);
-        $xml->element('revenueSource', $payment->revenue_source);
-        $xml->element('AccountingTemplate', $payment->product_accounting_template);
-        $xml->element('departmentRevenueSource', $payment->product_department_revenue_source);
-      }
+      $xml->element('gaoProductCode', $product->product_code_id);
+      $xml->element('function', $product->product_function);
+      $xml->element('revenueSource', $product->product_revenue_source);
+      $xml->element('AccountingTemplate', (isset($product->product_accounting_template) ? $product->product_accounting_template : ''));
+      $xml->element('departmentRevenueSource', (isset($product->product_department_revenue_source) ? $product->product_department_revenue_source : ''));
       $xml->element('gaoAgency', $payment->method->controller_data['gao_doc_no_agency']);
       $xml->element('gaoDescription', htmlentities($product->description));  
-      $xml->element('amount', ($product->amount)*100);
+			if($product->amount == 0) {
+				$xml->element('amount', '0');
+			} else {
+      	$xml->element('amount', ($product->amount)*100);
+      }
       $xml->element('quantity', $product->quantity);
       $xml->pop();  
     }
@@ -203,7 +203,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
 
     // Close Transaction
     $xml->pop();
-
+		dsm($xml);
     return $xml->getXML();
   }
 

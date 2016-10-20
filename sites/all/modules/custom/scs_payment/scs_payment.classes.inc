@@ -181,7 +181,6 @@ class PaymentMethodSCSController extends PaymentMethodController {
     $xml->push('lineItemList'); 
     // Start Foreach 
     foreach ($payment->line_items as $product) {
-    	dsm($product);
       $xml->push('lineItem');
       $xml->element('gaoProductCode', $product->product_code_id);
       $xml->element('function', $product->product_function);
@@ -203,7 +202,6 @@ class PaymentMethodSCSController extends PaymentMethodController {
 
     // Close Transaction
     $xml->pop();
-		dsm($xml);
     return $xml->getXML();
   }
 

@@ -1,5 +1,6 @@
 api_version: 1
 drush_version: 8
+php_version: 5.6
 
 workflows:
   deploy:

@@ -1,57 +1,96 @@
 <?php
 /**
  * @file
- * form-element-label.func.php
+ * Stub file for bootstrap_form_element_label().
  */
 
 /**
- * Overrides theme_form_element_label().
+ * Returns HTML for a form element label and required marker.
+ *
+ * Form element labels include the #title and a #required marker. The label is
+ * associated with the element itself by the element #id. Labels may appear
+ * before or after elements, depending on theme_form_element() and
+ * #title_display.
+ *
+ * This function will not be called for elements with no labels, depending on
+ * #title_display. For elements that have an empty #title and are not required,
+ * this function will output no label (''). For required elements that have an
+ * empty #title, this will output the required marker alone within the label.
+ * The label will use the #id to associate the marker with the field that is
+ * required. That is especially important for screenreader users to know
+ * which field is required.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - element: An associative array containing the properties of the element.
+ *     Properties used: #required, #title, #id, #value, #description.
+ *
+ * @return string
+ *   The constructed HTML.
+ *
+ * @see theme_form_element_label()
+ *
+ * @ingroup theme_functions
  */
 function bootstrap_form_element_label(&$variables) {
   $element = $variables['element'];
 
-  // This is also used in the installer, pre-database setup.
-  $t = get_t();
+  // Extract variables.
+  $output = '';
 
-  // Determine if certain things should skip for checkbox or radio elements.
-  $skip = (isset($element['#type']) && ('checkbox' === $element['#type'] || 'radio' === $element['#type']));
+  $title = !empty($element['#title']) ? filter_xss_admin($element['#title']) : '';
 
-  // If title and required marker are both empty, output no label.
-  if ((!isset($element['#title']) || $element['#title'] === '' && !$skip) && empty($element['#required'])) {
+  // Only show the required marker if there is an actual title to display.
+  if ($title && $required = !empty($element['#required']) ? theme('form_required_marker', array('element' => $element)) : '') {
+    $title .= ' ' . $required;
+  }
+
+  $display = isset($element['#title_display']) ? $element['#title_display'] : 'before';
+  $type = !empty($element['#type']) ? $element['#type'] : FALSE;
+  $checkbox = $type && $type === 'checkbox';
+  $radio = $type && $type === 'radio';
+
+  // Immediately return if the element is not a checkbox or radio and there is
+  // no label to be rendered.
+  if (!$checkbox && !$radio && ($display === 'none' || !$title)) {
     return '';
   }
 
-  // If the element is required, a required marker is appended to the label.
-  $required = !empty($element['#required']) ? theme('form_required_marker', array('element' => $element)) : '';
+  // Retrieve the label attributes array.
+  $attributes = &_bootstrap_get_attributes($element, 'label_attributes');
 
-  $title = filter_xss_admin($element['#title']);
-
-  $attributes = array();
-
-  // Style the label as class option to display inline with the element.
-  if ($element['#title_display'] == 'after' && !$skip) {
-    $attributes['class'][] = $element['#type'];
-  }
-  // Show label only to screen readers to avoid disruption in visual flows.
-  elseif ($element['#title_display'] == 'invisible') {
-    $attributes['class'][] = 'element-invisible';
-  }
-
-  // Add generic Bootstrap identifier class.
+  // Add Bootstrap label class.
   $attributes['class'][] = 'control-label';
 
+  // Add the necessary 'for' attribute if the element ID exists.
   if (!empty($element['#id'])) {
     $attributes['for'] = $element['#id'];
   }
 
-  // Insert radio and checkboxes inside label elements.
-  $output = '';
-  if (isset($variables['#children'])) {
-    $output .= $variables['#children'];
+  // Checkboxes and radios must construct the label differently.
+  if ($checkbox || $radio) {
+    if ($display === 'before') {
+      $output .= $title;
+    }
+    elseif ($display === 'none' || $display === 'invisible') {
+      $output .= '<span class="element-invisible">' . $title . '</span>';
+    }
+    // Inject the rendered checkbox or radio element inside the label.
+    if (!empty($element['#children'])) {
+      $output .= $element['#children'];
+    }
+    if ($display === 'after') {
+      $output .= $title;
+    }
   }
-
-  // Append label.
-  $output .= $t('!title !required', array('!title' => $title, '!required' => $required));
+  // Otherwise, just render the title as the label.
+  else {
+    // Show label only to screen readers to avoid disruption in visual flows.
+    if ($display === 'invisible') {
+      $attributes['class'][] = 'element-invisible';
+    }
+    $output .= $title;
+  }
 
   // The leading whitespace helps visually separate fields from inline labels.
   return ' <label' . drupal_attributes($attributes) . '>' . $output . "</label>\n";

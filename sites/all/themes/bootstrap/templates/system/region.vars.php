@@ -1,11 +1,17 @@
 <?php
 /**
  * @file
- * region.vars.php
+ * Stub file for "region" theme hook [pre]process functions.
  */
 
 /**
- * Implements hook_preprocess_region().
+ * Pre-processes variables for the "region" theme hook.
+ *
+ * See template for list of available variables.
+ *
+ * @see region.tpl.php
+ *
+ * @ingroup theme_preprocess
  */
 function bootstrap_preprocess_region(&$variables) {
   global $theme;
@@ -31,7 +37,7 @@ function bootstrap_preprocess_region(&$variables) {
   static $wells;
   if (!isset($wells)) {
     foreach (system_region_list($theme) as $name => $title) {
-      $wells[$name] = theme_get_setting('bootstrap_region_well-' . $name);
+      $wells[$name] = bootstrap_setting('region_well-' . $name);
     }
   }
   if (!empty($wells[$region])) {

@@ -7,46 +7,68 @@
  */
 
 /**
+ * Include #pre_render callbacks for elements.
+ */
+bootstrap_include('bootstrap', 'includes/pre-render.inc');
+
+/**
+ * Include #process callbacks for elements.
+ */
+bootstrap_include('bootstrap', 'includes/process.inc');
+
+/**
  * Implements hook_css_alter().
  */
 function bootstrap_css_alter(&$css) {
   $theme_path = drupal_get_path('theme', 'bootstrap');
+
   // Exclude specified CSS files from theme.
   $excludes = bootstrap_get_theme_info(NULL, 'exclude][css');
-  // Add Bootstrap CDN file and overrides.
-  $bootstrap_cdn = theme_get_setting('bootstrap_cdn');
-  if ($bootstrap_cdn) {
-    // Add CDN.
-    if (theme_get_setting('bootstrap_bootswatch')) {
-      $cdn = '//netdna.bootstrapcdn.com/bootswatch/' . $bootstrap_cdn  . '/' . theme_get_setting('bootstrap_bootswatch') . '/bootstrap.min.css';
+
+  // Add CDN assets, if any.
+  $provider = bootstrap_setting('cdn_provider');
+  if ($cdn_assets = bootstrap_get_cdn_assets('css', $provider)) {
+    $cdn_weight = -2.99;
+    foreach ($cdn_assets as $cdn_asset) {
+      $cdn_weight += .01;
+      $css[$cdn_asset] = array(
+        'data' => $cdn_asset,
+        'type' => 'external',
+        'every_page' => TRUE,
+        'media' => 'all',
+        'preprocess' => FALSE,
+        'group' => CSS_THEME,
+        'browsers' => array('IE' => TRUE, '!IE' => TRUE),
+        'weight' => $cdn_weight,
+      );
     }
-    else {
-      $cdn = '//netdna.bootstrapcdn.com/bootstrap/' . $bootstrap_cdn  . '/css/bootstrap.min.css';
+
+    // Add a specific version and theme CSS overrides file.
+    $version = bootstrap_setting('cdn_' . $provider . '_version');
+    if (!$version) {
+      $version = BOOTSTRAP_VERSION;
     }
-    $css[$cdn] = array(
-      'data' => $cdn,
-      'type' => 'external',
-      'every_page' => TRUE,
-      'media' => 'all',
-      'preprocess' => FALSE,
-      'group' => CSS_THEME,
-      'browsers' => array('IE' => TRUE, '!IE' => TRUE),
-      'weight' => -2,
-    );
-    // Add overrides.
-    $override = $theme_path . '/css/overrides.css';
-    $css[$override] = array(
-      'data' => $override,
-      'type' => 'file',
-      'every_page' => TRUE,
-      'media' => 'all',
-      'preprocess' => TRUE,
-      'group' => CSS_THEME,
-      'browsers' => array('IE' => TRUE, '!IE' => TRUE),
-      'weight' => -1,
-    );
+    $theme = bootstrap_setting('cdn_' . $provider . '_theme');
+    if (!$theme) {
+      $theme = 'bootstrap';
+    }
+    $theme = $theme === 'bootstrap' || $theme === 'bootstrap_theme' ? '' : "-$theme";
+    $overrides = "$theme_path/css/$version/overrides$theme.min.css";
+    if (file_exists($overrides)) {
+      $css[$overrides] = array(
+        'data' => $overrides,
+        'type' => 'file',
+        'every_page' => TRUE,
+        'media' => 'all',
+        'preprocess' => TRUE,
+        'group' => CSS_THEME,
+        'browsers' => array('IE' => TRUE, '!IE' => TRUE),
+        'weight' => -1,
+      );
+    }
   }
   if (!empty($excludes)) {
+    $excludes = array_merge($excludes, str_replace('.css', '-rtl.css', $excludes));
     $css = array_diff_key($css, drupal_map_assoc($excludes));
   }
 }
@@ -54,49 +76,127 @@ function bootstrap_css_alter(&$css) {
 /**
  * Implements hook_element_info_alter().
  */
-function bootstrap_element_info_alter(&$elements) {
-  foreach ($elements as &$element) {
-    // Setup a default "icon" variable. This allows #icon to be passed
-    // to every template and theme function.
-    // @see https://drupal.org/node/2219965
-    if (!isset($element['#icon'])) {
-      $element['#icon'] = NULL;
-    }
-    if (!isset($element['#icon_position'])) {
-      $element['#icon_position'] = 'before';
+function bootstrap_element_info_alter(&$info) {
+  global $theme_key;
+
+  $cid = "theme_registry:bootstrap:element_info";
+  $cached = array();
+  if (($cache = cache_get($cid)) && !empty($cache->data)) {
+    $cached = $cache->data;
+  }
+
+  $themes = _bootstrap_get_base_themes($theme_key, TRUE);
+  foreach ($themes as $theme) {
+    if (!isset($cached[$theme])) {
+      $cached[$theme] = array();
+      foreach (array_keys($info) as $type) {
+        $element = array();
+
+        // Replace fieldset theme implementations with bootstrap_panel.
+        if (!empty($info[$type]['#theme']) && $info[$type]['#theme'] === 'fieldset') {
+          $element['#bootstrap_replace']['#theme'] = 'bootstrap_panel';
+        }
+        if (!empty($info[$type]['#theme_wrappers']) && array_search('fieldset', $info[$type]['#theme_wrappers']) !== FALSE) {
+          $element['#bootstrap_replace']['#theme_wrappers']['fieldset'] = 'bootstrap_panel';
+        }
+
+        // Setup a default "icon" variable. This allows #icon to be passed
+        // to every template and theme function.
+        // @see https://drupal.org/node/2219965
+        $element['#icon'] = NULL;
+        $element['#icon_position'] = 'before';
+
+        $properties = array(
+          '#process' => array(
+            'form_process',
+            'form_process_' . $type,
+          ),
+          '#pre_render' => array(
+            'pre_render',
+            'pre_render_' . $type,
+          ),
+        );
+        foreach ($properties as $property => $callbacks) {
+          foreach ($callbacks as $callback) {
+            $function = $theme . '_' . $callback;
+            if (function_exists($function)) {
+              // Replace direct core function correlation.
+              if (!empty($info[$type][$property]) && array_search($callback, $info[$type][$property]) !== FALSE) {
+                $element['#bootstrap_replace'][$property][$callback] = $function;
+              }
+              // Check for a "form_" prefix instead (for #pre_render).
+              elseif (!empty($info[$type][$property]) && array_search('form_' . $callback, $info[$type][$property]) !== FALSE) {
+                $element['#bootstrap_replace'][$property]['form_' . $callback] = $function;
+              }
+              // Otherwise, append the function.
+              else {
+                $element[$property][] = $function;
+              }
+            }
+          }
+        }
+        $cached[$theme][$type] = $element;
+      }
+
+      // Cache the element information.
+      cache_set($cid, $cached);
     }
 
-    // Pre-render input elements.
-    if (!empty($element['#input'])) {
-      $element['#pre_render'][] = '_bootstrap_pre_render_input';
-    }
+    // Merge in each theme's cached element info.
+    $info = _bootstrap_element_info_array_merge($info, $cached[$theme]);
+  }
+}
 
-    // Process all form elements.
-    $element['#process'][] = '_bootstrap_process_element';
-
-    // Process fieldset elements.
-    if (!empty($element['#type']) && $element['#type'] === 'fieldset') {
-      $element['#theme_wrappers'] = array('bootstrap_panel');
+/**
+ * Merges the cached element information into the runtime array.
+ *
+ * @param array $info
+ *   The element info array to merge data into.
+ * @param array $cached
+ *   The cached element info data array to merge from.
+ *
+ * @return array
+ *   The altered element info array.
+ */
+function _bootstrap_element_info_array_merge($info, $cached) {
+  foreach ($cached as $type => $element) {
+    $replacement_data = isset($element['#bootstrap_replace']) ? $element['#bootstrap_replace'] : array();
+    unset($element['#bootstrap_replace']);
+    foreach ($element as $property => $data) {
+      if (is_array($data)) {
+        if (!isset($info[$type][$property])) {
+          $info[$type][$property] = array();
+        }
+        // Append the values if not already in the array.
+        foreach ($data as $key => $value) {
+          if (!in_array($value, $info[$type][$property])) {
+            $info[$type][$property][] = $value;
+          }
+        }
+      }
+      // Create the property, if not already set.
+      elseif (!isset($info[$type][$property])) {
+        $info[$type][$property] = $data;
+      }
     }
-    if (!empty($element['#theme']) && $element['#theme'] === 'fieldset') {
-      $element['#theme'] = 'bootstrap_panel';
-    }
-
-    // Replace #process function.
-    if (!empty($element['#process']) && ($key = array_search('form_process_fieldset', $element['#process'])) !== FALSE) {
-      $element['#process'][$key] = '_bootstrap_process_fieldset';
-    }
-
-    // Replace #pre_render function.
-    if (!empty($element['#pre_render']) && ($key = array_search('form_pre_render_fieldset', $element['#pre_render'])) !== FALSE) {
-      $element['#pre_render'][$key] = '_bootstrap_pre_render_fieldset';
-    }
-
-    // Replace #theme_wrappers function.
-    if (!empty($element['#theme_wrappers']) && ($key = array_search('fieldset', $element['#theme_wrappers'])) !== FALSE) {
-      $element['#theme_wrappers'][$key] = 'bootstrap_panel';
+    // Replace data, if necessary.
+    foreach ($replacement_data as $property => $data) {
+      if (is_array($data)) {
+        foreach ($data as $needle => $replacement) {
+          if (!empty($info[$type][$property]) && ($key = array_search($needle, $info[$type][$property])) !== FALSE) {
+            $info[$type][$property][$key] = $replacement;
+          }
+        }
+      }
+      // Replace the property with the new data.
+      else {
+        $info[$type][$property] = $data;
+      }
     }
   }
+
+  // Return the altered element info array.
+  return $info;
 }
 
 /**
@@ -106,9 +206,26 @@ function bootstrap_form_alter(array &$form, array &$form_state = array(), $form_
   if ($form_id) {
     switch ($form_id) {
       case 'system_theme_settings':
-        // Include the settings form here.
-        bootstrap_include('bootstrap', 'includes/settings.inc');
-        _bootstrap_settings_form($form, $form_state);
+        // Create vertical tabs for global settings (provided by core or other
+        // contrib modules).
+        if (!isset($form['global'])) {
+          $form['global'] = array(
+            '#type' => 'vertical_tabs',
+            '#weight' => -9,
+          );
+          if (!empty($form_state['build_info']['args'][0])) {
+            $form['global']['#prefix'] = '<h2><small>' . t('Override Global Settings') . '</small></h2>';
+          }
+        }
+
+        // Iterate over all child elements and check to see if they should be
+        // moved in the global vertical tabs.
+        $global_children = element_children($form);
+        foreach ($global_children as $child) {
+          if (isset($form[$child]['#type']) && $form[$child]['#type'] === 'fieldset' && !isset($form[$child]['#group'])) {
+            $form[$child]['#group'] = 'global';
+          }
+        }
         break;
 
       case 'search_form':
@@ -221,42 +338,44 @@ function bootstrap_js_alter(&$js) {
 
   // Add Bootstrap settings.
   $js['settings']['data'][]['bootstrap'] = array(
-    'anchorsFix' => theme_get_setting('bootstrap_anchors_fix'),
-    'anchorsSmoothScrolling' => theme_get_setting('bootstrap_anchors_smooth_scrolling'),
-    'formHasError' => (int) theme_get_setting('bootstrap_forms_has_error_value_toggle'),
-    'popoverEnabled' => theme_get_setting('bootstrap_popover_enabled'),
+    'anchorsFix' => bootstrap_setting('anchors_fix'),
+    'anchorsSmoothScrolling' => bootstrap_setting('anchors_smooth_scrolling'),
+    'formHasError' => (int) bootstrap_setting('forms_has_error_value_toggle'),
+    'popoverEnabled' => bootstrap_setting('popover_enabled'),
     'popoverOptions' => array(
-      'animation' => (int) theme_get_setting('bootstrap_popover_animation'),
-      'html' => (int) theme_get_setting('bootstrap_popover_html'),
-      'placement' => theme_get_setting('bootstrap_popover_placement'),
-      'selector' => theme_get_setting('bootstrap_popover_selector'),
-      'trigger' => implode(' ', array_filter(array_values((array) theme_get_setting('bootstrap_popover_trigger')))),
-      'triggerAutoclose' => (int) theme_get_setting('bootstrap_popover_trigger_autoclose'),
-      'title' => theme_get_setting('bootstrap_popover_title'),
-      'content' => theme_get_setting('bootstrap_popover_content'),
-      'delay' => (int) theme_get_setting('bootstrap_popover_delay'),
-      'container' => theme_get_setting('bootstrap_popover_container'),
+      'animation' => (int) bootstrap_setting('popover_animation'),
+      'html' => (int) bootstrap_setting('popover_html'),
+      'placement' => bootstrap_setting('popover_placement'),
+      'selector' => bootstrap_setting('popover_selector'),
+      'trigger' => implode(' ', array_filter(array_values((array) bootstrap_setting('popover_trigger')))),
+      'triggerAutoclose' => (int) bootstrap_setting('popover_trigger_autoclose'),
+      'title' => bootstrap_setting('popover_title'),
+      'content' => bootstrap_setting('popover_content'),
+      'delay' => (int) bootstrap_setting('popover_delay'),
+      'container' => bootstrap_setting('popover_container'),
     ),
-    'tooltipEnabled' => theme_get_setting('bootstrap_tooltip_enabled'),
+    'tooltipEnabled' => bootstrap_setting('tooltip_enabled'),
     'tooltipOptions' => array(
-      'animation' => (int) theme_get_setting('bootstrap_tooltip_animation'),
-      'html' => (int) theme_get_setting('bootstrap_tooltip_html'),
-      'placement' => theme_get_setting('bootstrap_tooltip_placement'),
-      'selector' => theme_get_setting('bootstrap_tooltip_selector'),
-      'trigger' => implode(' ', array_filter(array_values((array) theme_get_setting('bootstrap_tooltip_trigger')))),
-      'delay' => (int) theme_get_setting('bootstrap_tooltip_delay'),
-      'container' => theme_get_setting('bootstrap_tooltip_container'),
+      'animation' => (int) bootstrap_setting('tooltip_animation'),
+      'html' => (int) bootstrap_setting('tooltip_html'),
+      'placement' => bootstrap_setting('tooltip_placement'),
+      'selector' => bootstrap_setting('tooltip_selector'),
+      'trigger' => implode(' ', array_filter(array_values((array) bootstrap_setting('tooltip_trigger')))),
+      'delay' => (int) bootstrap_setting('tooltip_delay'),
+      'container' => bootstrap_setting('tooltip_container'),
     ),
   );
 
-  // Add CDN.
-  if (theme_get_setting('bootstrap_cdn')) {
-    $cdn = '//netdna.bootstrapcdn.com/bootstrap/' . theme_get_setting('bootstrap_cdn')  . '/js/bootstrap.min.js';
-    $js[$cdn] = drupal_js_defaults();
-    $js[$cdn]['data'] = $cdn;
-    $js[$cdn]['type'] = 'external';
-    $js[$cdn]['every_page'] = TRUE;
-    $js[$cdn]['weight'] = -100;
+  // Add CDN assets, if any.
+  if ($cdn_assets = bootstrap_get_cdn_assets('js')) {
+    $cdn_weight = -99.99;
+    foreach ($cdn_assets as $cdn_asset) {
+      $cdn_weight += .01;
+      $js[$cdn_asset] = drupal_js_defaults($cdn_asset);
+      $js[$cdn_asset]['type'] = 'external';
+      $js[$cdn_asset]['every_page'] = TRUE;
+      $js[$cdn_asset]['weight'] = $cdn_weight;
+    }
   }
 }
 
@@ -264,7 +383,7 @@ function bootstrap_js_alter(&$js) {
  * Implements hook_icon_bundle_list_alter().
  */
 function bootstrap_icon_bundle_list_alter(&$build, $bundle) {
-  if (theme_get_setting('bootstrap_tooltip_enabled')) {
+  if (bootstrap_setting('tooltip_enabled')) {
     foreach ($build as &$icon) {
       $icon['#attributes']['data-toggle'] = 'tooltip';
       $icon['#attributes']['data-placement'] = 'bottom';
@@ -299,13 +418,3 @@ function bootstrap_menu_local_tasks_alter(&$data, &$router_item, $root_path) {
 function bootstrap_js_callback_filter_xss_alter(array &$allowed_tags = array()) {
   $allowed_tags[] = 'button';
 }
-
-/**
- * Include #pre_render callbacks for elements.
- */
-bootstrap_include('bootstrap', 'includes/pre-render.inc');
-
-/**
- * Include #process callbacks for elements.
- */
-bootstrap_include('bootstrap', 'includes/process.inc');

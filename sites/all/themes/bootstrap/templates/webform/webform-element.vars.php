@@ -1,11 +1,17 @@
 <?php
 /**
  * @file
- * webform-element.func.php
+ * Stub file for "webform_element" theme hook [pre]process functions.
  */
 
 /**
- * Implements hook_preprocess_webform_element().
+ * Pre-processes variables for the "webform_element" theme hook.
+ *
+ * See theme function for list of available variables.
+ *
+ * @see theme_webform_element()
+ *
+ * @ingroup theme_preprocess
  */
 function bootstrap_preprocess_webform_element(&$variables) {
   $element = $variables['element'];
@@ -16,13 +22,13 @@ function bootstrap_preprocess_webform_element(&$variables) {
 
   // See http://getbootstrap.com/css/#forms-controls.
   if (isset($element['#type'])) {
-    if ($element['#type'] == "radio") {
+    if ($element['#type'] === 'radio') {
       $wrapper_attributes['class'][] = 'radio';
     }
-    elseif ($element['#type'] == "checkbox") {
+    elseif ($element['#type'] === 'checkbox') {
       $wrapper_attributes['class'][] = 'checkbox';
     }
-    else {
+    elseif ($element['#type'] !== 'hidden') {
       $wrapper_attributes['class'][] = 'form-group';
     }
   }

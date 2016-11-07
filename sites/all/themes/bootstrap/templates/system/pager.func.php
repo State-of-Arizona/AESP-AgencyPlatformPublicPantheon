@@ -1,11 +1,31 @@
 <?php
 /**
  * @file
- * pager.func.php
+ * Stub file for bootstrap_pager().
  */
 
 /**
- * Overrides theme_pager().
+ * Returns HTML for a query pager.
+ *
+ * Menu callbacks that display paged query results should call theme('pager') to
+ * retrieve a pager control so that users can view other results. Format a list
+ * of nearby pages with additional query results.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - tags: An array of labels for the controls in the pager.
+ *   - element: An optional integer to distinguish between multiple pagers on
+ *     one page.
+ *   - parameters: An associative array of query string parameters to append to
+ *     the pager links.
+ *   - quantity: The number of pages in the list.
+ *
+ * @return string
+ *   The constructed HTML.
+ *
+ * @see theme_pager()
+ *
+ * @ingroup theme_functions
  */
 function bootstrap_pager($variables) {
   $output = "";
@@ -43,12 +63,11 @@ function bootstrap_pager($variables) {
   }
 
   // End of generation loop preparation.
-  // @todo add theme setting for this.
-  // $li_first = theme('pager_first', array(
-  // 'text' => (isset($tags[0]) ? $tags[0] : t('first')),
-  // 'element' => $element,
-  // 'parameters' => $parameters,
-  // ));
+  $li_first = theme('pager_first', array(
+    'text' => (isset($tags[0]) ? $tags[0] : t('first')),
+    'element' => $element,
+    'parameters' => $parameters,
+  ));
   $li_previous = theme('pager_previous', array(
     'text' => (isset($tags[1]) ? $tags[1] : t('previous')),
     'element' => $element,
@@ -61,20 +80,20 @@ function bootstrap_pager($variables) {
     'interval' => 1,
     'parameters' => $parameters,
   ));
-  // @todo add theme setting for this.
-  // $li_last = theme('pager_last', array(
-  // 'text' => (isset($tags[4]) ? $tags[4] : t('last')),
-  // 'element' => $element,
-  // 'parameters' => $parameters,
-  // ));
+  $li_last = theme('pager_last', array(
+    'text' => (isset($tags[4]) ? $tags[4] : t('last')),
+    'element' => $element,
+    'parameters' => $parameters,
+  ));
   if ($pager_total[$element] > 1) {
-    // @todo add theme setting for this.
-    // if ($li_first) {
-    // $items[] = array(
-    // 'class' => array('pager-first'),
-    // 'data' => $li_first,
-    // );
-    // }
+
+    // Only show "first" link if set on components' theme setting
+    if ($li_first && bootstrap_setting('pager_first_and_last')) {
+      $items[] = array(
+        'class' => array('pager-first'),
+        'data' => $li_first,
+      );
+    }
     if ($li_previous) {
       $items[] = array(
         'class' => array('prev'),
@@ -134,17 +153,30 @@ function bootstrap_pager($variables) {
         'data' => $li_next,
       );
     }
-    // @todo add theme setting for this.
-    // if ($li_last) {
-    // $items[] = array(
-    // 'class' => array('pager-last'),
-    // 'data' => $li_last,
-    // );
-    // }
-    return '<div class="text-center">' . theme('item_list', array(
-      'items' => $items,
-      'attributes' => array('class' => array('pagination')),
-    )) . '</div>';
+    // // Only show "last" link if set on components' theme setting
+    if ($li_last && bootstrap_setting('pager_first_and_last')) {
+      $items[] = array(
+       'class' => array('pager-last'),
+       'data' => $li_last,
+      );
+    }
+
+    $build = array(
+      '#theme_wrappers' => array('container__pager'),
+      '#attributes' => array(
+        'class' => array(
+          'text-center',
+        ),
+      ),
+      'pager' => array(
+        '#theme' => 'item_list',
+        '#items' => $items,
+        '#attributes' => array(
+          'class' => array('pagination'),
+        ),
+      ),
+    );
+    return drupal_render($build);
   }
   return $output;
 }

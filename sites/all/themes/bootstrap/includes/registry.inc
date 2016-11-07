@@ -1,49 +1,46 @@
 <?php
 /**
  * @file
- * registry.inc
- *
- * Contains functions specific to the theme registry.
- *
- * Theme templates, functions and [pre]process functions
- *
- * Theme templates `*.tpl.php` files are stored in the `theme` directory along
- * with `*.func.php` and `*.vars.php` files. The latter two are enabled by the
- * processing done below. The three types of files can be grouped into
- * sub-directories. It is recommended that they are grouped by the modules
- * they originate from. Theme specific hooks should be grouped into a folder
- * named after the theme itself.
- *
- * Function files store theme functions directly related to the base file name
- * or "theme hook", e.g., the hook `foo` would be handled by the
- * `bootstrap_foo` function which would be stored in `foo.func.php`.
- *
- * Variable files store [pre]process functions directly related to the base file
- * file name or "theme hook" just like function files, e.g., the hook `html`
- * would be handled by the `bootstrap_preprocess_html` function held in
- * `html.vars.php`.
- *
- * The two types of files mentioned above should also be used to hold support
- * functions specific to the theming hook. When a function grows too large,
- * break it apart so it becomes more readable.
- *
- * Files specific to theme functions and variable preprocess/process functions
- * should be named after the `base hook`. Alternate hooks (or what is commonly
- * referred to as "hook suggestions") should not be used for the file name.
- * The contents of the theme functions file can hold hook suggestions and it
- * should be related to the base hook. [Pre]process functions for hook
- * suggestions are not supported in Drupal 7 core.
- *
- * Using these files will keep the `template.php` file clean and grouping them
- * within the theme directory will make it easier to discover and work with.
- *
- * Warning: Using core's `path_to_theme` function may return the wrong path.
- * It is difficult to predict to begin with and the changes made here will
- * make it even worse. Use `drupal_get_path('theme', 'bootstrap')` instead.
+ * List of functions used to alter the theme registry in Bootstrap based themes.
  */
 
 /**
- * Stub implementation for hook_theme().
+ * @addtogroup registry
+ * @{
+ */
+
+// Define additional sub-groups for creating lists for all the theme files.
+/**
+ * @defgroup theme_functions Theme Functions (.func.php)
+ *
+ * List of theme functions used in the Drupal Bootstrap base theme.
+ *
+ * View the parent topic for additional documentation.
+ */
+/**
+ * @defgroup theme_preprocess Theme Preprocess Functions (.vars.php)
+ *
+ * List of theme preprocess functions used in the Drupal Bootstrap base theme.
+ *
+ * View the parent topic for additional documentation.
+ */
+/**
+ * @defgroup theme_process Theme Process Functions (.vars.php)
+ *
+ * List of theme process functions used in the Drupal Bootstrap base theme.
+ *
+ * View the parent topic for additional documentation.
+ */
+/**
+ * @defgroup templates Theme Templates (.tpl.php)
+ *
+ * List of theme templates used in the Drupal Bootstrap base theme.
+ *
+ * View the parent topic for additional documentation.
+ */
+
+/**
+ * Stub implementation for bootstrap_theme().
  *
  * This base-theme's custom theme hook implementations. Never define "path"
  * or "template" as these are detected and automatically added.
@@ -54,6 +51,20 @@
  * @see hook_theme()
  */
 function _bootstrap_theme(&$existing, $type, $theme, $path) {
+  // Bootstrap Carousels.
+  $hooks['bootstrap_carousel'] = array(
+    'variables' => array(
+      'attributes' => array(),
+      'items' => array(),
+      'start_index' => 0,
+      'controls' => TRUE,
+      'indicators' => TRUE,
+      'interval' => 5000,
+      'pause' => 'hover',
+      'wrap' => TRUE,
+    ),
+  );
+
   // Bootstrap Dropdowns.
   $hooks['bootstrap_dropdown'] = array(
     'render element' => 'element',
@@ -65,7 +76,9 @@ function _bootstrap_theme(&$existing, $type, $theme, $path) {
       'heading' => '',
       'body' => '',
       'footer' => '',
+      'dialog_attributes' => array(),
       'attributes' => array(),
+      'size' => '',
       'html_heading' => FALSE,
     ),
   );
@@ -230,6 +243,10 @@ function _bootstrap_process_theme_registry(&$registry, $themes) {
         // Correct the type that is implementing this override.
         $registry[$hook]['type'] = $GLOBALS['theme_path'] === $registry[$hook]['theme path'] ? 'theme' : 'base_theme';
 
+        // Sort the phase functions.
+        // @see https://www.drupal.org/node/2098551
+        _bootstrap_registry_sort_phase_functions($registry[$hook][$phase_key], $hook, $phase, $themes);
+
         // Setup a default "context" variable. This allows #context to be passed
         // to every template and theme function.
         // @see https://drupal.org/node/2035055
@@ -248,6 +265,51 @@ function _bootstrap_process_theme_registry(&$registry, $themes) {
         }
       }
     }
+  }
+}
+
+/**
+ * Ensures the phase functions are invoked in the correct order.
+ *
+ * @param array $functions
+ *   The phase functions to iterate over.
+ * @param string $hook
+ *   The current hook being processed.
+ * @param string $phase
+ *   The current phase being processed.
+ * @param array $themes
+ *   An indexed array of current themes.
+ *
+ * @see https://www.drupal.org/node/2098551
+ */
+function _bootstrap_registry_sort_phase_functions(&$functions, $hook, $phase, $themes) {
+  // Immediately return if there is nothing to sort.
+  if (count($functions) < 2) {
+    return;
+  }
+
+  // Create an associative array of theme functions to ensure sort order.
+  $theme_functions = array_fill_keys($themes, array());
+
+  // Iterate over all the themes.
+  foreach ($themes as $theme) {
+    // Only add the function to the array of theme functions if it currently
+    // exists in the $functions array.
+    $function = $theme . '_' . $phase . '_' . $hook;
+    $key = array_search($function, $functions);
+    if ($key !== FALSE) {
+      // Save the theme function to be added later, but sorted.
+      $theme_functions[$theme][] = $function;
+
+      // Remove it from the current $functions array.
+      unset($functions[$key]);
+    }
+  }
+
+  // Iterate over all the captured theme functions and place them back into
+  // the phase functions array.
+  foreach ($theme_functions as $array) {
+    $functions = array_merge($functions, $array);
   }
 }
 
@@ -287,7 +349,7 @@ function _bootstrap_process_theme_registry_suggestions(&$registry, $themes) {
     'process functions'    => 'process',
   );
 
-  $functions = get_defined_functions();
+  $grouped_functions = drupal_group_functions_by_prefix();
 
   // Iterate over each theme passed.
   foreach ($themes as $theme) {
@@ -303,11 +365,15 @@ function _bootstrap_process_theme_registry_suggestions(&$registry, $themes) {
 
       // Iterate over the [pre]process phases.
       foreach ($variable_process_phases as $phase_key => $phase) {
-        // Find functions matching the specific theme, phase and pattern.
-        if ($matches = preg_grep('/^' . $theme . '_' . $phase . '_' . $pattern . '/', $functions['user'])) {
+        // Find functions matching the specific theme and phase prefix.
+        $prefix = $theme . '_' . $phase;
+
+        // Grep only the functions which are within the prefix group.
+        list($first_prefix,) = explode('_', $prefix, 2);
+        if (isset($grouped_functions[$first_prefix]) && ($matches = preg_grep('/^' . $prefix . '_' . $pattern . '/', $grouped_functions[$first_prefix]))) {
           foreach ($matches as $match) {
             // Determine the current theme implementation.
-            $hook = substr($match, strlen($theme . '_' . $phase) + 1);
+            $hook = substr($match, strlen($prefix) + 1);
             $base_hook = $hook;
 
             // If there's no current theme implementation, keep checking for
@@ -337,6 +403,11 @@ function _bootstrap_process_theme_registry_suggestions(&$registry, $themes) {
               // registry, one must be created if base hook information was
               // found, otherwise it will be ignored.
               if (!isset($registry[$hook])) {
+                $registry[$base_hook] += array(
+                  'type' => 'theme',
+                  'preprocess functions' => array(),
+                  'process functions' => array(),
+                );
                 $hook_type = isset($registry[$base_hook]['function']) ? 'function' : 'template';
                 $arg_name = isset($registry[$base_hook]['variables']) ? 'variables' : 'render element';
                 $registry[$hook] = array(
@@ -381,3 +452,35 @@ function _bootstrap_process_theme_registry_suggestions(&$registry, $themes) {
     }
   }
 }
+
+/**
+ * Performance gain.
+ *
+ * Do not remove from 7.x. This function is not available in every core version.
+ *
+ * @see https://www.drupal.org/node/2339447
+ */
+if (!function_exists('drupal_group_functions_by_prefix')) {
+  /**
+   * Group all user functions by word before first underscore.
+   *
+   * @return array
+   *   Functions grouped by the first prefix.
+   */
+  function drupal_group_functions_by_prefix() {
+    $functions = get_defined_functions();
+    $grouped_functions = array();
+
+    // Splitting user defined functions into groups by the first prefix.
+    foreach ($functions['user'] as $function) {
+      list($first_prefix,) = explode('_', $function, 2);
+      $grouped_functions[$first_prefix][] = $function;
+    }
+
+    return $grouped_functions;
+  }
+}
+
+/**
+ * @} End of "addtogroup registry".
+ */

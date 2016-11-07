@@ -1,19 +1,35 @@
 <?php
 /**
  * @file
- * bootstrap-panel.vars.php
+ * Stub file for "bootstrap_panel" theme hook [pre]process functions.
  */
 
 /**
- * Implements hook_preprocess_bootstrap_panel().
+ * Pre-processes variables for the "bootstrap_panel" theme hook.
+ *
+ * See template for list of available variables.
+ *
+ * @see bootstrap-panel.tpl.php
+ *
+ * @ingroup theme_preprocess
  */
 function bootstrap_preprocess_bootstrap_panel(&$variables) {
   $element = &$variables['element'];
-  $attributes = !empty($element['#attributes']) ? $element['#attributes'] : array();
+
+  // Set the element's attributes.
+  element_set_attributes($element, array('id'));
+
+  // Retrieve the attributes for the element.
+  $attributes = &_bootstrap_get_attributes($element);
+
+  // Add panel and panel-default classes.
   $attributes['class'][] = 'panel';
   $attributes['class'][] = 'panel-default';
+
   // states.js requires form-wrapper on fieldset to work properly.
   $attributes['class'][] = 'form-wrapper';
+
+  // Handle collapsible panels.
   $variables['collapsible'] = FALSE;
   if (isset($element['#collapsible'])) {
     $variables['collapsible'] = $element['#collapsible'];
@@ -27,14 +43,18 @@ function bootstrap_preprocess_bootstrap_panel(&$variables) {
     $variables['collapsible'] = FALSE;
     $variables['collapsed'] = FALSE;
   }
-  if (!isset($element['#id']) && $variables['collapsible']) {
-    $element['#id'] = drupal_html_id('bootstrap-panel');
+  // Collapsible elements need an ID, so generate one if necessary.
+  if (!isset($attributes['id']) && $variables['collapsible']) {
+    $attributes['id'] = drupal_html_id('bootstrap-panel');
   }
+
+  // Set the target if the element has an id.
   $variables['target'] = NULL;
-  if (isset($element['#id'])) {
-    $attributes['id'] = $element['#id'];
-    $variables['target'] = '#' . $element['#id'] . ' > .collapse';
+  if (isset($attributes['id'])) {
+    $variables['target'] = '#' . $attributes['id'] . ' > .collapse';
   }
+
+  // Build the panel content.
   $variables['content'] = $element['#children'];
   if (isset($element['#value'])) {
     $variables['content'] .= $element['#value'];
@@ -50,12 +70,26 @@ function bootstrap_preprocess_bootstrap_panel(&$variables) {
   foreach ($keys as $key) {
     $variables[$key] = !empty($element["#$key"]) ? $element["#$key"] : FALSE;
   }
+
+  // Add the attributes.
   $variables['attributes'] = $attributes;
 }
 
 /**
- * Implements hook_process_bootstrap_panel().
+ * Processes variables for the "bootstrap_panel" theme hook.
+ *
+ * See template for list of available variables.
+ *
+ * @see bootstrap-panel.tpl.php
+ *
+ * @ingroup theme_process
  */
 function bootstrap_process_bootstrap_panel(&$variables) {
   $variables['attributes'] = drupal_attributes($variables['attributes']);
+  if (!empty($variables['title'])) {
+    $variables['title'] = _bootstrap_filter_xss(render($variables['title']));
+  }
+  if (!empty($variables['description'])) {
+    $variables['description'] = _bootstrap_filter_xss(render($variables['description']));
+  }
 }

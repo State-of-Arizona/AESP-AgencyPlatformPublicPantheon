@@ -32,9 +32,9 @@ function menu_views_form_menu_overview_form_alter(&$form, &$form_state) {
           if ($view->access($item['view']['display']) && $view->set_display($item['view']['display'])) {
             $view->set_arguments(explode('/', $item['view']['arguments']));
             // Provide title options for the view.
-            $title = $item['view']['settings']['title_override'];
+            $title = filter_xss_admin($item['view']['settings']['title_override']);
             if (empty($title)) {
-              $title = $view->get_title();
+              $title = filter_xss_admin($view->get_title());
             }
           }
           $view->destroy();
@@ -61,7 +61,6 @@ function menu_views_form_menu_overview_form_alter(&$form, &$form_state) {
  */
 function menu_views_form_menu_edit_item_alter(&$form, &$form_state) {
   drupal_set_title(t('Edit menu item'));
-  $item = $form['original_item']['#value'];
   _menu_views_form_alter($form, $form, $form_state);
 }
 
@@ -74,7 +73,6 @@ function menu_views_form_menu_edit_item_alter(&$form, &$form_state) {
  */
 function menu_views_form_node_form_alter(&$form, &$form_state) {
   if (isset($form['menu']['link'])) {
-    $item = $form['#node']->menu;
     _menu_views_form_alter($form['menu']['link'], $form, $form_state);
   }
 }
@@ -115,15 +113,12 @@ function _menu_views_form_tokens_ui(array &$element) {
       $i++;
     }
     $element['tokens_' . $i] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Replacement Tokens'),
-      '#description' => t('Below are the list of available tokens to use for passing arguments to this attached view.<br /><br />You can reference the node associated with this menu link by using <code>[menu-link:node:nid]</code>.<br />You can reference the node associated with the parent of this menu link by using <code>[menu-link:parent:node:nid]</code>.'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
+      '#type' => 'container',
     );
     $element['tokens_' . $i]['tokens'] = array(
       '#theme' => 'token_tree',
       '#token_types' => array('menu-link'),
+      '#dialog' => TRUE,
     );
   }
 }
@@ -272,8 +267,12 @@ function _menu_views_form_alter(array &$element, array &$form, array &$form_stat
     $element['menu_item_settings']['weight'] = $element['weight'];
     unset($element['weight']);
   }
-  
-  
+
+  // Add support for the xmlsitemap_menu module.
+  if (module_exists('xmlsitemap_menu')) {
+    $element['xmlsitemap']['#weight'] = $item['type'] === 'view' ? 51 : 30;
+  }
+
   // Create a radio toggle for menu item types: link or view.
   $element['menu_item_type'] = array(
     '#access' => $access,
@@ -292,11 +291,28 @@ function _menu_views_form_alter(array &$element, array &$form, array &$form_stat
     '#weight' => -1000,
   );
   
+  // Determine if menu_attributes is enabled.
+  $menu_attributes = module_exists('menu_attributes');
+
   // Show/Hide the core link form elements based on menu item type of: link or view.
   foreach (element_children($element) as $child) {
     // Skip options (handled below) and actions.
-    $element_type = isset($element[$child]['#type']) ? $element[$child]['#type'] : '';
-    if ($child == 'menu_item_type' || $child == 'disabled' || $child == 'menu_item_settings' || empty($element_type) || $element_type == 'actions' || $element_type == 'hidden' || $element_type == 'value') {
+    $type = isset($element[$child]['#type']) ? $element[$child]['#type'] : '';
+
+    // Ensure necessary children are always present (regardless of their type).
+    $ignore_children = array(
+      'menu_item_type', 'disabled', 'menu_item_settings',
+      'form_build_id', 'form_token', 'form_id',
+      'xmlsitemap',
+    );
+
+    // Allow the menu_attributes module to control the description field.
+    if ($menu_attributes) {
+      $ignore_children[] = 'description';
+    }
+
+    $ignore_types = array('actions', 'hidden', 'value', 'token');
+    if (in_array($child, $ignore_children) || !$type || in_array($type, $ignore_types)) {
       continue;
     }
     $element[$child]['#access'] = $visible;
@@ -304,8 +320,11 @@ function _menu_views_form_alter(array &$element, array &$form, array &$form_stat
   // Show/Hide the link options form elements based on menu item type of: link or view.
   foreach (element_children($element['options']) as $child) {
     // Skip menu_view options.
-    $element_type = isset($element['options'][$child]['#type']) ? $element['options'][$child]['#type'] : '';
-    if ($child == 'menu_views' || empty($element_type) || $element_type == 'hidden' || $element_type == 'value') {
+    $type = isset($element['options'][$child]['#type']) ? $element['options'][$child]['#type'] : '';
+    // Ensure necessary children are always present (regardless of their type).
+    $ignore_children = array('menu_views');
+    $ignore_types = array('hidden', 'value', 'token');
+    if (in_array($child, $ignore_children) || !$type || in_array($type, $ignore_types)) {
       continue;
     }
     $element['options'][$child]['#access'] = $visible;
@@ -706,11 +725,11 @@ function _menu_views_parents_recurse($tree, $menu_name, $indent, &$options, $exc
       _menu_views_tokenize($item);
       if ($item['type'] == 'view' && $item['view']['name'] && $item['view']['display']) {
         $title = t($item['view']['name']) . '-' . t($item['view']['display']);
-        $view_title = $item['view']['settings']['title_override'];
+        $view_title = filter_xss_admin($item['view']['settings']['title_override']);
         if (empty($view_title) && ($view = views_get_view($item['view']['name']))) {
           if ($view->access($item['view']['display']) && $view->set_display($item['view']['display'])) {
             $view->set_arguments(explode('/', $item['view']['arguments']));
-            $view_title = $view->get_title();
+            $view_title = filter_xss_admin($view->get_title());
           }
           $view->destroy();
         }

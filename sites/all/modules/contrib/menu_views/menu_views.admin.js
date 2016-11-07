@@ -74,6 +74,8 @@
    */
   Drupal.behaviors.menu_views = {
     attach: function (context, settings) {
+      // Ensure that menu_views exists in settings.
+      settings.menu_views = settings.menu_views || {};
       if (!settings.menu_views.node_form && settings.menu_views.admin_theme == 'rubik') {
         var sidebar = $('.column-side .column-wrapper', context);
         if (sidebar.length) {

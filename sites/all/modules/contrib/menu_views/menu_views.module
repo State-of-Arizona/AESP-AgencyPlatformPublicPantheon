@@ -54,6 +54,11 @@ function menu_views_theme_registry_alter(&$registry) {
     $registry['menu_views_superfish_menu_item_link_default'] = $registry['superfish_menu_item_link'];
     $registry['superfish_menu_item_link']['function'] = 'menu_views_superfish_menu_item_link';
   }
+  // Provide Responsive Dropdown Menus support.
+  if (isset($registry['responsive_dropdown_menus_item_link'])) {
+    $registry['menu_views_responsive_dropdown_menus_item_link_default'] = $registry['responsive_dropdown_menus_item_link'];
+    $registry['responsive_dropdown_menus_item_link']['function'] = 'menu_views_responsive_dropdown_menus_item_link';
+  }
 }
 
 /**
@@ -100,6 +105,20 @@ function menu_views_superfish_menu_item_link(array $variables) {
 }
 
 /**
+ * Implements theme_responsive_dropdown_menus_item_link().
+ * Overrides default theming function to intercept views.
+ */
+function menu_views_responsive_dropdown_menus_item_link(array $variables) {
+  // Only intercept if this menu item link is a view.
+  if (isset($variables['menu_item']['link']) && $view = _menu_views_replace_menu_item($variables['menu_item']['link'])) {
+    $item = _menu_views_get_item($variables['menu_item']['link']);
+    return '<div' . drupal_attributes(array('class' => explode(' ', $item['view']['settings']['wrapper_classes']))) . '>' . $view . '</div>';
+  }
+  // Otherwise, use the default theming function.
+  return theme('menu_views_responsive_dropdown_menus_item_link_default', $variables);
+}
+
+/**
  * Implements hook_menu_breadcrumb_alter().
  */
 function menu_views_menu_breadcrumb_alter(&$active_trail, $item) {
@@ -112,13 +131,13 @@ function menu_views_menu_breadcrumb_alter(&$active_trail, $item) {
         unset($active_trail[$key]);
       }
       else {
-        // Use overriden title if provided.
-        $title = $menu_view['view']['settings']['breadcrumb_title'];
+        // Use overridden title if provided.
+        $title = filter_xss_admin($menu_view['view']['settings']['breadcrumb_title']);
         // Use title provided by view next.
         if (empty($title)) {
           $view = views_get_view($menu_view['view']['name']);
           if ($view && $view->access($menu_view['view']['display']) && $view->set_display($menu_view['view']['display'])) {
-            $title = $view->get_title();
+            $title = filter_xss_admin($view->get_title());
             $view->destroy();
           }
         }
@@ -136,15 +155,13 @@ function menu_views_menu_breadcrumb_alter(&$active_trail, $item) {
 }
 
 function _menu_views_replace_menu_item($element) {
-  $output = FALSE;
+  $build = array();
   $item = _menu_views_get_item($element);
   _menu_views_tokenize($item);
   if ($item['type'] == 'view' && $item['view']['name'] && $item['view']['display']) {
-    $output = '';
     $element['#attributes']['class'][] = 'menu-views';
     if ($view = views_get_view($item['view']['name'])) {
       if ($view->access($item['view']['display']) && $view->set_display($item['view']['display'])) {
-        $output = '';
         $arguments = explode('/', $item['view']['arguments']);
         // Need to replace empty arguments with NULL values for views.
         foreach ($arguments as $key => $value) {
@@ -153,37 +170,50 @@ function _menu_views_replace_menu_item($element) {
           }
         }
         $view->set_arguments($arguments);
+        $build['view'] = array(
+          '#markup' => $view->preview(),
+          '#weight' => 10,
+        );
+
         // Provide title options for the view.
         if ((bool)$item['view']['settings']['title']) {
-          $title = $item['view']['settings']['title_override'];
+          $title = filter_xss_admin($item['view']['settings']['title_override']);
           if (empty($title)) {
-            $title = $view->get_title();
+            $title = filter_xss_admin($view->get_title());
           }
           if (!empty($title)) {
-            $wrapper = $item['view']['settings']['title_wrapper'];
-            if ($wrapper === '0') {
-              $wrapper = FALSE;
+            $tag = $item['view']['settings']['title_wrapper'];
+            if ($tag === '0') {
+              $tag = FALSE;
             }
-            elseif ($wrapper === '') {
-              $wrapper = 'h3';
+            elseif ($tag === '') {
+              $tag = 'h3';
             }
-            if ($wrapper) {
-              $output .= '<' . $wrapper . (!empty($item['view']['settings']['title_classes']) ? ' class="' . $item['view']['settings']['title_classes'] . '"' : '') . '>';
+            if ($tag) {
+              $title_attributes = array();
+              if (!empty($item['view']['settings']['title_classes'])) {
+                $title_attributes['class'] = array_filter(explode(' ', $item['view']['settings']['title_classes']));
+                foreach ($title_attributes['class'] as $key => $class) {
+                  $title_attributes['class'][$key] = drupal_html_class($class);
+                }
+              }
+              $build['title'] = array(
+                '#theme' => 'html_tag__menu_views__title',
+                '#tag' => $tag,
+                '#attributes' => $title_attributes,
+                '#value' => filter_xss_admin($title),
+              );
             }
-            $output .= $title;
-            if ($wrapper) {
-              $output .= '</' . $wrapper . '>';
+            else {
+              $build['title'] = array(
+                '#markup' => $title,
+              );
             }
           }
         }
-        $output .= $view->preview();
-        $build = array(
-          'output' => array(
-            '#markup' => $output
-          ),
-        );
+
         // Add contextual links if allowed and if views_ui module is enabled.
-        if (user_access('access contextual links') && module_exists('views_ui')) {
+        if (module_exists('contextual_links') && user_access('access contextual links') && module_exists('views_ui')) {
           views_add_contextual_links($build, 'special_block_-exp', $view, $item['view']['display']);
           if (!empty($build['#contextual_links'])) {
             $build['#prefix'] = '<div class="contextual-links-region">';
@@ -196,12 +226,13 @@ function _menu_views_replace_menu_item($element) {
             );
           }
         }
+
         $view->destroy();
-        return drupal_render($build);
       }
     }
+    return drupal_render($build);
   }
-  return $output;
+  return FALSE;
 }
 
 function _menu_views_default_values() {

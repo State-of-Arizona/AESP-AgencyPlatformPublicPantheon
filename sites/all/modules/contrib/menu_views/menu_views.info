@@ -5,9 +5,9 @@ package = "Views"
 dependencies[] = menu
 dependencies[] = views
 
-; Information added by drupal.org packaging script on 2013-06-13
-version = "7.x-2.2"
+; Information added by Drupal.org packaging script on 2016-11-02
+version = "7.x-2.4"
 core = "7.x"
 project = "menu_views"
-datestamp = "1371136255"
+datestamp = "1478108822"
 

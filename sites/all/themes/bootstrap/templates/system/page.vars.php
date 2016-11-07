@@ -1,13 +1,17 @@
 <?php
 /**
  * @file
- * page.vars.php
+ * Stub file for "page" theme hook [pre]process functions.
  */
 
 /**
- * Implements hook_preprocess_page().
+ * Pre-processes variables for the "page" theme hook.
+ *
+ * See template for list of available variables.
  *
  * @see page.tpl.php
+ *
+ * @ingroup theme_preprocess
  */
 function bootstrap_preprocess_page(&$variables) {
   // Add information about the number of sidebars.
@@ -19,6 +23,13 @@ function bootstrap_preprocess_page(&$variables) {
   }
   else {
     $variables['content_column_class'] = ' class="col-sm-12"';
+  }
+
+  if (bootstrap_setting('fluid_container') == 1) {
+    $variables['container_class'] = 'container-fluid';
+  }
+  else {
+    $variables['container_class'] = 'container';
   }
 
   // Primary nav.
@@ -41,13 +52,16 @@ function bootstrap_preprocess_page(&$variables) {
 
   $variables['navbar_classes_array'] = array('navbar');
 
-  if (theme_get_setting('bootstrap_navbar_position') !== '') {
-    $variables['navbar_classes_array'][] = 'navbar-' . theme_get_setting('bootstrap_navbar_position');
+  if (bootstrap_setting('navbar_position') !== '') {
+    $variables['navbar_classes_array'][] = 'navbar-' . bootstrap_setting('navbar_position');
+  }
+  elseif (bootstrap_setting('fluid_container') == 1) {
+    $variables['navbar_classes_array'][] = 'container-fluid';
   }
   else {
     $variables['navbar_classes_array'][] = 'container';
   }
-  if (theme_get_setting('bootstrap_navbar_inverse')) {
+  if (bootstrap_setting('navbar_inverse')) {
     $variables['navbar_classes_array'][] = 'navbar-inverse';
   }
   else {
@@ -56,9 +70,13 @@ function bootstrap_preprocess_page(&$variables) {
 }
 
 /**
- * Implements hook_process_page().
+ * Processes variables for the "page" theme hook.
+ *
+ * See template for list of available variables.
  *
  * @see page.tpl.php
+ *
+ * @ingroup theme_process
  */
 function bootstrap_process_page(&$variables) {
   $variables['navbar_classes'] = implode(' ', $variables['navbar_classes_array']);

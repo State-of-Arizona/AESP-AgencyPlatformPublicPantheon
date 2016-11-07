@@ -7,53 +7,67 @@
  */
 
 /**
- * Pre-render input elements.
+ * Implements hook_pre_render().
  */
-function _bootstrap_pre_render_input($element) {
+function bootstrap_pre_render($element) {
+  if (!empty($element['#bootstrap_ignore_pre_render'])) {
+    return $element;
+  }
+
   // Only add the "form-control" class for specific element input types.
   $types = array(
     // Core.
     'password',
     'password_confirm',
+    'machine_name',
     'select',
     'textarea',
     'textfield',
-    // HTML5.
+
+    // Elements module (HTML5).
+    'date',
+    'datefield',
     'email',
+    'emailfield',
+    'number',
+    'numberfield',
+    'range',
+    'rangefield',
+    'search',
+    'searchfield',
+    'tel',
+    'telfield',
+    'url',
+    'urlfield',
+
     // Webform module.
     'webform_email',
     'webform_number',
-    // Elements module.
-    'emailfield',
-    'numberfield',
-    'rangefield',
-    'searchfield',
-    'telfield',
-    'urlfield',
   );
 
-  if (!empty($element['#type']) && (in_array($element['#type'], $types) || ($element['#type'] === 'file' && empty($element['#managed_file'])))) {
-    $element['#attributes']['class'][] = 'form-control';
-  }
-
-  if (!empty($element['#type']) && ($element['#type'] !== 'checkbox' || $element['#type'] !== 'radio' || $element['#type'] !== 'checkboxes' || $element['#type'] !== 'radios')) {
-    if (!empty($element['#description']) && empty($element['#attributes']['title']) && _bootstrap_tooltip_description($element['#description'])) {
-      $element['#attributes']['title'] = $element['#description'];
+  // Add necessary classes for specific types.
+  if ($type = !empty($element['#type']) ? $element['#type'] : FALSE) {
+    if (in_array($type, $types) || ($type === 'file' && empty($element['#managed_file']))) {
+      $element['#attributes']['class'][] = 'form-control';
     }
-
-    if (!empty($element['#attributes']['title'])) {
-      $element['#attributes']['data-toggle'] = 'tooltip';
+    if ($type === 'machine_name') {
+      $element['#wrapper_attributes']['class'][] = 'form-inline';
     }
   }
+
+  // Add smart descriptions to the element, if necessary.
+  bootstrap_element_smart_description($element);
+
+  // Return the modified element.
   return $element;
 }
 
 /**
- * Pre-render fieldset element.
+ * Implements hook_pre_render_HOOK().
  */
-function _bootstrap_pre_render_fieldset($element) {
+function bootstrap_pre_render_fieldset($element) {
   // Fieldsets may be rendered outside of a Form API context.
-  if (!isset($element['#parents']) || !isset($element['#groups'])) {
+  if (!empty($element['#bootstrap_ignore_pre_render']) || !isset($element['#parents']) || !isset($element['#groups'])) {
     return $element;
   }
   // Inject group member elements belonging to this group.

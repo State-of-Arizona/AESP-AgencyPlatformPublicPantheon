@@ -7,9 +7,13 @@
  */
 
 /**
- * Process all elements.
+ * Implements hook_form_process().
  */
-function _bootstrap_process_element(&$element, &$form_state) {
+function bootstrap_form_process($element, &$form_state, &$form) {
+  if (!empty($element['#bootstrap_ignore_process'])) {
+    return $element;
+  }
+
   if (!empty($element['#attributes']['class']) && is_array($element['#attributes']['class'])) {
     $key = array_search('container-inline', $element['#attributes']['class']);
     if ($key !== FALSE) {
@@ -18,13 +22,6 @@ function _bootstrap_process_element(&$element, &$form_state) {
 
     if (in_array('form-wrapper', $element['#attributes']['class'])) {
       $element['#attributes']['class'][] = 'form-group';
-    }
-  }
-
-  // Process form actions.
-  if (!empty($element['#type']) && $element['#type'] === 'actions') {
-    foreach (element_children($element) as $child) {
-      _bootstrap_iconize_button($element[$child]);
     }
   }
 
@@ -41,11 +38,11 @@ function _bootstrap_process_element(&$element, &$form_state) {
 
     // If element is nested, return the referenced parent from the form.
     if (!empty($array_parents)) {
-      $parent = &drupal_array_get_nested_value($form_state['complete form'], $array_parents);
+      $parent = &drupal_array_get_nested_value($form, $array_parents);
     }
     // Otherwise return the complete form.
     else {
-      $parent = &$form_state['complete form'];
+      $parent = &$form;
     }
 
     // Ignore buttons before we find the element in the form.
@@ -63,45 +60,51 @@ function _bootstrap_process_element(&$element, &$form_state) {
       }
     }
   }
+
   return $element;
 }
 
 /**
- * Process fieldset element.
+ * Implements hook_form_process_HOOK().
  */
-function _bootstrap_process_fieldset(&$element, &$form_state) {
-  $parents = implode('][', $element['#parents']);
+function bootstrap_form_process_actions($element, &$form_state, &$form) {
+  $element['#attributes']['class'][] = 'form-actions';
 
-  // Each fieldset forms a new group. The #type 'vertical_tabs' basically only
-  // injects a new fieldset.
-  $form_state['groups'][$parents]['#group_exists'] = TRUE;
-  $element['#groups'] = &$form_state['groups'];
-
-  // Process vertical tabs group member fieldsets.
-  if (isset($element['#group'])) {
-    // Add this fieldset to the defined group (by reference).
-    $element['#theme_wrappers'] = array('bootstrap_panel');
-    $group = $element['#group'];
-    $form_state['groups'][$group][] = &$element;
+  if (!empty($element['#bootstrap_ignore_process'])) {
+    return $element;
   }
 
-  // Contains form element summary functionality.
-  $element['#attached']['library'][] = array('system', 'drupal.form');
+  foreach (element_children($element) as $child) {
+    _bootstrap_iconize_button($element[$child]);
+  }
+  return $element;
+}
 
-  // Collapsible fieldsets.
-  if (!empty($element['#collapsible'])) {
-    $element['#attached']['library'][] = array('system', 'drupal.collapse');
-    $element['#attributes']['class'][] = 'collapsible';
-    if (!empty($element['#collapsed'])) {
-      $element['#attributes']['class'][] = 'collapsed';
-    }
+/**
+ * Implements hook_form_process_HOOK().
+ */
+function bootstrap_form_process_text_format($element, &$form_state, &$form) {
+  if (!empty($element['#bootstrap_ignore_process'])) {
+    return $element;
   }
 
-  // The .form-wrapper class is required for #states to treat fieldsets like
-  // containers.
-  if (!isset($element['#attributes']['class'])) {
-    $element['#attributes']['class'] = array();
-  }
+  // Provide smart description on the value text area.
+  bootstrap_element_smart_description($element, $element['value']);
+
+  // Allow the elements inside to be displayed inline.
+  $element['format']['#attributes']['class'][] = 'form-inline';
+
+  // Remove the cluttering guidelines; they can be viewed on a separate page.
+  $element['format']['guidelines']['#access'] = FALSE;
+
+  // Hide the select label.
+  $element['format']['format']['#title_display'] = 'none';
+
+  // Make the select element smaller using a Bootstrap class.
+  $element['format']['format']['#attributes']['class'][] = 'input-sm';
+
+  // Support the Bootstrap Select plugin if it is used.
+  $element['format']['format']['#attributes']['data-style'] = 'btn-sm btn-default';
 
   return $element;
 }

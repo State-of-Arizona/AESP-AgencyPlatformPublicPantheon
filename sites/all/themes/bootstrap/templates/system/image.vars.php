@@ -1,27 +1,26 @@
 <?php
 /**
  * @file
- * image.vars.php
+ * Stub file for "image" theme hook [pre]process functions.
  */
 
 /**
- * Implements hook_preprocess_image().
+ * Pre-processes variables for the "image" theme hook.
+ *
+ * See theme function for list of available variables.
+ *
+ * @see theme_image()
+ *
+ * @ingroup theme_preprocess
  */
 function bootstrap_preprocess_image(&$variables) {
-  // Contrib modules have a very bad habit of frequently adding classes as
-  // strings, convert them to a proper array.
-  // @see https://www.drupal.org/node/2269653
-  if (isset($variables['attributes']['class']) && !is_array($variables['attributes']['class'])) {
-    $variables['attributes']['class'] = explode(' ', $variables['attributes']['class']);
-  }
-
   // Add image shape, if necessary.
-  if ($shape = theme_get_setting('bootstrap_image_shape')) {
-    $variables['attributes']['class'][] = $shape;
+  if ($shape = bootstrap_setting('image_shape')) {
+    _bootstrap_add_class($shape, $variables);
   }
 
   // Add responsiveness, if necessary.
-  if ($shape = theme_get_setting('bootstrap_image_responsive')) {
-    $variables['attributes']['class'][] = 'img-responsive';
+  if (bootstrap_setting('image_responsive')) {
+    _bootstrap_add_class('img-responsive', $variables);
   }
 }

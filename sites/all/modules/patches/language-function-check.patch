@@ -1,0 +1,21 @@
+commit 2edcf113f76c4ab06a601c2fb9156a58893a602f
+Author: mfalat <mfalat@MattFalat.vermillion.eaglecrk.local>
+Date:   Tue Nov 29 13:10:42 2016 -0600
+
+    check drafty for language function
+
+diff --git a/sites/default/modules/contrib/drafty/drafty.module b/sites/default/modules/contrib/drafty/drafty.module
+index db34632..95abefb 100644
+--- a/sites/default/modules/contrib/drafty/drafty.module
++++ b/sites/default/modules/contrib/drafty/drafty.module
+@@ -200,7 +200,9 @@ class Drafty {
+     if (module_exists('title')) {
+       $entity = entity_load_single($type, $id);
+       $langcode = entity_language($type, $entity);
+-      title_active_language($langcode);
++      if(function_exists('title_active_language')){
++      	title_active_language($langcode);
++			}
+     }
+     $revision = entity_revision_load($type, $vid);
+ 

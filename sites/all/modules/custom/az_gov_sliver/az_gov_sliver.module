@@ -27,16 +27,7 @@ function az_gov_sliver_menu() {
   return $items;*/
 }
 
-/**
- * Implements hook_permission().
- */
-function az_gov_sliver_permission() {
-  /*return array(
-    'administer az_gov_sliver' => array(
-      'title' => t('Administer Az.Gov Sliver'),
-    ),
-  );*/
-}
+
 
 /**
  * Implements hook_init().

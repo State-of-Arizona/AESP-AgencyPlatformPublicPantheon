@@ -25,10 +25,10 @@ function agency_platform_distribution_install() {
   //Rebuilds all enabled features
   features_revert();
 
-// ignore any rebuild messages
+  // ignore any rebuild messages
   node_access_needs_rebuild(FALSE);
 
-// ignore any other install messages
+  // ignore any other install messages
   drupal_get_messages();
 
   //creates the contributor role

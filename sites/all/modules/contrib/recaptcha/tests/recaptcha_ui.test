@@ -11,22 +11,25 @@
 class ReCaptchaAdminUITestCase extends ReCaptchaBaseTestCase {
 
   /**
-   * Drupal path of the (general) CAPTCHA admin page
+   * Drupal path of the (general) CAPTCHA admin page.
    */
   const RECAPTCHA_ADMIN_PATH = 'admin/config/people/captcha/recaptcha';
 
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'ReCaptcha admin UI test',
       'group' => 'reCAPTCHA',
-      'description' => 'Tests reCaptcha admin UI'
+      'description' => 'Tests reCaptcha admin UI',
     );
   }
 
   /**
    * Test access to the admin pages.
    */
-  function testAdminAccess() {
+  public function testAdminAccess() {
     $this->drupalLogin($this->normal_user);
     $this->drupalGet(self::RECAPTCHA_ADMIN_PATH);
     file_put_contents('tmp.simpletest.html', $this->drupalGetContent());
@@ -37,7 +40,6 @@ class ReCaptchaAdminUITestCase extends ReCaptchaBaseTestCase {
     $this->drupalGet(self::RECAPTCHA_ADMIN_PATH);
     $this->assertResponse(200);
     $this->assertField('recaptcha_server_status_check_interval');
-
 
     // Update the interval and make sure it get saved properly.
     $edit = array(

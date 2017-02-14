@@ -12,25 +12,27 @@ abstract class ReCaptchaBaseTestCase extends DrupalWebTestCase {
 
   /**
    * User with various administrative permissions.
+   *
    * @var object Drupal user
    */
   protected $admin_user;
 
   /**
-   * Normal visitor with limited permissions
+   * Normal visitor with limited permissions.
+   *
    * @var object Drupal user;
    */
   protected $normal_user;
 
   /**
-   * Drupal path of the (general) CAPTCHA admin page
+   * Drupal path of the (general) CAPTCHA admin page.
    */
   const RECAPTCHA_ADMIN_PATH = 'admin/config/people/captcha/recaptcha';
 
   /**
    * Set up some required modules and users.
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp('recaptcha');
 
     // Create a normal user.

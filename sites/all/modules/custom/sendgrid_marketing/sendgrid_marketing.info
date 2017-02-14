@@ -1,0 +1,9 @@
+name = Sendgrid Marketing
+description = Sendgrid marketing widget.
+package = Marketing
+configure = admin/config/services/sendgrid_marketing
+core = 7.x
+
+
+dependencies[] = encrypt
+dependencies[] = block

@@ -1,0 +1,37 @@
+<?php
+
+/**
+ * @file
+ * Provides install, upgrade and un-install functions for sendgrid_marketing.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function sendgrid_marketing_uninstall() {
+  // Delete sendgrid marketing variables.
+  drupal_load('module', 'sendgrid_marketing');
+  foreach (variable_get('sendgrid_marketing_ids', array()) as $delta) {
+    variable_del("sendgrid_marketing_{$delta}_contact_lists");
+    variable_del("sendgrid_marketing_{$delta}_custom_fields");
+    variable_del("sendgrid_marketing_{$delta}_available_agencies");
+    db_delete('block')
+      ->condition('module', 'sendgrid_marketing')
+      ->condition('delta', $delta)
+      ->execute();
+    db_delete('block_role')
+      ->condition('module', 'sendgrid_marketing')
+      ->condition('delta', $delta)
+      ->execute();
+  }
+  variable_del('sendgrid_marketing_key');
+  variable_del('sendgrid_marketing_ids');
+
+}
+
+/**
+ * Implements hook_enable().
+ */
+function sendgrid_marketing_enable() {
+  drupal_set_message(t('To use Sendgrid Marketing, first add Sendgrid API key. <a href="@url">Click here to add key.</a>', array('@url' => url('admin/config/services/sendgrid_marketing'))));
+}

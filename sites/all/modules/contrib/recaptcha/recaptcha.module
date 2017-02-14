@@ -10,14 +10,17 @@
  */
 function recaptcha_help($path, $arg) {
   $output = '';
+
   switch ($path) {
     case 'admin/modules#name':
       $output .= t('reCAPTCHA');
       break;
+
     case 'admin/modules#description':
     case 'admin/user/captcha/recaptcha':
       $output .= t('Uses the <a href="@url" target="_blank">reCAPTCHA</a> web service to improve the CAPTCHA system and protect email addresses.', array('@url' => url('https://www.google.com/recaptcha')));
       break;
+
     case 'admin/help#recaptcha':
       $output .= '<p>' .
         t('Uses the reCAPTCHA web service to improve the CAPTCHA module and protect email addresses. For more information on what reCAPTCHA is, visit <a href="@url" target="_blank">the official website</a>.', array('@url' => url('https://www.google.com/recaptcha'))) .
@@ -28,6 +31,7 @@ function recaptcha_help($path, $arg) {
         '</p>';
       break;
   }
+
   return $output;
 }
 
@@ -99,7 +103,7 @@ function recaptcha_captcha($op, $captcha_type = '') {
         global $language;
         if (isset($language->language)) {
           // reCAPTCHA uses two-character language codes, so 'pt-br' must be
-          // passed as 'pt'; cf. https://developers.google.com/recaptcha/docs/customization#i18n
+          // passed as 'pt'.
           $recaptcha_options['lang'] = drupal_substr($language->language, 0, 2);
         }
 
@@ -166,6 +170,8 @@ function recaptcha_captcha($op, $captcha_type = '') {
 }
 
 /**
+ * Test whether the reCAPTCHA server is up.
+ *
  * @return bool
  *   TRUE if the reCAPTCHA server is up, FALSE otherwise.
  */

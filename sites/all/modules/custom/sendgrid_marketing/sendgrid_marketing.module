@@ -1,0 +1,195 @@
+<?php
+
+/**
+ * @file
+ * Facilitates the sendgrid news;letter block functionality.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function sendgrid_marketing_permission() {
+  return array(
+    'administer sendgrid_marketing' => array(
+      'title' => t('Administer Sendgrid Marketing'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function sendgrid_marketing_menu() {
+  $items = array();
+  $items['admin/config/services/sendgrid_marketing'] = array(
+    'title' => 'Sendgrid marketing configuration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sendgrid_marketing_settings_form'),
+    'access arguments' => array('administer sendgrid_marketing'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'sendgrid_marketing.admin.inc',
+  );
+  if (module_exists('block')) {
+    $items['admin/structure/block/add-sendgrid-newsletter-block'] = array(
+      'title' => 'Add newsletter block',
+      'description' => 'Add a new Sendgrid newsletter block.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('sendgrid_marketing_add_block_form'),
+      'access arguments' => array('administer sendgrid_marketing'),
+      'type' => MENU_LOCAL_ACTION,
+      'file' => 'sendgrid_marketing.block.inc',
+    );
+    $default_theme = variable_get('theme_default', 'bartik');
+    foreach (list_themes() as $key => $theme) {
+      if ($key != $default_theme) {
+        $items['admin/structure/block/list/' . $key . '/add-sendgrid-newsletter-block'] = array(
+          'title' => 'Add newsletter block',
+          'description' => 'Add a new Sendgrid newsletter block.',
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('sendgrid-newsletter_add_block_form'),
+          'access arguments' => array('administer sendgrid_marketing'),
+          'type' => MENU_LOCAL_ACTION,
+          'file' => 'sendgrid_marketing.block.inc',
+        );
+      }
+    }
+    $items['admin/structure/block/%/delete-sendgrid-newsletter-block'] = array(
+      'title' => 'Delete newsletter block',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('sendgrid_marketing_delete_form', 3),
+      'access arguments' => array('administer sendgrid_marketing'),
+      'type' => MENU_CALLBACK,
+      'file' => 'sendgrid_marketing.block.inc',
+    );
+  }
+  return $items;
+}
+
+/**
+ * Alters the block admin form to add delete links next to menu blocks.
+ */
+function sendgrid_marketing_form_block_admin_display_form_alter(&$form, $form_state) {
+  foreach (variable_get('sendgrid_marketing_ids', array()) as $delta) {
+    $my_array = array('#type' => 'link', '#title' => t('delete'), '#href' => 'admin/structure/block/' . $delta . '/delete-sendgrid-newsletter-block');
+    $form['blocks']['sendgrid_marketing_' . $delta]['delete'] = $my_array;
+
+  }
+}
+
+/**
+ * Off-load the following infrequently called hooks to another file.
+ */
+function sendgrid_marketing_block_info() {
+  module_load_include('inc', 'sendgrid_marketing', 'sendgrid_marketing.block');
+  return _sendgrid_marketing_block_info();
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function sendgrid_marketing_block_view($delta = '') {
+  $blocks = array();
+  module_load_include('inc', 'sendgrid_marketing', 'sendgrid_marketing.block');
+  $form = drupal_get_form("sendgrid_marketing_subscribe_form_{$delta}", array('delta' => $delta));
+  $blocks['content'] = drupal_render($form);
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function sendgrid_marketing_block_configure($delta = '') {
+  module_load_include('inc', 'sendgrid_marketing', 'sendgrid_marketing.block');
+  return _sendgrid_marketing_block_configure($delta);
+}
+
+/**
+ * Implements hook_block_save($delta = '', $edit = array().
+ */
+function sendgrid_marketing_block_save($delta = '', $edit = array()) {
+  module_load_include('inc', 'sendgrid_marketing', 'sendgrid_marketing.block');
+  return _sendgrid_marketing_block_save($delta, $edit);
+}
+
+/**
+ * Implements hook_forms().
+ */
+function sendgrid_marketing_forms($form_id) {
+  $forms = array();
+  if (strpos($form_id, 'sendgrid_marketing_subscribe_form_') === 0) {
+    $forms[$form_id]['callback'] = 'sendgrid_marketing_subscribe_form';
+  }
+  return $forms;
+}
+
+/**
+ * Utility function.
+ */
+function _sendgrid_marketing_create_contact($params = array()) {
+  $url = 'https://api.sendgrid.com/v3/contactdb/recipients';
+  return _sendgrid_marketing_curl_send($url, $params, TRUE);
+}
+
+/**
+ * Utility function.
+ */
+function _sendgrid_marketing_add_contact_to_list($contact_list, $recipient_id, $params) {
+  $url = 'https://api.sendgrid.com/v3/contactdb/lists/' . $contact_list . '/recipients/' . $recipient_id;
+  return _sendgrid_marketing_curl_send($url, $params, TRUE);
+}
+
+/**
+ * Utility function that utilizes php curl to communicate with Sendgrid.
+ */
+function _sendgrid_marketing_curl_send($url, $params = array(), $post = FALSE) {
+  if (!$api_key = decrypt(variable_get('sendgrid_marketing_key', ''))) {
+    return FALSE;
+  }
+  $ch = curl_init();
+  $headers = array('Authorization: Bearer ' . $api_key);
+  if ($post) {
+    curl_setopt($ch, CURLOPT_POST, TRUE);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
+  }
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+  curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  $data = curl_exec($ch);
+  if (curl_errno($ch)) {
+    watchdog('sendgrid', 'Sendgrid Error: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
+    drupal_set_message('error', t('There was an unexpected error while submitting your request.'));
+    return FALSE;
+  }
+  curl_close($ch);
+
+  return drupal_json_decode($data);
+}
+
+/**
+ * Utility function that pulls contact lists from sendgrid.
+ */
+function _sendgrid_marketing_fetch_lists() {
+  $url = 'https://api.sendgrid.com/v3/contactdb/lists';
+  $options = array();
+  if ($contact_lists = _sendgrid_marketing_curl_send($url)) {
+    foreach ($contact_lists['lists'] as $key => $value) {
+      $options[$value['id']] = $value['name'];
+    }
+  }
+  return $options;
+}
+
+/**
+ * Utility function that pulls custom fields from sendgrid.
+ */
+function _sendgrid_marketing_fetch_fields() {
+  $url = 'https://api.sendgrid.com/v3/contactdb/custom_fields';
+  $options = array();
+  if ($custom_fields = _sendgrid_marketing_curl_send($url)) {
+    foreach ($custom_fields['custom_fields'] as $key => $value) {
+      $options[$value['id']] = $value['name'];
+    }
+  }
+  return $options;
+}

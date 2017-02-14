@@ -7,11 +7,11 @@
 function agency_platform_distribution_form_install_configure_form_alter(&$form, $form_state) {
   // Pre-populate the site name and email address.
   $form['site_information']['site_name']['#default_value'] = $_SERVER['SERVER_NAME'];
-  $form['site_information']['site_mail']['#default_value'] = 'admin@asetcms.gov';
+  $form['site_information']['site_mail']['#default_value'] = 'digital.gov@azdoa.gov';
 
   // Account information defaults
   $form['admin_account']['account']['name']['#default_value'] = 'admin-cms';
-  $form['admin_account']['account']['mail']['#default_value'] = 'admin@asetcms.gov';
+  $form['admin_account']['account']['mail']['#default_value'] = 'digital.gov@azdoa.gov';
 
   // Date/time settings
   $form['server_settings']['site_default_country']['#default_value'] = 'US';

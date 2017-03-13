@@ -129,7 +129,7 @@ class WebformPaymentContext implements PaymentContextInterface {
     $submission->is_draft = FALSE;
     webform_submission_update($node, $submission);
     webform_submission_send_mail($node, $submission);
-    $this->redirect($this->getSuccessUrl());
+    //$this->redirect($this->getSuccessUrl());
   }
 
   public function statusSuccess(\Payment $payment) {

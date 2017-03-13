@@ -1,0 +1,13 @@
+diff --git a/sites/all/modules/contrib/webform_paymethod_select/src/WebformPaymentContext.php b/sites/all/modules/contrib/webform_paymethod_select/src/WebformPaymentContext.php
+index 974fc8e..2b7567a 100644
+--- a/sites/all/modules/contrib/webform_paymethod_select/src/WebformPaymentContext.php
++++ b/sites/all/modules/contrib/webform_paymethod_select/src/WebformPaymentContext.php
+@@ -129,7 +129,7 @@ class WebformPaymentContext implements PaymentContextInterface {
+     $submission->is_draft = FALSE;
+     webform_submission_update($node, $submission);
+     webform_submission_send_mail($node, $submission);
+-    $this->redirect($this->getSuccessUrl());
++    //$this->redirect($this->getSuccessUrl());
+   }
+ 
+   public function statusSuccess(\Payment $payment) {

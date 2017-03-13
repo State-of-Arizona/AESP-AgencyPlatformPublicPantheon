@@ -1,118 +1,854 @@
 <?php
 /**
  * @file
+ * Ultimate Cron. Extend cron functionality in Drupal.
+ */
+
+include dirname(__FILE__) . '/ultimate_cron.poorman.inc';
+
+define('ULTIMATE_CRON_LOG_TYPE_NORMAL', 0);
+define('ULTIMATE_CRON_LOG_TYPE_ADMIN', 1);
+define('ULTIMATE_CRON_LOG_TYPE_ALL', -1);
+
+/**
+ * Pseudo define.
+ */
+function _ultimate_cron_define_log_type_all() {
+  return array(ULTIMATE_CRON_LOG_TYPE_NORMAL, ULTIMATE_CRON_LOG_TYPE_ADMIN);
+}
+
+/**
+ * Memory exhaust protection.
  *
- * @todo Add filter on overview page.
- * @todo Add log view (with graph).
- * @todo Make proper markup for overview page.
- * @todo Refactor drush stuff, too many intimate relations with Background Process
- * @todo Refactor Cron % offset stuff. Too mixed up and ungrokable code-wise and 'delta' is not consistent.
+ * To reduce the risk of shutdown handlers failing, we reserve 2MiB of memory
+ * by default. This value is overridable.
+ */
+
+$GLOBALS['__RESERVED_MEMORY'] = str_repeat('0', variable_get('ultimate_cron_reserve_memory', 1024 * 1024 * 2));
+$GLOBALS['ultimate_cron_shutdown_functions'] = array();
+
+/**
+ * Setup shutdown handler.
  *
- * hook_cron_alter(&$hooks)
- * hook_cron_schedule_alter(&$hooks)
- * hook_cron_pre_execute($name, $hook)
- * hook_cron_pre_execute_FUNCTION($hook)
- * hook_cron_post_execute($name, $hook)
- * hook_cron_post_execute_FUNCTION($hook)
+ * The shutdown function itself is also overridable, in case it is necessary to
+ * add it earlier, say settings.php.
+ * Remeber to invoke the registered ultimate cron shutdown handlers.
+ * If the function exists, we assume that the register_shutdown_handler() has
+ * also been setup correctly.
  */
+if (!function_exists('_ultimate_cron_out_of_memory_protection')) {
+  /**
+   * Shutdown hander that unleash the memory reserved.
+   */
+  function _ultimate_cron_out_of_memory_protection() {
+    // error_log("RELEASING MEMORY");
+    unset($GLOBALS['__RESERVED_MEMORY']);
+    // error_log(print_r($GLOBALS['ultimate_cron_shutdown_functions'], TRUE));
+    foreach ($GLOBALS['ultimate_cron_shutdown_functions'] as $function) {
+      call_user_func_array($function['callback'], $function['arguments']);
+    }
+  }
+
+
+  // The minor overhead in _drupal_shutdown_function() can mean the
+  // difference between life and death for our shutdown handlers in
+  // a memory exhaust situation. We want our shutdown handler to be
+  // called as early as possible. If no callbacks have been registrered
+  // yet, we use PHPs built-in register_shutdown_function() otherwise
+  // we ensure, that we are the first in the list of Drupals registered
+  // shutdown functions.
+  $callbacks = &drupal_register_shutdown_function();
+  if (empty($callbacks)) {
+    register_shutdown_function('_ultimate_cron_out_of_memory_protection');
+  }
+  else {
+    array_unshift($callbacks, array('callback' => '_ultimate_cron_out_of_memory_protection', 'arguments' => array()));
+    // Reset internal array pointer just in case ...
+    reset($callbacks);
+  }
+}
 
 /**
- * Maximum number of simultaneous connections.
+ * Registers a function for execution on shutdown.
+ *
+ * Wrapper for register_shutdown_function() that catches thrown exceptions to
+ * avoid "Exception thrown without a stack frame in Unknown".
+ *
+ * This is a duplicate of the built-in functionality in Drupal, however we
+ * need to perform our tasks before that.
+ *
+ * @param callback $callback
+ *   The shutdown function to register.
+ * @param ...
+ *   Additional arguments to pass to the shutdown function.
+ *
+ * @see register_shutdown_function()
+ *
+ * @ingroup php_wrappers
  */
-define('ULTIMATE_CRON_SIMULTANEOUS_CONNECTIONS', 40);
+function ultimate_cron_register_shutdown_function($callback) {
+  $args = func_get_args();
+  array_shift($args);
+  $GLOBALS['ultimate_cron_shutdown_functions'][] = array(
+    'callback' => $callback,
+    'arguments' => $args,
+  );
+}
+
+// ---------- CTOOLS INTEGRATION ----------
 
 /**
- * Default handle prefix for background processes.
+ * Implements hook_ctools_plugin_api().
  */
-define('ULTIMATE_CRON_HANDLE_PREFIX', 'uc:');
+function ultimate_cron_ctools_plugin_api($module, $api) {
+  if ($module == 'ultimate_cron' && $api == 'plugins') {
+    return array('version' => 3);
+  }
+  if ($module == 'ultimate_cron' && $api == 'ultimate_cron') {
+    return array('version' => 3);
+  }
+}
 
 /**
- * Default rule.
+ * Implements hook_ctools_plugin_directory().
+ *
+ * This module implements plugins for cTools and Ultimate Cron.
  */
-define('ULTIMATE_CRON_RULE',         '*/10+@ * * * *');
+function ultimate_cron_ctools_plugin_directory($module, $type) {
+  // Safety: go away if CTools is not at an appropriate version.
+  if (!module_invoke('ctools', 'api_version', '1.7')) {
+    return;
+  }
+  $supported = array(
+    'ctools' => array(
+      'export_ui' => 'export_ui',
+    ),
+    'ultimate_cron' => array(
+      'settings' => 'settings',
+      'scheduler' => 'scheduler',
+      'launcher' => 'launcher',
+      'logger' => 'logger',
+    ),
+  );
+
+  if (isset($supported[$module][$type])) {
+    return "plugins/$module/" . $supported[$module][$type];
+  }
+}
 
 /**
- * Default rule for easy hook "hourly".
+ * Implements hook_ctools_plugin_type().
+ *
+ * Ultimate Cron provides for plugins.
+ *
+ * Settings  : Attaches settings to a cron job
+ * Scheduler : Determines when a job should run.
+ * Launcher  : Responsible for launching/running the job.
+ * Logger    : The backend for a jobs logs.
  */
-define('ULTIMATE_CRON_HOURLY_RULE',  '0 * * * *');
+function ultimate_cron_ctools_plugin_type() {
+  return array(
+    'settings' => array(
+      'use hooks' => FALSE,
+      'defaults' => array(
+        'static' => array(
+          'default plugin' => '',
+          'title singular' => t('settings'),
+          'title plural' => t('settings'),
+          'title singular proper' => t('Settings'),
+          'title plural proper' => t('Settings'),
+          'class' => 'UltimateCronSettings',
+          'multiple' => TRUE,
+        ),
+      ),
+      'classes' => array('handler'),
+      'cache' => TRUE,
+    ),
+    'scheduler' => array(
+      'use hooks' => FALSE,
+      'defaults' => array(
+        'static' => array(
+          'default plugin' => 'simple',
+          'title singular' => t('scheduler'),
+          'title plural' => t('schedulers'),
+          'title singular proper' => t('Scheduler'),
+          'title plural proper' => t('Schedulers'),
+          'class' => 'UltimateCronScheduler',
+        ),
+      ),
+      'classes' => array('handler'),
+      'cache' => TRUE,
+    ),
+    'launcher' => array(
+      'use hooks' => FALSE,
+      'defaults' => array(
+        'static' => array(
+          'default plugin' => 'serial',
+          'title singular' => t('launcher'),
+          'title plural' => t('launchers'),
+          'title singular proper' => t('Launcher'),
+          'title plural proper' => t('Launchers'),
+          'class' => 'UltimateCronLauncher',
+        ),
+      ),
+      'classes' => array('handler'),
+      'cache' => TRUE,
+    ),
+    'logger' => array(
+      'use hooks' => FALSE,
+      'defaults' => array(
+        'static' => array(
+          'default plugin' => 'database',
+          'title singular' => t('logger'),
+          'title plural' => t('loggers'),
+          'title singular proper' => t('Logger'),
+          'title plural proper' => t('Loggers'),
+          'class' => 'UltimateCronLogger',
+        ),
+      ),
+      'classes' => array('handler'),
+      'cache' => TRUE,
+    ),
+  );
+}
 
 /**
- * Default rule for easy hook "daily".
+ * Get plugin instance.
+ *
+ * @param string $type
+ *   Type of the plugin (settings, scheduler, launcher, logger).
+ *
+ * @return object
+ *   The instance of the plugin (singleton).
  */
-define('ULTIMATE_CRON_DAILY_RULE',   '0 0 * * *');
+function ultimate_cron_ctools_plugin_instance($type, $plugin) {
+  static $cache;
+  if (!isset($cache[$plugin['name']])) {
+    $cache[$plugin['name']] = ctools_plugin_get_class($plugin, 'handler');
+
+  }
+
+  if (isset($cache[$plugin['name']]) && class_exists($cache[$plugin['name']])) {
+    $class = $cache[$plugin['name']];
+    return $class::factory($class, $type, $plugin);
+  }
+  else {
+    return NULL;
+  }
+}
 
 /**
- * Default rule for easy hook "weekly".
+ * Require callback for plugins.
+ *
+ * @param string $type
+ *   Type of the plugin (settings, scheduler, launcher, logger).
+ * @param string $name
+ *   Name of the plugin (general, queue, serial, database, etc.).
+ *
+ * @return object
+ *   The instance of the plugin (singleton).
+ *
+ * @throws \RuntimeException
+ *   Throws a \RuntimeException if the plugin could not be loaded.
  */
-define('ULTIMATE_CRON_WEEKLY_RULE',  '0 0 * * 1');
+function _ultimate_cron_plugin_require($type, $name) {
+  $object = _ultimate_cron_plugin_load($type, $name);
+
+  if (!is_object($object)) {
+    throw new \RuntimeException(t('Ultimate Cron failed to require ctools "!type" plugin "!name"', array('!type' => $type, '!name' => $name)));
+  }
+
+  return $object;
+}
 
 /**
- * Default rule for easy hook "monthly".
+ * Load callback for plugins.
+ *
+ * @param string $type
+ *   Type of the plugin (settings, scheduler, launcher, logger).
+ * @param string $name
+ *   Name of the plugin (general, queue, serial, database, etc.).
+ *
+ * @return object
+ *   The instance of the plugin (singleton).
  */
-define('ULTIMATE_CRON_MONTHLY_RULE', '0 0 1 * *');
+function _ultimate_cron_plugin_load($type, $name) {
+  $cache = &drupal_static('ultimate_cron_plugin_load_all', array());
+  if (!isset($cache[$type][$name])) {
+    // Will populate the $cache static variable if a plugin is loaded.
+    _ultimate_cron_plugin_load_all($type);
+  }
+
+  if (isset($cache[$type][$name])) {
+    return $cache[$type][$name];
+  }
+  else {
+    return NULL;
+  }
+}
 
 /**
- * Default rule for easy hook "yearly".
+ * Load all callback for plugins.
+ *
+ * @param string $type
+ *   Type of the plugin (settings, scheduler, launcher, logger).
+ *
+ * @return array
+ *   The instances of the plugin type (singletons).
  */
-define('ULTIMATE_CRON_YEARLY_RULE',  '0 0 1 1 *');
+function _ultimate_cron_plugin_load_all($type, $reset = FALSE) {
+  $cache = &drupal_static('ultimate_cron_plugin_load_all', array());
+  if (!$reset && isset($cache[$type])) {
+    return $cache[$type];
+  }
+  if ($reset) {
+    drupal_static_reset('ctools_plugins');
+    drupal_static_reset('ctools_plugin_setup');
+  }
+
+  ctools_include('plugins');
+  $plugin_infos = ctools_get_plugins('ultimate_cron', $type);
+  $plugins = array();
+  foreach ($plugin_infos as $name => $plugin) {
+    if ($object = ultimate_cron_ctools_plugin_instance($name, $plugin)) {
+      $plugins[$name] = $object;
+    }
+  }
+  $cache[$type] = $plugins;
+  return $cache[$type];
+}
 
 /**
- * Default max execution time for Ultimate Cron.
+ * Load all jobs available from cTools export.
+ *
+ * This function loads the raw job "entities", and is NOT the function
+ * exposed to cTools export and export ui.
+ *
+ * @param bool $reset
+ *   Reset the object cache.
+ *
+ * @return array
+ *   UltimateCronJob objects.
  */
-define('ULTIMATE_CRON_MAX_EXECUTION_TIME', 86400);
+function _ultimate_cron_job_load_all_raw($reset = FALSE) {
+  ctools_include('export');
+  $table = 'ultimate_cron_job';
+  if ($reset) {
+    ctools_export_load_object_reset($table);
+  }
+
+  $class = _ultimate_cron_get_class('job');
+
+  $results = ctools_export_load_object($table);
+  foreach ($results as $name => &$result) {
+    $result->disabled = ultimate_cron_job_get_status($name);
+    $result->settings = !empty($result->settings) ? $result->settings : array();
+
+    // Make sure the object is of the correcty type.
+    if (!$result instanceOf $class) {
+      $result = $class::factory($result);
+    }
+  }
+  return $results;
+}
 
 /**
- * Default catch up time for Ultimate Cron.
+ * CTools Export load callback.
+ *
+ * @param string $name
+ *   Name of the job to load.
+ * @param bool $reset
+ *   (optional) Reset the ctools export object cache.
+ *
+ * @return UltimateCronJob
+ *   The job loaded.
  */
-define('ULTIMATE_CRON_CATCH_UP', 300);
+function _ultimate_cron_job_load($name, $reset = FALSE) {
+  $jobs = _ultimate_cron_job_load_all($reset);
+  return isset($jobs[$name]) ? $jobs[$name] : FALSE;
+}
 
 /**
- * Default lease time for Ultimate Cron queues.
+ * CTools Export load multiple callback.
+ *
+ * @param array $names
+ *   Names of the jobs to load.
+ * @param bool $reset
+ *   (optional) Reset the ctools export object cache.
+ *
+ * @return array
+ *   Array of UltimateCronJob objects.
  */
-define('ULTIMATE_CRON_QUEUE_LEASE_TIME', 30);
+function _ultimate_cron_job_load_multiple($names, $reset = FALSE) {
+  $jobs = array();
+  foreach (_ultimate_cron_job_load_all($reset) as $name => $job) {
+    if (in_array($name, $names)) {
+      $jobs[$name] = $job;
+    }
+  }
+  return $jobs;
+}
 
 /**
- * Default clean up time for log entries (30 days).
+ * CTools Export load all callback.
+ *
+ * @param bool $reset
+ *   (optional) Reset the ctools export object cache.
+ *
+ * @return array
+ *   Array of UltimateCronJob objects.
  */
-define('ULTIMATE_CRON_CLEANUP_LOG', 86400 * 30);
+function _ultimate_cron_job_load_all($reset = FALSE) {
+  static $cache = NULL;
+  if (!$reset && isset($cache)) {
+    return $cache;
+  }
+
+  $raw_jobs = _ultimate_cron_job_load_all_raw($reset);
+  $jobs = array();
+
+  foreach (ultimate_cron_get_hooks($reset) as $name => $hook) {
+    $jobs[$name] = ultimate_cron_prepare_job($name, $hook, isset($raw_jobs[$name]) ? $raw_jobs[$name] : NULL);
+  }
+
+  $cache = $jobs;
+  UltimateCronPlugin::hook_cron_alter($cache);
+
+  return $cache;
+}
 
 /**
- * Default setting for poorman.
+ * Prepare a UltimateCronJob object with hook data, etc.
+ *
+ * @param string $name
+ *   Name of the job.
+ * @param array $hook
+ *   The cron hook data from hook_cronapi(), etc.
+ * @param UltimateCronJob $job
+ *   (optional) The job to prepare with the hook data. If no job is given,
+ *   a new blank UltimateCronJob object will be used.
+ *
+ * @return UltimateCronJob
+ *   The prepared UltimateCronJob object.
  */
-define('ULTIMATE_CRON_POORMAN', FALSE);
+function ultimate_cron_prepare_job($name, $hook, $job = NULL) {
+  $schema = ctools_export_get_schema('ultimate_cron_job');
+  $export = $schema['export'];
+
+  if (!$job) {
+    $job = ctools_export_crud_new('ultimate_cron_job');
+    $job->name = $name;
+    $job->title = $hook['title'];
+    $job->description = $hook['description'];
+    $job->table = 'ultimate_cron_job';
+    $job->export_type = EXPORT_IN_CODE;
+    $job->{$export['export type string']} = t('Default');
+    $job->disabled = ultimate_cron_job_get_status($name);
+    if (!isset($job->disabled)) {
+      $job->disabled = !$hook['enabled'];
+    }
+  }
+  else {
+    // If object lives in database, then it is overridden, since we do not
+    // have objects living only in the database.
+    if ($job->export_type & EXPORT_IN_DATABASE) {
+      $job->{$export['export type string']} = t('Overridden');
+      $job->export_type |= EXPORT_IN_CODE;
+    }
+  }
+
+  // We do alot of += on arrays. Let's make sure we have an array to begin with.
+  ctools_include('plugins');
+  $plugin_types = ctools_plugin_get_plugin_type_info();
+  foreach ($plugin_types['ultimate_cron'] as $plugin_type => $info) {
+    $class = $info['defaults']['static']['class'];
+    if ($class::$multiple) {
+      $plugins = _ultimate_cron_plugin_load_all($plugin_type);
+      foreach ($plugins as $plugin) {
+        if (!isset($job->settings[$plugin_type][$plugin->name])) {
+          $job->settings[$plugin_type][$plugin->name] = array();
+        }
+      }
+    }
+    else {
+      if (!isset($job->settings[$plugin_type])) {
+        $job->settings[$plugin_type] = array();
+      }
+    }
+  }
+  $job->hook = $hook;
+  return $job;
+}
 
 /**
- * Default queue polling latency.
+ * CTools Export set status callback.
+ *
+ * Set job status and log it.
+ *
+ * @param mixed $object
+ *   Name of job or UltimateCronJob object.
+ * @param bool $status
+ *   The status to set (TRUE = disabled).
  */
-define('ULTIMATE_CRON_QUEUE_POLLING_LATENCY', '');
+function _ultimate_cron_job_set_status($object, $status) {
+  if (!is_object($object)) {
+    $object = _ultimate_cron_job_load($object);
+  }
+
+  if (empty($object->dont_log)) {
+    $log_entry = $object->startLog(uniqid($object->name, TRUE), 'modification', ULTIMATE_CRON_LOG_TYPE_ADMIN);
+    $log_entry->log($object->name, 'Job @status by ' . $log_entry->formatUser(), array(
+      '@status' => $status ? t('disabled') : t('enabled'),
+    ), WATCHDOG_INFO);
+    $log_entry->finish();
+  }
+
+  variable_set('default_ultimate_cron_job_' . $object->name, $status ? TRUE : FALSE);
+  $object->disabled = $status;
+}
 
 /**
- * Time in seconds to spend on launcing cron jobs.
+ * CTools Export save callback.
+ *
+ * Save a job and log it.
+ *
+ * @param UltimateCronJob &$object
+ *   The UltimateCronJob to save.
+ *
+ * @return bool
+ *   Result of drupal_write_record().
  */
-define('ULTIMATE_CRON_LAUNCH_WINDOW', 55);
+function _ultimate_cron_job_save(&$object) {
+  $table = 'ultimate_cron_job';
+  $schema = ctools_export_get_schema($table);
+  $export = $schema['export'];
+
+  // Objects should have a serial primary key. If not, simply fail to write.
+  if (empty($export['primary key'])) {
+    return FALSE;
+  }
+
+  $key = $export['primary key'];
+  if ($object->export_type & EXPORT_IN_DATABASE) {
+    // Existing record.
+    $update = array($key);
+  }
+  else {
+    // New record.
+    $update = array();
+    $object->export_type = EXPORT_IN_DATABASE;
+  }
+  $result = drupal_write_record($table, $object, $update);
+
+  if (empty($object->dont_log)) {
+    $log = $object->startLog(uniqid($object->name, TRUE), 'modification', ULTIMATE_CRON_LOG_TYPE_ADMIN);
+    $log->log($object->name, 'Job modified by ' . $log->formatUser(), array(), WATCHDOG_INFO);
+    $log->finish();
+  }
+
+  return $result;
+}
 
 /**
- * Time in seconds to spend on launcing cron jobs.
+ * CTools Export delete callback.
+ *
+ * Revert a job and log it.
+ *
+ * @param mixed $object
+ *   Name of job or UltimateCronJob object.
  */
-define('ULTIMATE_CRON_SERVICE_GROUP', 'default');
+function _ultimate_cron_job_delete($object) {
+  $table = 'ultimate_cron_job';
+  $schema = ctools_export_get_schema($table);
+  $export = $schema['export'];
+
+  // If we were sent an object, get the export key from it. Otherwise
+  // assume we were sent the export key.
+  if (!is_object($object)) {
+    $name = $object;
+    if (!($object = _ultimate_cron_job_load($name))) {
+      throw new Exception(t('Unable to revert unknown job: @name', array(
+        '@name' => $name,
+      )));
+    }
+  }
+
+  db_delete($table)
+    ->condition($export['key'], $object->{$export['key']})
+    ->execute();
+
+  if (empty($object->dont_log)) {
+    $log = $object->startLog(uniqid($object->name, TRUE), 'modification', ULTIMATE_CRON_LOG_TYPE_ADMIN);
+    $log->log($object->name, 'Job reverted by ' . $log->formatUser(), array(), WATCHDOG_INFO);
+    $log->finish();
+  }
+}
+
+/**
+ * Get status "callback".
+ *
+ * @param string $name
+ *   Name of job.
+ *
+ * @return bool
+ *   TRUE if job is disabled.
+ */
+function ultimate_cron_job_get_status($name) {
+  return variable_get('default_ultimate_cron_job_' . $name, NULL);
+}
+
+/**
+ * CTools Export field export callback.
+ *
+ * Export job.
+ *
+ * @param mixed $object
+ *   Name of job or UltimateCronJob object.
+ * @param int $indent
+ *   Indent to use.
+ */
+function _ultimate_cron_job_export_settings($object, $field, $value, $indent = '') {
+  // $value = $object->getSettings();
+  return ctools_var_export($value, $indent);
+}
+
+/**
+ * CTools Export export callback.
+ *
+ * Export job.
+ *
+ * @param mixed $object
+ *   Name of job or UltimateCronJob object.
+ * @param int $indent
+ *   Indent to use.
+ */
+function _ultimate_cron_job_export($object, $indent = '') {
+  $object = (object) (array) $object;
+  return ctools_export_object('ultimate_cron_job', $object, $indent);
+}
+
+/**
+ * Turn exported code into an object.
+ *
+ * Note: If the code is poorly formed, this could crash and there is no
+ * way to prevent this.
+ *
+ * @param string $code
+ *   The code to eval to create the object.
+ *
+ * @return object
+ *   An object created from the export. This object will NOT have been saved
+ *   to the database. In the case of failure, a string containing all errors
+ *   that the system was able to determine.
+ */
+function _ultimate_cron_job_import($code) {
+  $table = 'ultimate_cron_job';
+  $schema = ctools_export_get_schema($table);
+  $export = $schema['export'];
+
+  ob_start();
+  eval($code);
+  ob_end_clean();
+
+  if (empty(${$export['identifier']})) {
+    $errors = ob_get_contents();
+    if (empty($errors)) {
+      $errors = t('No item found.');
+    }
+    return $errors;
+  }
+
+  $item = ${$export['identifier']};
+
+  $jobs = _ultimate_cron_job_load_all();
+  if (isset($jobs[$item->name])) {
+    $job = clone $jobs[$item->name];
+    $job->disabled = $item->disabled;
+    $job->api_version = $item->api_version;
+    $job->name = $item->name;
+    $job->title = $item->title;
+    $job->settings = $item->settings;
+    $item = $job;
+  }
+  else {
+    return t('Job "@name" doesn\'t exist. You can only import jobs already defined by the system.', array(
+      '@name' => $item->name,
+    ));
+  }
+
+  // Set these defaults just the same way that ctools_export_new_object sets
+  // them.
+  $item->export_type = NULL;
+  $item->{$export['export type string']} = t('Overridden');
+
+  return $item;
+}
+
+/**
+ * Only overriden jobs should be exportable.
+ */
+function ultimate_cron_ultimate_cron_job_list() {
+  $table = 'ultimate_cron_job';
+  $list = array();
+
+  $items = _ultimate_cron_job_load_all_raw();
+  $schema = ctools_export_get_schema($table);
+
+  $export_key = $schema['export']['key'];
+  foreach ($items as $item) {
+    // Try a couple of possible obvious title keys:
+    $keys = array('admin_title', 'title');
+    if (isset($schema['export']['admin_title'])) {
+      array_unshift($keys, $schema['export']['admin_title']);
+    }
+
+    $string = '';
+    foreach ($keys as $key) {
+      if (!empty($item->$key)) {
+        $string = $item->$key . " (" . $item->$export_key . ")";
+        break;
+      }
+    }
+
+    if (empty($string)) {
+      $string = $item->$export_key;
+    }
+    $list[$item->$export_key] = check_plain($string);
+  }
+  return $list;
+}
 
 // ---------- HOOKS ----------
 
-module_load_include('nagios.inc', 'ultimate_cron');
+/**
+ * Implements hook_flush_caches().
+ */
+function ultimate_cron_flush_caches() {
+  return array('cache_ultimate_cron');
+}
+
+/**
+ * Implements hook_hook_info().
+ */
+function ultimate_cron_hook_info() {
+  $hooks = array();
+
+  // Add all easy hooks to cron group.
+  $easy_hooks = ultimate_cron_get_easy_hooks();
+
+  // Always ensure hook_cron() plus more is present in group.
+  $easy_hooks += array(
+    'cron' => array(),
+    'cron_alter' => array(),
+    'cronapi' => array(),
+  );
+
+  foreach (array_keys($easy_hooks) as $name) {
+    $hooks[$name] = array('group' => 'cron');
+  }
+  $hooks['cron_easy_hooks'] = array('group' => 'cron');
+  $hooks['cron_easy_hooks_alter'] = array('group' => 'cron');
+  $hooks['cron_pre_schedule'] = array('group' => 'cron');
+  $hooks['cron_post_schedule'] = array('group' => 'cron');
+  $hooks['cron_pre_launch'] = array('group' => 'cron');
+  $hooks['cron_post_launch'] = array('group' => 'cron');
+  $hooks['cron_pre_run'] = array('group' => 'cron');
+  $hooks['cron_post_run'] = array('group' => 'cron');
+  $hooks['cron_pre_invoke'] = array('group' => 'cron');
+  $hooks['cron_post_invoke'] = array('group' => 'cron');
+  $hooks['ultimate_cron_plugin_build_operations_alter'] = array('group' => 'cron');
+
+  return $hooks;
+}
+
+/**
+ * Implements hook_hook_info_alter().
+ */
+function ultimate_cron_hook_info_alter(&$hooks) {
+  if (module_exists('background_process')) {
+    $info = system_get_info('module', 'background_process');
+    if (!empty($info['dependencies']) && in_array('progress', $info['dependencies'])) {
+      $hooks['background_process_shutdown']['group'] = 'background_process';
+    }
+  }
+}
+
+/**
+ * Implements hook_init().
+ *
+ * Make sure we have the proper "last run" of cron in global $conf
+ * for maximum compatibility with core.
+ */
+function ultimate_cron_init() {
+  if (!variable_get('ultimate_cron_bypass_transactional_safe_connection')) {
+    $info = Database::getConnectionInfo('default');
+    Database::addConnectionInfo('default', 'ultimate_cron', $info['default']);
+  }
+  $GLOBALS['ultimate_cron_original_session_saving'] = drupal_save_session();
+  $GLOBALS['ultimate_cron_original_user'] = $GLOBALS['user'];
+
+  _ultimate_cron_variable_load('cron_last');
+}
 
 /**
  * Implements hook_help().
+ *
+ * @todo Please update this...
  */
 function ultimate_cron_help($path, $arg) {
   switch ($path) {
     case 'admin/help#ultimate_cron':
-      // Return a line-break version of the module README
-      return '<pre>' . file_get_contents(dirname(__FILE__) . '/README.txt') . '</pre>';
-    case 'admin/build/cron':
-      return '<p>' . t('Here you can see the crontab settings for each job available') . '</p>';
-    case 'admin/build/cron/settings':
-      return '<p>' . t('Here you can change the crontab settings for each job available') . '</p>';
+      $readme = dirname(__FILE__) . '/README.txt';
+      if (is_readable($readme)) {
+        // Return a line-break version of the module README.
+        return '<pre>' . file_get_contents($readme) . '</pre>';
+      }
+      else {
+        $output = '<h3>' . t('About') . '</h3>';
+        $output .= '<p>' . t('The Ultimate Cron handling for Drupal. Runs cron jobs individually in parallel using configurable rules, pool management and load balancing.') . '</p>';
+        $output .= '<h3>' . t('Features') . '</h3>';
+        $output .= '<ul>';
+        $output .= '<li>' . t('Works out-of-the box in most cases (or aims to)') . '</li>';
+        $output .= '<li>' . t('Parallel exection of cron jobs') . '</li>';
+        $output .= '<li>' . t('Configuration per job (enable/disable, rules, etc.)') . '</li>';
+        $output .= '<li>' . t('Multiple rules per cron job') . '</li>';
+        $output .= '<li>' . t('Pool management and load balancing using Background process') . '</li>';
+        $output .= '<li>' . t('Support for Drupal Queues') . '</li>';
+        $output .= '<li>' . t('Overview of cron jobs') . '</li>';
+        $output .= '<li>' . t('Log history of cron jobs') . '</li>';
+        $output .= '<li>' . t('Status/error messages per cron job, providing easy debugging of troublesome cron jobs') . '</li>';
+        $output .= '<li>' . t('hook_cron_alter() for easy adding/manipulating cron jobs') . '</li>';
+        $output .= '<li>' . t('Poormans cron with keepalive a granularity of 1 minute') . '</li>';
+        $output .= '<li>' . t('<a href="@url" rel="nofollow">Drush</a> support (list, start, enable/disable jobs from the command line)', array('@url' => 'https://www.drupal.org/project/drush')) . '</li>';
+        $output .= '</ul>';
+
+        $output .= '<h3>' . t('Useful links') . '</h3>';
+        $output .= '<ul>';
+        $output .= '<li>' . t('<a href="@url">Ultimate Cron project on Drupal.org</a>', array('@url' => 'https://www.drupal.org/project/ultimate_cron')) . '</li>';
+        $output .= '</ul>';
+        return $output;
+      }
   }
+}
+
+/**
+ * Implements hook_modules_enabled().
+ */
+function ultimate_cron_modules_enabled() {
+  // Clear ctools pluin cache for ultimate and rebuild menu,
+  // so that Ultimate Cron won't end up in an inconsistent state.
+  cache_clear_all('plugins:ultimate_cron:', 'cache', TRUE);
+  menu_rebuild();
+}
+
+/**
+ * Implements hook_modules_disabled().
+ */
+function ultimate_cron_modules_disabled() {
+  // Clear ctools pluin cache for ultimate and rebuild menu,
+  // so that Ultimate Cron won't end up in an inconsistent state.
+  cache_clear_all('plugins:ultimate_cron:', 'cache', TRUE);
+  menu_rebuild();
 }
 
 /**
@@ -120,115 +856,94 @@ function ultimate_cron_help($path, $arg) {
  */
 function ultimate_cron_menu() {
   $items = array();
-  $items['admin/config/system/cron/settings'] = array(
-    'title' => 'Settings',
-    'description' => 'Cron settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('ultimate_cron_settings_form'),
-    'access arguments' => array('administer ultimate cron'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'ultimate_cron.admin.inc',
+
+  // Poormans cron trigger.
+  $items['admin/config/system/cron/poorman'] = array(
+    'title' => 'Poormans cron',
+    'description' => 'Trigger poormans cron',
+    'page callback' => 'ultimate_cron_poorman_page',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'ultimate_cron.poorman.inc',
   );
-  $items['admin/config/system/cron/settings/%'] = array(
-    'title' => 'Settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('ultimate_cron_function_settings_form', 5),
-    'access arguments' => array('administer ultimate cron'),
-    'weight' => 0,
-    'file' => 'ultimate_cron.admin.inc',
-  );
+
+  ctools_include('plugins');
+  // In case a plugin has been removed, we need to clear the plugin cache
+  // first, so cTools won't try to include non-existant files.
+  $plugin_types = ctools_plugin_get_plugin_type_info(TRUE);
+
+  // Create callbacks for all plugins.
   $weight = 0;
-  foreach (array(
-    'error' => 'Errors', 
-    'warning' => 'Warnings', 
-    'info' => 'Info', 
-    'success' => 'Success',
-    'running' => 'Running',
-  ) as $status => $title) {
-    $items['admin/config/system/cron/overview/' . $status] = array(
-      'title' => $title,
-      'description' => 'View and manage cron table',
-      'page callback' => 'ultimate_cron_view_page',
-      'page arguments' => array(5),
-      'access arguments' => array('administer ultimate cron'),
-      'module' => 'ultimate_cron',
-      'file' => 'ultimate_cron.admin.inc',
-      'weight' => $weight++,
+  foreach ($plugin_types['ultimate_cron'] as $plugin_type => $info) {
+    $static = $info['defaults']['static'];
+    $class = $static['class'];
+    $items["admin/config/system/cron/$plugin_type"] = array(
       'type' => MENU_LOCAL_TASK,
+      'title' => $static['title plural proper'],
+      'description' => "Administer " . $static['title plural'],
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('ultimate_cron_plugin_form', $plugin_type),
+      'access arguments' => array('administer ultimate cron'),
+      'file' => 'ultimate_cron.admin.inc',
+      'weight' => 2 + $weight,
     );
+    $items["admin/config/system/cron/$plugin_type/settings"] = array(
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'title' => $class::$multiple ? 'List' : 'Settings',
+      'weight' => -1 + $weight,
+    );
+    $weight++;
+    foreach (_ultimate_cron_plugin_load_all($plugin_type, TRUE) as $name => $plugin) {
+      if (!$plugin->isValid()) {
+        continue;
+      }
+      $items["admin/config/system/cron/$plugin_type/$name"] = array(
+        'type' => MENU_LOCAL_TASK,
+        'title' => $plugin->title,
+        'description' => $plugin->description,
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array(
+          'ultimate_cron_plugin_settings',
+          $plugin_type,
+          $name,
+        ),
+        'access arguments' => array('administer ultimate cron'),
+        'file' => 'ultimate_cron.admin.inc',
+        'weight' => $weight++,
+      );
+    }
   }
-  $items['admin/config/system/cron/overview/all'] = array(
-    'title' => 'All',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => $weight++,
-  );
-  $items['admin/reports/cron'] = array(
-    'title' => 'Cron logs',
-    'description' => 'View logs for all cron jobs.',
-    'page callback' => 'ultimate_cron_view_page',
-    'access arguments' => array('administer ultimate cron'),
-    'file' => 'ultimate_cron.admin.inc',
-  );
-  $items['admin/reports/cron/%'] = array(
-    'title' => 'Cron log',
-    'description' => 'View log for specific function.',
-    'page callback' => 'ultimate_cron_function_log_page',
-    'page arguments' => array(3),
-    'access arguments' => array('administer ultimate cron'),
-    'file' => 'ultimate_cron.admin.inc',
-  );
-  $items['admin/ultimate-cron/service/start/%'] = array(
-    'type' => MENU_CALLBACK,
-    'title' => 'Run cron job',
-    'description' => 'Run cron job',
-    'page callback' => 'ultimate_cron_service_start',
-    'page arguments' => array(4),
-    'access arguments' => array('administer ultimate cron'),
-    'file' => 'ultimate_cron.admin.inc',
-  );
-  $items['admin/ultimate-cron/service/enable/%'] = array(
-    'type' => MENU_CALLBACK,
-    'title' => 'Enable cron job',
-    'description' => 'Enable cron job',
-    'page callback' => 'ultimate_cron_service_enable',
-    'page arguments' => array(4, TRUE),
-    'access arguments' => array('administer ultimate cron'),
-    'file' => 'ultimate_cron.admin.inc',
-  );
-  $items['admin/ultimate-cron/service/disable/%'] = array(
-    'type' => MENU_CALLBACK,
-    'title' => 'Disable cron job',
-    'description' => 'Disable cron job',
-    'page callback' => 'ultimate_cron_service_enable',
-    'page arguments' => array(4, FALSE),
-    'access arguments' => array('administer ultimate cron'),
-    'file' => 'ultimate_cron.admin.inc',
-  );
-  $items['admin/ultimate-cron/service/process-status'] = array(
-    'type' => MENU_CALLBACK,
-    'title' => 'Cron job process status',
-    'description' => 'Cron job process status',
-    'page callback' => 'ultimate_cron_service_process_status',
-    'access arguments' => array('administer ultimate cron'),
-    'file' => 'ultimate_cron.admin.inc',
-  );
+
   return $items;
 }
 
 /**
- * Implements hook_cron_queue_info().
- * Used for code injection in order to hijack cron runs.
+ * Implements hook_menu_alter().
+ *
+ * Steal the run-cron, so when you "run cron manually" from the status-reports
+ * page the ultimate_cron cron handler is run.
  */
-function ultimate_cron_cron_queue_info() {
-  static $processed = FALSE;
-  if (!$processed) {
-    $processed = TRUE;
-    if (basename($_SERVER['PHP_SELF']) == 'cron.php') {
-      ultimate_cron_cron_run(FALSE);
-      exit;
-    }
+function ultimate_cron_menu_alter(&$items) {
+  // Relocate ctools export ui to main tab.
+  // During install, the cTools export ui menu entries may not have been setup.
+  // If so, skip this part and assume that the menu will be rebuild after
+  // install is complete.
+  if (isset($items['admin/config/system/cron/jobs'])) {
+    $items['admin/config/system/cron'] = $items['admin/config/system/cron/jobs'];
+    $items['admin/config/system/cron/jobs'] = array(
+      'title' => 'Jobs',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => 20,
+    );
+    unset($items['admin/config/system/cron']['type']);
   }
-  return array();
+
+  // Steal the core cron run.
+  $steal = &$items['admin/reports/status/run-cron'];
+  $steal['page callback'] = 'ultimate_cron_run_scheduled_page';
+  $steal['page arguments'] = array('admin/reports/status');
+  $steal['module'] = 'ultimate_cron';
+  $steal['file'] = 'ultimate_cron.module';
 }
 
 /**
@@ -238,995 +953,616 @@ function ultimate_cron_permission() {
   return array(
     'administer ultimate cron' => array(
       'title' => t('Administer Ultimate Cron'),
-      'description' => t('Lets you configure everything in Ultimate Cron')
-    )
+      'description' => t('Lets you configure everything in Ultimate Cron'),
+    ),
+    'view cron jobs' => array(
+      'title' => t('View cron jobs'),
+      'description' => t('Lets you view cron jobs and their logs'),
+    ),
+    'run cron jobs' => array(
+      'title' => t('Run cron jobs'),
+      'description' => t('Lets you run cron jobs'),
+    ),
   );
 }
 
 /**
- * The cron handler takes over the normal Drupal cron handler
- * and runs the normal hook_cron() plus the hook_cronapi().
+ * Implements hook_cron_queue_info().
  *
- * @param boolean $return
- *   return to caller if TRUE, otherwise exit().
+ * Used for code injection in order to hijack cron runs.
  */
-function ultimate_cron_cron_run($return = FALSE) {
-  if (variable_get('install_task', FALSE) != 'done') {
-    return;
+function ultimate_cron_cron_queue_info() {
+  $debug = debug_backtrace();
+  $cron_debug_level = 3;
+  if (version_compare(PHP_VERSION, '7.0.0', '>=')) {
+    // PHP 7 will not include call_user_func_array in the backtrace.
+    $cron_debug_level--;
   }
-
-  // Be other cron module friendly
-  if (_ultimate_cron_incompatible_modules()) {
-    return;
-  }
-
-  // If run from core cron through CLI then don't do anything (drush core-cron)
-  if (!$return && drupal_is_cli()) {
-    return;
-  }
-
-  // Acquire lock
-  if (!lock_acquire('cron', 240.0)) {
-    drupal_set_message(t('Ultimate Cron launcher already running'), 'error');
-    return;
-  }
-
-  $msc = variable_get('ultimate_cron_simultaneous_connections', ULTIMATE_CRON_SIMULTANEOUS_CONNECTIONS);
-
-  // Get list of cron hooks.
-  $hooks = ultimate_cron_get_hooks();
-
-  // Get schedule.
-  $schedule = ultimate_cron_get_schedule($hooks);
-
-  drupal_set_message(t('%jobs jobs scheduled for launch', array('%jobs' => count($schedule))));
-
-  // Start the jobs. Keep launching jobs until X seconds into the request.
-  @set_time_limit(120);
-  $time = time();
-  $expire = $time + variable_get('ultimate_cron_launch_window', ULTIMATE_CRON_LAUNCH_WINDOW);
-  $running = array();
-  $launched = 0;
-
-  $handle_prefix = variable_get('ultimate_cron_handle_prefix', ULTIMATE_CRON_HANDLE_PREFIX);
-
-  // Try to launch jobs within the given time frame
-  while (!empty($schedule) && time() < $expire) {
-    $running_processes = db_select('background_process', 'bp')
-                          ->fields('bp', array('handle'))
-                          ->condition('bp.handle', $handle_prefix . '%', 'LIKE')
-                          ->countQuery()
-                          ->execute()
-                          ->fetchField();
-
-    // Launch jobs.
-    reset($schedule);
-    while ((list($name, $hook) = each($schedule)) && time() < $expire) {
-      // Congestion protection
-      if (empty($hook['override_congestion_protection']) && $running_processes >= $msc) {
-        continue;
-      }
-
-      if (empty($hook['force_run']) && !ultimate_cron_hook_should_run($hook)) {
-        unset($schedule[$name]);
-        continue;
-      }
-
-      $result = ultimate_cron_run_hook($name, $hook);
-
-      // Handle errors.
-      if ($result) {
-        $handle = $handle_prefix . $name;
-        $running[$handle] = $result;
-        unset($schedule[$name]);
-        $launched++;
-        $running_processes++;
-      }
-      else {
-        if ($result === FALSE) {
-          // Could not get lock, skip job.
-          unset($schedule[$name]);
+  if (!empty($debug[$cron_debug_level]['function']) && $debug[$cron_debug_level]['function'] == 'drupal_cron_run') {
+    if (!empty($debug[$cron_debug_level + 1])) {
+      try {
+        if ($debug[$cron_debug_level + 1]['function'] == 'install_finished') {
+          // Looks like drupal_cron_run() was called unexpectedly.
+          watchdog('ultimate_cron', 'Running cron in compatibility mode during site install.', array(), WATCHDOG_DEBUG);
         }
         else {
-          // Failed to start, retry next time.
-          watchdog('ultimate_cron', "Error starting $name", array(), WATCHDOG_WARNING);
+          // Looks like drupal_cron_run() was called unexpectedly.
+          watchdog('ultimate_cron', 'drupal_cron_run() called unexpectedly by @file:@line function @function. Running core in compatibility mode.', array(
+            '@function' => $debug[$cron_debug_level + 1]['function'],
+            '@line' => $debug[$cron_debug_level]['line'],
+            '@file' => $debug[$cron_debug_level]['file'],
+          ), WATCHDOG_DEBUG);
         }
+
+        ultimate_cron_cron_run_compatibility();
       }
+      catch (Throwable $e) {
+        // Restore the user.
+        $GLOBALS['user'] = $GLOBALS['ultimate_cron_original_user'];
+        drupal_save_session($GLOBALS['ultimate_cron_original_session_saving']);
+        throw $e;
+      }
+      catch (Exception $e) {
+        // Restore the user.
+        $GLOBALS['user'] = $GLOBALS['ultimate_cron_original_user'];
+        drupal_save_session($GLOBALS['ultimate_cron_original_session_saving']);
+        throw $e;
+      }
+      return array();
     }
 
-    // Jobs running ... check for start
-    if ($running) {
-      $result = db_query("SELECT p.name FROM {progress} p WHERE p.name IN (:running)", array(':running' => array_keys($running)));
-      while ($handle = $result->fetchObject()) {
-        if (is_resource($running[$handle->name])) {
-          fclose($running[$handle->name]);
-        }
-        unset($running[$handle->name]);
-      }
-    }
-    sleep(1);
-  }
-
-  // Close all jobs left
-  if ($running) {
-    foreach (array_keys($running) as $handle) {
-      if (is_resource($running[$handle])) {
-        fclose($running[$handle]);
-      }
-      unset($running[$handle]);
-    }
-  }
-
-  // Update drupals cron timestamp, but don't clear the cache for all variables!
-  $name = 'cron_last';
-  $value = time();
-  global $conf;
-  db_merge('variable')->key(array('name' => $name))->fields(array('value' => serialize($value)))->execute();
-  $conf[$name] = $value;
-
-  drupal_set_message(t('%jobs jobs launched', array('%jobs' => $launched)));
-  if (count($schedule)) {
-    drupal_set_message(t('%jobs jobs failed to launch within %seconds seconds', array(
-      '%jobs' => count($schedule),
-      '%seconds' => variable_get('ultimate_cron_launch_window', ULTIMATE_CRON_LAUNCH_WINDOW)
-    )), empty($schedule) ? 'status' : 'error');
-    watchdog('ultimate_cron', '%jobs jobs failed to launch within %seconds seconds', array(
-      '%jobs' => count($schedule),
-      '%seconds' => variable_get('ultimate_cron_launch_window', ULTIMATE_CRON_LAUNCH_WINDOW)
-    ), WATCHDOG_WARNING);
-  }
-
-  // Release the lock
-  lock_release('cron');
-
-  // And we're done ...
-  if ($return) {
-    return empty($schedule);
-  }
-  else {
+    // Looks like drupal_cron_run() was called just the way we like it.
+    ultimate_cron_cron_run();
     exit;
   }
+  return array();
 }
 
 /**
- * Implements hook_cronapi().
+ * Plugin clean up cron job.
+ *
+ * This is a cron callback for cleanup up plugins.
+ *
+ * @param UltimateCronJob $job
+ *   The cron job being run.
+ * @param array $arguments
+ *   (optional) An array that can have one or more of the following elements:
+ *   - type: The type of the plugin (settings, scheduler, launcher, logger).
+ *   - name: The name of the plugin (queue, crontab, serial, database).
  */
-function ultimate_cron_cronapi($op, $job = NULL, $hook = NULL) {
-  // Grab the defined cron queues.
-  static $queues = NULL;
-  if (!isset($queues)) {
-    $queues = module_invoke_all('cron_queue_info');
-    drupal_alter('cron_queue_info', $queues);
-  }
-
-  switch ($op) {
-    case 'list':
-      $jobs['ultimate_cron_cleanup_log'] = t('Cleanup log entries');
-
-      foreach ($queues as $queue_name => $info) {
-        $jobs['ultimate_cron_queue_' . $queue_name] = t('Queue: %name', array('%name' => $queue_name));
-      }
-      return $jobs;
-    case 'rule':
-      $queue_name = preg_replace('/^ultimate_cron_queue_/', '', $job);
-      if ($queue_name === $job) {
-        return;
-      }
-      return '* * * * *';
-    case 'execute':
-      $queue_name = preg_replace('/^ultimate_cron_queue_/', '', $job);
-      if ($queue_name === $job) {
-        return;
-      }
-
-      $polling_latency = variable_get('ultimate_cron_queue_polling_latency', ULTIMATE_CRON_QUEUE_POLLING_LATENCY);
-      $info = $queues[$queue_name];
-
-      $function = $info['worker callback'];
-      $end = time() + (isset($info['time']) ? $info['time'] : 15);
-      $queue = DrupalQueue::get($queue_name);
-      $items = 0;
-
-      $settings = ultimate_cron_get_settings("ultimate_cron_queue_$queue_name");
-      $polling_throttle = isset($settings['queue_polling_throttle']) ? $settings['queue_polling_throttle'] : 0;
-
-      while (time() < $end) {
-        $lease_time = isset($hook['settings']['queue_lease_time']) ? $hook['settings']['queue_lease_time'] : variable_get('ultimate_cron_queue_lease_time', ULTIMATE_CRON_QUEUE_LEASE_TIME);
-        $item = $queue->claimItem($lease_time);
-        if (!$item) {
-          if (is_numeric($polling_latency)) {
-            usleep($polling_latency * 1000);
-            continue;
-          }
-          else {
-            break;
-          }
-        }
-        try {
-          if (is_numeric($polling_throttle)) {
-            if ($items == 0) {
-              // Move the boundary if using a throttle, to avoid waiting for nothing
-              $end -= $polling_throttle / 1000;
-            } else {
-              // Sleep before retrieving
-              usleep($polling_throttle * 1000);
-            }
-          }
-          $function($item->data);
-          $queue->deleteItem($item);
-          $items++;
-        }
-        catch (Exception $e) {
-          // Just continue ...
-          watchdog('ultimate_cron', "Queue item %item_id failed with message %message", array(
-            '%item_id' => $item->item_id,
-            '%message' => $e->getMessage()
-          ), WATCHDOG_ERROR);
-        }
-      }
-      drupal_set_message(t('Processed @items items', array('@items' => $items)));
-      if (is_numeric($polling_latency)) {
-        $settings = ultimate_cron_get_settings($job);
-        $hook['settings'] = $settings + $hook['settings'];
-        if (ultimate_cron_hook_should_run($hook)) {
-          background_process_keepalive();
-        }
-      }
-      return;
-  }
-}
-
-/**
- * Implements hook_progress_message_alter().
- */
-function ultimate_cron_progress_message_alter(&$message) {
-  $pseudo_process = new stdClass();
-  $pseudo_process->handle = $message->data->progress->name;
-  $pseudo_process->start_stamp = $message->data->progress->start_stamp;
-  $pseudo_process->progress = $message->data->progress->progress;
-  $pseudo_process->exec_status = 2;
-  $message->data->background_process = $pseudo_process;
-  return ultimate_cron_background_process_message_alter($message);
-}
-
-/**
- * Implements hook_background_process_message_alter().
- */
-function ultimate_cron_background_process_message_alter(&$message) {
-  $handle_prefix = variable_get('ultimate_cron_handle_prefix', ULTIMATE_CRON_HANDLE_PREFIX);
-
-  // Only alter Ultimate Cron background process messages
-  if (substr($message->data->background_process->handle, 0, 3) !== $handle_prefix) {
-    return;
-  }
-
-  $message->data->ultimate_cron['start_stamp'] = format_date((int)$message->data->background_process->start_stamp, 'custom', 'Y-m-d H:i:s');
-  if ($message->data->background_process->progress >= 0) {
-    $message->data->ultimate_cron['progress'] = gmdate('H:i:s', (int)(microtime(TRUE) - $message->data->background_process->start_stamp)) . sprintf(" (%3d%%)", $message->data->background_process->progress * 100);
-  }
-  $message->data->ultimate_cron['unlockURL'] = url('background-process/unlock/' . $message->data->background_process->handle, array('query' => array('destination' => 'admin/config/system/cron')));
-}
-
-/**
- * Implements hook_theme_registry_alter().
- */
-function ultimate_cron_theme_registry_alter(&$theme_registry) {
-  $theme_registry['page']['theme paths'][] = drupal_get_path('module', 'ultimate_cron') . '/templates';
+function ultimate_cron_plugin_cleanup($job, $arguments) {
+  $type = $arguments['type'];
+  $name = $arguments['name'];
+  $plugin = _ultimate_cron_plugin_require($type, $name);
+  $plugin->cleanup();
 }
 
 /**
  * Implements hook_watchdog().
+ *
+ * Capture watchdog messages and send them to the loggers.
  */
-function ultimate_cron_watchdog($log = array()) {
-  $record = &drupal_static('ultimate_cron_record', FALSE);
-  if ($record) {
-    $log['variables'] = is_array($log['variables']) ? $log['variables'] : array();
-    ultimate_cron_record_log(t($log['message'], $log['variables']), FALSE, $log['severity']);
+function ultimate_cron_watchdog(array $log_entry) {
+  if (class_exists('UltimateCronLogger')) {
+    UltimateCronLogger::hook_watchdog($log_entry);
   }
 }
 
+// ---------- CALLBACK FUNCTIONS ----------
+
 /**
- * Implements hook_init().
+ * Run cron.
+ *
+ * The cron handler takes over the normal Drupal cron handler,
+ * and runs the normal hook_cron() plus the hook_cronapi().
  */
-function ultimate_cron_init() {
-  // No need for hocus pocus and poorman until site is installed.
-  if (variable_get('install_task') != 'done') {
+function ultimate_cron_cron_run() {
+  if (variable_get('install_task', FALSE) != 'done') {
     return;
   }
 
-  $name = 'cron_last';
-  if ($value = db_query("SELECT value FROM {variable} WHERE name = :name", array(':name' => $name))->fetchField()) {
-    $value = unserialize($value);
-  }
-  global $conf;
-  $conf['cron_last'] = $value;
-
-  ultimate_cron_trigger_poorman();
-}
-
-/**
- * Launch poorman cron if it's time to do so.
- */
-function ultimate_cron_trigger_poorman() {
-  // Launch poormans cron if applicable
-  if (variable_get('ultimate_cron_poorman', ULTIMATE_CRON_POORMAN) && !_ultimate_cron_incompatible_modules()) {
-    $last = variable_get('cron_last', 0);
-    $last = floor($last / 60) * 60;
-    $time = time();
-    $time = floor($time / 60) * 60;
-    // Don't attempt, if already run within last minute
-    if ($last < $time) {
-      ultimate_cron_launch_poorman();
-    }
-  }
-}
-
-/**
- * Launch the poormans cron background process.
- */
-function ultimate_cron_launch_poorman() {
-  $handle = 'ultimate_cron_poorman';
-  if ($process = background_process_get_process($handle)) {
-    if ($process->start + 120 < time()) {
-      // Must have timed out or something ... remove it!
-      if (background_process_remove_process($handle, $process->start)) {
-        $process = NULL;
-      }
-    }
-  }
-  if (!$process) {
-    $process = new BackgroundProcess($handle);
-    // Because anyone can launch poormans cron, run it as anonymous
-    $process->uid = 0;
-    $process->service_host = 'ultimate_cron_poorman';
-    $result = $process->start('_ultimate_cron_poorman');
-  }
-}
-
-/**
- * Implements hook_background_process_shutdown().
- *
- * Shutdown handler for cronjobs.
- */
-function ultimate_cron_background_process_shutdown($process, $shutdown_msg = NULL) {
-  $args = func_get_args();
-  $record = drupal_static('ultimate_cron_record', FALSE);
-  $handle_prefix = variable_get('ultimate_cron_handle_prefix', ULTIMATE_CRON_HANDLE_PREFIX);
-  $name = preg_replace('/^' . $handle_prefix . '/', '', $process->handle);
-  if (!empty($name) && $name != $process->handle) {
-    static $has_run = array();
-    if (!empty($has_run[$name])) {
-      return;
-    }
-    $has_run[$name] = TRUE;
-
-    // Record end time
-    $end = microtime(TRUE);
-
-    if ($record) {
-      // Get drupal messages
-      $messages = drupal_get_messages(NULL, TRUE);
-      $messages['status'] = empty($messages['status']) ? array() : $messages['status'];
-      $messages['warning'] = empty($messages['warning']) ? array() : $messages['warning'];
-      $messages['error'] = empty($messages['error']) ? array() : $messages['error'];
-
-      foreach ($messages['status'] as $message) {
-        ultimate_cron_record_log($message);
-      }
-      foreach ($messages['warning'] as $message) {
-        ultimate_cron_record_log($message, FALSE, WATCHDOG_WARNING);
-      }
-      foreach ($messages['error'] as $message) {
-        ultimate_cron_record_log($message, FALSE, WATCHDOG_ERROR);
-      }
-
-      // Get error messages
-      $error = error_get_last();
-      if ($error) {
-        $message = $error['message'] . ' (line ' . $error['line'] . ' of ' . $error['file'] . ').' . "\n";
-        $severity = WATCHDOG_INFO;
-        if ($error['type'] && (E_NOTICE || E_USER_NOTICE || E_USER_WARNING)) {
-          $severity = WATCHDOG_NOTICE;
-        }
-        if ($error['type'] && (E_WARNING || E_CORE_WARNING || E_USER_WARNING)) {
-          $severity = WATCHDOG_WARNING;
-        }
-        if ($error['type'] && (E_ERROR || E_CORE_ERROR || E_USER_ERROR || E_RECOVERABLE_ERROR)) {
-          $severity = WATCHDOG_ERROR;
-        }
-        ultimate_cron_record_log($message, FALSE, $severity);
-      }
-    }
-
-    if ($shutdown_msg) {
-      ultimate_cron_record_log($shutdown_msg, FALSE, WATCHDOG_ERROR);
-    }
-
-    $log = drupal_static('ultimate_cron_record_log', array('msg' => '', 'severity' => -1));
-    $severity = $log['severity'];
-    $msg = $log['msg'];
-    $result = $severity < 0 || $severity >= WATCHDOG_INFO ? 1: 0;
-
-    // log results here ...
-    $object = (object)array(
-      'name' => $name,
-      'start_stamp' => $process->start,
-      'end_stamp' => $end,
-      'service_host' => $process->service_host,
-      'exec_status' => $result,
-      'severity' => $severity,
-      'msg' => trim($msg),
-    );
-    $old_db = db_set_active('background_process');
-    drupal_write_record('ultimate_cron_log', $object);
-    db_set_active($old_db);
-
-    $object->formatted['start_stamp'] = format_date((int)$object->start_stamp, 'custom', 'Y-m-d H:i:s');
-    $object->formatted['end_stamp'] = format_date((int)$object->end_stamp, 'custom', 'Y-m-d H:i:s');
-    $object->formatted['duration'] = gmdate('H:i:s', (int)($object->end_stamp - $object->start_stamp));
-    $object->formatted['severity'] = $object->severity < 0 ? 'success' : ($object->severity >= WATCHDOG_NOTICE ? 'info' : ($object->severity >= WATCHDOG_WARNING ? 'warning' : 'error'));
-    $object->formatted['executeURL'] = url('admin/ultimate-cron/service/start/' . $object->name, array('query' => array('destination' => 'admin/config/system/cron')));
-    $object->formatted['msg'] = strip_tags(html_entity_decode($object->msg, ENT_QUOTES));
-    if (module_exists('nodejs')) {
-      $message = (object) array(
-        'channel' => 'ultimate_cron',
-        'data' => (object) array(
-          'action' => 'log',
-          'log' => $object,
-        ),
-        'callback' => 'nodejsUltimateCron',
-      );
-      nodejs_send_content_channel_message($message);
-    }
-
-  }
-}
-
-
-// ---------- FIXUPS FOR CORE  ----------
-
-/**
- * Implements hook_menu_alter().
- *
- * Steal the run-cron, so when you "run cron manually" from the status-reports
- * page the ultimate_cron cron handler is run.
- */
-function ultimate_cron_menu_alter(&$items) {
-  if (_ultimate_cron_incompatible_modules()) {
+  // If run from core cron through CLI then don't do anything (drush core-cron)
+  if (drupal_is_cli()) {
     return;
   }
 
-  $items['admin/config/system/cron'] = array(
-    'title' => 'Cron',
-    'description' => 'View and manage cron table',
-    'page callback' => 'ultimate_cron_view_page',
-    'access arguments' => array('administer ultimate cron'),
-    'module' => 'ultimate_cron',
-    'file' => 'ultimate_cron.admin.inc',
-  );
-  $items['admin/config/system/cron/overview'] = array(
-    'title' => 'List',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-  $steal = &$items['admin/reports/status/run-cron'];
-  $steal['page callback'] = 'ultimate_cron_run_cron';
-  $steal['page arguments'] = array();
-  $steal['module'] = 'ultimate_cron';
-  $steal['file'] = 'ultimate_cron.admin.inc';
+  ultimate_cron_run_scheduled(FALSE);
+  exit;
 }
 
 /**
- * Implements hook_cron_alter().
- * Add better description to core modules.
+ * Run cron in compatibility mode.
+ *
+ * Runs all non core cron jobs first, then locks core cron jobs,
+ * and then assumes that the consumer of this function will execute the
+ * core cron jobs.
+ *
+ * If a lock cannot be obtained for a core cron job, an exception will be
+ * thrown since it will then be unsafe to run it.
  */
-function ultimate_cron_cron_alter(&$hooks) {
-  $update['dblog_cron']['description'] = t('Remove expired log messages and flood control events');
-  $update['field_cron']['description'] = t('Purges deleted Field API data');
-  $update['filter_cron']['description'] = t('Expire outdated filter cache entries');
-  $update['node_cron']['description'] = t('Mark old nodes as read');
-  $update['search_cron']['description'] = t('Update indexes');
-  $update['system_cron']['description'] = t('Cleanup (batch, flood, temp-files, etc.)');
-  $update['aggregator_cron']['description'] = t('Refresh feeds');
-  $update['openid_cron']['description'] = t('Remove expired nonces from the database');
-  $update['ping_cron']['description'] = t('Notify remote sites');
-  $update['poll_cron']['description'] = t('Close expired polls');
-  $update['statistics_cron']['description'] = t('Reset counts and clean up');
-  $update['trigger_cron']['description'] = t('Run actions for cron triggers');
-  $update['tracker_cron']['description'] = t('Update tracker index');
-  $update['update_cron']['description'] = t('Check system for updates');
-  $update['ultimate_cron_cleanup_log']['configure'] = 'admin/config/system/cron/settings';
-  $update['dblog_cron']['configure'] = 'admin/config/development/logging';
-
-  foreach ($update as $name => $data) {
-    if (isset($hooks[$name])) {
-      foreach ($data as $key => $value) {
-        $hooks[$name][$key] = $value;
+function ultimate_cron_cron_run_compatibility() {
+  // Normally core cron just runs all the jobs regardless of schedule
+  // and locks.
+  // By default we will also run all Ultimate Cron jobs regardless of
+  // their schedule. This behavior can be overridden via the variable:
+  // "ultimate_cron_check_schedule_on_core_cron".
+  //
+  // Split up jobs between core and non-core, and run the non-core jobs
+  // first.
+  foreach (_ultimate_cron_job_load_all() as $job) {
+    if (in_array('core', $job->hook['tags'])) {
+      $core_jobs[] = $job;
+    }
+    else {
+      if (!variable_get('ultimate_cron_check_schedule_on_core_cron', FALSE) || $job->isScheduled()) {
+        if ($lock_id = $job->lock()) {
+          $log_entry = $job->startLog($lock_id, 'Launched by Drupal core');
+          $job->run();
+          $log_entry->finish();
+          $job->unlock();
+        }
       }
     }
+  }
+
+  // Before passing control back to core, make sure that we can get a
+  // lock on the jobs. If we can't, we don't allow core to run any
+  // jobs, since we can't inform core which jobs are safe to run.
+  foreach ($core_jobs as $job) {
+    $lock_id = $job->lock();
+    if (!$lock_id) {
+      throw new Exception(t('Could not acquire lock for @name', array(
+        '@name' => $job->name,
+      )));
+    }
+    $job->startLog($lock_id, 'Launched by Drupal core');
   }
 }
 
 // ---------- HELPER FUNCTIONS ----------
 
 /**
- * Set current hook being processed
+ * Load a variable by-passing the cache.
  *
- * @param $hook
- * @return
- *   Current hook
- */
-function ultimate_cron_set_current_hook($hook = NULL) {
-  static $current_hook;
-  if ($hook) {
-    $current_hook = $hook;
-  }
-  return $current_hook;
-}
-
-/**
- * Get current hook being processed
+ * We update the the cron_last variable once a minute. In order to avoid
+ * clearing the variable cache every minute, we handle that variable
+ * directly.
  *
- * @return
- *   Current hook
- */
-function ultimate_cron_get_current_hook() {
-  return ultimate_cron_set_current_hook();
-}
-
-/**
- * The actual poorman function
- * @return type
- */
-function _ultimate_cron_poorman() {
-  if (!variable_get('ultimate_cron_poorman', ULTIMATE_CRON_POORMAN) || _ultimate_cron_incompatible_modules()) {
-    return;
-  }
-
-  // Restart when done
-  background_process_keepalive();
-
-  // Derive current minute
-  $time = time();
-  $time = floor($time / 60) * 60;
-
-  // Run the cron
-  ultimate_cron_cron_run(TRUE);
-
-  // Wait until end of "current" minute
-  $wait = $time + 60 - time();
-  if ($wait > 0 && $wait <= 60) {
-    sleep($wait);
-  }
-}
-
-/**
- * Clean up log entries.
- */
-function ultimate_cron_cleanup_log() {
-  do {
-    $result = db_query_range("SELECT lid FROM {ultimate_cron_log} WHERE start_stamp < :start", 0, 1000, array(':start' => time() - variable_get('ultimate_cron_cleanup_log', ULTIMATE_CRON_CLEANUP_LOG)));
-    $lids = array();
-    while ($row = $result->fetchObject()) {
-      $lids[] = $row->lid;
-    }
-    if (!empty($lids)) {
-      db_query("DELETE FROM {ultimate_cron_log} WHERE lid IN (:lids)", array(':lids' => $lids));
-    }
-  } while (!empty($lids));
-}
-
-/**
- * Run a cron hook.
- * Launches the cron job in a background process
+ * @param string $name
+ *   Name of variable to load.
  *
- * @param $name
- * @param $hook
  * @return mixed
- *   Connections file handle on success.
+ *   Value of the variable. The value is also stored in the global static
+ *   variables array, so variable_get() may retrieve the correct data
+ *   afterwards.
  */
-function ultimate_cron_run_hook($name, $hook) {
-  // Run the job in background
-  $result = NULL;
-  $handle_prefix = variable_get('ultimate_cron_handle_prefix', ULTIMATE_CRON_HANDLE_PREFIX);
-  $handle = $handle_prefix . $name;
-  $process = new BackgroundProcess($handle);
-
-  // Always run cron job as anonymous user
-  $process->uid = 0;
-
-  // Determine service group
-  $process->service_group = empty($hook['settings']['service_group']) ? variable_get('ultimate_cron_service_group', ULTIMATE_CRON_SERVICE_GROUP) : $hook['settings']['service_group'];
-
-  $hook['timestamp'] = time();
-  unset($hook['log']['msg']);
-  $result = $process->start('_ultimate_cron_run_hook', array($name, $hook));
-
-  return $result ? $process->connection : $result;
-}
-
-function ultimate_cron_run_hook_cli($name, $hook) {
-  // Run the job in background
-  $result = NULL;
-  $handle_prefix = variable_get('ultimate_cron_handle_prefix', ULTIMATE_CRON_HANDLE_PREFIX);
-  $handle = $handle_prefix . $name;
-  $process = new BackgroundProcess($handle);
-
-  // Always run cron job as anonymous user
-  $process->uid = 0;
-
-  $hook['timestamp'] = time();
-  if ($process->lock()) {
-    try {
-      $process_obj = background_process_get_process($handle);
-      $process->start = $process_obj->start;
-      if (function_exists('background_process_update_status')) {
-        background_process_update_status($handle, BACKGROUND_PROCESS_STATUS_RUNNING);
-      }
-      else {
-        db_update('background_process')
-          ->fields(array(
-            'exec_status' => BACKGROUND_PROCESS_STATUS_RUNNING,
-          ))
-          ->condition('handle', $handle)
-          ->execute();
-      }
-
-      $old_handle = background_process_current_handle();
-      background_process_current_handle($handle);
-      _ultimate_cron_run_hook($name, $hook);
-      module_invoke_all('background_process_shutdown', $process);
-      background_process_current_handle($old_handle);
-      background_process_remove_process($handle, $process->start);
-      return TRUE;
-    }
-    catch (Exception $e) {
-      module_invoke_all('background_process_shutdown', $process, (string)$e);
-      return NULL;
-    }
-  }
-  return FALSE;
-}
-
-/**
- * This is the function that is launched into a background process.
- * It runs the cron job and does housekeeping, pre/post execute hooks, etc.
- *
- * @param $module
- *   Module containing function.
- * @param $name
- *   Function to call.
- * @return boolean
- *   TRUE on success, FALSE on failure.
- */
-function _ultimate_cron_run_hook($name, $hook) {
-  @set_time_limit(variable_get('ultimate_cron_max_execution_time', ULTIMATE_CRON_MAX_EXECUTION_TIME));
-  drupal_save_session(FALSE);
-
-  // Load current process
-  $process = background_process_get_process(background_process_current_handle());
-
-  $record = &drupal_static('ultimate_cron_record', FALSE);
-  $record = TRUE;
-  ultimate_cron_record_log(NULL, TRUE);
-
-  // Load log if not present
-  if (!isset($hook['log'])) {
-    $hook['log'] = ultimate_cron_get_log($name);
-  }
-
-  $time = time();
-  if (empty($hook['skip_catch_up']) && !ultimate_cron_hook_should_run($hook)) {
-    // Hook started too late!
-    watchdog('ultimate_cron', '%function skipped. Invoked at %invoke, but did not start until %start', array(
-      '%function' => $name,
-      '%invoke' => format_date($hook['timestamp'], 'custom', 'Y-m-d H:i:s'),
-      '%start' => format_date($time, 'custom', 'Y-m-d H:i:s'),
-    ), WATCHDOG_ERROR);
-    ultimate_cron_background_process_shutdown($process, NULL);
-    return FALSE;
-  }
-
-  // Let other modules do stuff before execution, if they need to.
-  module_invoke_all('cron_pre_execute', $name, $hook);
-  module_invoke_all('cron_pre_execute_' . $name, $hook);
-
-  if (!empty($hook['file'])) {
-    include_once $hook['file'];
-  }
-
-  $callback = $hook['callback'];
-  ultimate_cron_set_current_hook($hook);
-  if (is_callable($callback)) {
-    call_user_func($callback);
+function _ultimate_cron_variable_load($name, $default = NULL) {
+  if ($value = db_query("SELECT value FROM {variable} WHERE name = :name", array(':name' => $name))->fetchField()) {
+    $value = unserialize($value);
   }
   else {
-    module_invoke($hook['module'], 'cronapi', 'execute', $name, $hook);
+    $value = $default;
   }
-
-  ultimate_cron_background_process_shutdown($process, NULL);
-
-  // Let other modules do stuff before execution, if they need to.
-  module_invoke_all('cron_post_execute', $name, $hook);
-  module_invoke_all('cron_post_execute_' . $name, $hook);
-
-  return TRUE;
+  global $conf;
+  $conf[$name] = $value;
+  return $value;
 }
 
 /**
- * Get a list of functions that should be run now.
+ * Load multiple variables by-passing the cache.
  *
- * @param $hooks
- *   Array of cron hooks to check.
+ * We update the the cron_last variable once a minute. In order to avoid
+ * clearing the variable cache every minute, we handle that variable
+ * directly.
+ *
+ * @param array $names
+ *   Names of variables to load.
+ *
  * @return array
- *   Functions to run now.
+ *   Values of the variables. The values are also stored in the global static
+ *   variables array, so variable_get() may retrieve the correct data
+ *   afterwards.
  */
-function ultimate_cron_get_schedule($hooks) {
-  // Create list of scheduled functions
-  $schedule = array();
-  foreach ($hooks as $name => &$hook) {
-    ultimate_cron_load_hook_data($hook);
+function _ultimate_cron_variable_load_multiple($names, $default = NULL) {
+  $values = array();
+  $result = db_query("SELECT name, value FROM {variable} WHERE name IN (:names)", array(':names' => $names))->fetchAllKeyed();
+  global $conf;
+  foreach ($names as $name) {
+    $conf[$name] = $values[$name] = isset($result[$name]) ? unserialize($result[$name]) : $default;
+  }
+  return $values;
+}
 
-    // Store last run in hook for sorting purposes
-    $last_run = isset($hook['log']['start']) ? $hook['log']['start'] : 0;
-    $hook['last_run'] = $last_run;
+/**
+ * Variable set with cache by-pass.
+ *
+ * We update the the cron_last variable once a minute. In order to avoid
+ * clearing the variable cache every minute, we handle that variable
+ * directly.
+ *
+ * The global static variables array is also updated, so variable_get()
+ * may retrieve the correct data afterwards.
+ *
+ * @param string $name
+ *   Name of variables to save.
+ * @param mixed $value
+ *   Value of the variable.
+ */
+function _ultimate_cron_variable_save($name, $value) {
+  global $conf;
+  db_merge('variable')->key(array('name' => $name))->fields(array('value' => serialize($value)))->execute();
+  $conf[$name] = $value;
+}
 
-    if (ultimate_cron_hook_should_run($hook)) {
-      $schedule[$name] = $hook;
+/**
+ * Cron easy hooks.
+ *
+ * Provide a default set of easy hooks.
+ *
+ * @return array
+ *   Easy hooks.
+ */
+function ultimate_cron_get_easy_hooks() {
+  static $easy_hooks;
+  if (isset($easy_hooks)) {
+    return $easy_hooks;
+  }
+
+  // Default provided easy hooks.
+  $easy_hooks = array(
+    'cron' => array(
+      'title' => 'Default cron job',
+    ),
+    'cron_hourly' => array(
+      'title' => 'Hourly cron job',
+      'scheduler' => array(
+        'name' => 'crontab',
+        'crontab' => array(
+          'rules' => array('0+@ * * * *'),
+        ),
+      ),
+    ),
+    'cron_daily' => array(
+      'title' => 'Daily cron job',
+      'scheduler' => array(
+        'name' => 'crontab',
+        'crontab' => array(
+          'rules' => array('0+@ 12 * * *'),
+        ),
+      ),
+    ),
+    'cron_nightly' => array(
+      'title' => 'Nightly cron job',
+      'scheduler' => array(
+        'name' => 'crontab',
+        'crontab' => array(
+          'rules' => array('0+@ 0 * * *'),
+        ),
+      ),
+    ),
+    'cron_weekly' => array(
+      'title' => 'Weekly cron job',
+      'scheduler' => array(
+        'name' => 'crontab',
+        'crontab' => array(
+          'rules' => array('0+@ 0 * * 1'),
+        ),
+      ),
+    ),
+    'cron_monthly' => array(
+      'title' => 'Monthly cron job',
+      'scheduler' => array(
+        'name' => 'crontab',
+        'crontab' => array(
+          'rules' => array('0+@ 0 1 * *'),
+        ),
+      ),
+    ),
+    'cron_yearly' => array(
+      'title' => 'Yearly cron job',
+      'scheduler' => array(
+        'name' => 'crontab',
+        'crontab' => array(
+          'rules' => array('0+@ 0 1 1 *'),
+        ),
+      ),
+    ),
+  );
+
+  // Allow modules to define their own easy hooks.
+  $easy_hooks += module_invoke_all('cron_easy_hooks');
+
+  // Allow modules to alter the defined easy hooks.
+  drupal_alter('cron_easy_hooks', $easy_hooks);
+
+  return $easy_hooks;
+}
+
+/**
+ * Get a specific cron hook.
+ *
+ * @param string $name
+ *   Name of hook.
+ * @param bool $reset
+ *   Reset static cache.
+ *
+ * @return array
+ *   Hook definition.
+ */
+function ultimate_cron_get_hook($name, $reset = FALSE) {
+  $hooks = ultimate_cron_get_hooks($reset);
+  return $hooks[$name];
+}
+
+/**
+ * Get cron hooks declared by a module.
+ *
+ * @param string $module
+ *   Name of module.
+ *
+ * @return array
+ *   Hook definitions for the specified module.
+ */
+function ultimate_cron_get_module_hooks($module) {
+  $items = array();
+  if (module_hook($module, 'cronapi')) {
+    $items = module_invoke($module, 'cronapi', NULL);
+
+    if (!is_array($items)) {
+      // API Version 1.x
+      $items = array();
+
+      $list = module_invoke($module, 'cronapi', 'list');
+      if (!$list) {
+        $list = array();
+      }
+      foreach ($list as $name => $title) {
+        $items[$name] = array('title' => $title);
+      }
+      foreach ($items as $name => &$item) {
+        $item['api_version'] = 'ultimate_cron-1';
+        $rules = module_invoke($module, 'cronapi', 'rule', $name);
+        $rules = $rules ? $rules : array();
+
+        $settings = (array) module_invoke($module, 'cronapi', 'settings', $name);
+        if (empty($settings['rules']) && $rules) {
+          $settings['rules'] = is_array($rules) ? $rules : array($rules);
+        }
+
+        if (!empty($settings['rules'])) {
+          $settings['scheduler'] = array(
+            'name' => 'crontab',
+            'crontab' => array(
+              'rules' => $settings['rules'],
+            ),
+          );
+          unset($settings['rules']);
+        }
+
+        $settings += array(
+          'configure' => module_invoke($module, 'cronapi', 'configure', $name),
+        );
+        $item += $settings;
+      }
+    }
+    else {
+      foreach ($items as &$item) {
+        if (!empty($item['rule'])) {
+          // Elysia 2.x compatibility.
+          $item['scheduler'] = array(
+            'name' => 'crontab',
+            'crontab' => array(
+              'rules' => array($item['rule']),
+            ),
+          );
+          $item['api_version'] = 'elysia_cron-2';
+          $item['title'] = $item['description'];
+        }
+      }
     }
   }
 
-  // Sort by last run time
-  uasort($schedule, '_ultimate_cron_sort_schedule');
+  // Add hook_cron() if applicable.
+  if (module_hook($module, 'cron')) {
+    if (empty($items["{$module}_cron"])) {
+      $items["{$module}_cron"] = array();
+    }
 
-  // Allow other to manipulate the schedule
-  drupal_alter('cron_schedule', $schedule);
-
-  return $schedule;
-}
-
-/**
- * Populate hook array with settings and log data
- *
- * @param type $hook
- */
-function ultimate_cron_load_hook_data(&$hook) {
-  // Get settings
-  $hook['settings'] = ultimate_cron_get_settings($hook['function']) + $hook['settings'];
-
-  // Get log, used for checking last start time
-  $hook['log'] = ultimate_cron_get_log($hook['function']);
-}
-
-/**
- * Check if a hook should be run now.
- *
- * @param array $hook
- * @return boolean
- */
-function ultimate_cron_hook_should_run($hook) {
-  // Is it enabled?
-  if (empty($hook['settings']['enabled'])) {
-    return FALSE;
+    $info = system_get_info('module', $module);
+    $items["{$module}_cron"] += array(
+      'module' => $module,
+      'title' => 'Default cron handler',
+      'configure' => empty($info['configure']) ? NULL : $info['configure'],
+      'tags' => array(),
+      'pass job argument' => FALSE,
+    );
+    $items["{$module}_cron"]['tags'][] = 'core';
   }
 
-  $last_run = isset($hook['log']['start']) ? $hook['log']['start'] : 0;
+  foreach (ultimate_cron_get_easy_hooks() as $name => $easy_hook) {
+    $hook_name = "{$module}_{$name}";
+    if (module_hook($module, $name)) {
+      if (empty($items[$hook_name])) {
+        $items[$hook_name] = array();
+      }
+      $items[$hook_name] += $easy_hook;
 
-  return ultimate_cron_should_run($hook['settings']['rules'], $last_run, time(), $hook['settings']['catch_up'], $hook['delta']);
+      $info = system_get_info('module', $module);
+      $items[$hook_name] += array(
+        'module' => $module,
+        'title' => 'Easy hook ' . $name,
+      );
+    }
+  }
+
+  // Make sure the module is defined.
+  foreach ($items as &$item) {
+    $item += array(
+      'module' => $module,
+    );
+  }
+
+  return $items;
 }
 
 /**
- * Sort callback for ordering schedule.
- *
- * @param type $a
- * @param type $b
- * @return type
+ * Get hooks defined in plugins.
  */
-function _ultimate_cron_sort_schedule($a, $b) {
-  return $a['last_run'] == $b['last_run'] ? 0 : ($a['last_run'] < $b['last_run'] ? -1 : 1);
+function ultimate_cron_get_plugin_hooks() {
+  $items = array();
+  // Invoke hook_cronapi() on the plugins.
+  $plugin_types = ctools_plugin_get_plugin_type_info();
+  foreach ($plugin_types['ultimate_cron'] as $plugin_type => $info) {
+    $plugins = _ultimate_cron_plugin_load_all($plugin_type);
+    foreach ($plugins as $plugin) {
+      if ($plugin->isValid()) {
+        $items += $plugin->cronapi();
+      }
+    }
+  }
+  return $items;
 }
 
 /**
- * Get cron hooks available.
+ * Prepare the hooks by adding default values.
+ *
+ * @param array &$hooks
+ *   The hooks to be prepared.
+ */
+function ultimate_cron_prepare_hooks(&$hooks) {
+  // Add default settings.
+  static $plugin_types;
+  static $plugins;
+  if (!isset($plugin_types)) {
+    ctools_include('plugins');
+    $plugin_types = ctools_plugin_get_plugin_type_info();
+    $plugins = array();
+    foreach ($plugin_types['ultimate_cron'] as $plugin_type => $info) {
+      $plugins[$plugin_type] = _ultimate_cron_plugin_load_all($plugin_type);
+    }
+  }
+
+  foreach ($hooks as $name => &$item) {
+    foreach ($plugin_types['ultimate_cron'] as $plugin_type => $info) {
+      $static = $info['defaults']['static'];
+      $class = $static['class'];
+      $item += array(
+        $plugin_type => array(),
+      );
+      if (!$class::$multiple) {
+        $item[$plugin_type] += array(
+          'name' => variable_get('ultimate_cron_plugin_' . $plugin_type . '_default', $static['default plugin']),
+        );
+      }
+
+      foreach ($plugins[$plugin_type] as $plugin_name => $plugin) {
+        if (!$plugin->isValid()) {
+          continue;
+        }
+        $item[$plugin_type] += array(
+          $plugin_name => array(),
+        );
+      }
+    }
+
+    $item += array(
+      'title' => $name,
+      'description' => isset($item['title']) ? $item['title'] : $name,
+      'file path' => drupal_get_path('module', $item['module']),
+      'callback arguments' => array(),
+      'callback' => $name,
+      'enabled' => TRUE,
+      'tags' => array(),
+      'api_version' => 'ultimate_cron-2',
+      'pass job argument' => TRUE,
+    );
+  }
+}
+
+/**
+ * Get all cron hooks defined.
+ *
+ * @param bool $reset
+ *   Reset static cache.
  *
  * @return array
- *   List of modules.
+ *   All hook definitions available.
  */
-function ultimate_cron_get_hooks() {
-  static $hooks = NULL;
-  if (isset($hooks)) {
-    return $hooks;
+function ultimate_cron_get_hooks($reset = FALSE) {
+  static $cache = NULL;
+  if (!$reset && isset($cache)) {
+    return $cache;
   }
-  $hooks = array();
-  $delta = 0;
 
-  // Generate list of hooks
+  $cache = cache_get('ultimate_cron_hooks');
+  if ($cache && $cache->data) {
+    $cache = $cache->data;
+    return $cache;
+  }
+
+  $hooks = array();
+  // Generate list of jobs provided by modules.
   $modules = module_list();
   foreach ($modules as $module) {
-    $file = drupal_get_path('module', $module) . '/' . $module . '.info';
-    $info = drupal_parse_info_file($file);
-    foreach (ultimate_cron_easy_hooks() as $hook => $description) {
-      if (module_hook($module, $hook)) {
-        $name = $module . '_' . $hook;
-        $hooks[$name]['description'] = $description;
-        $hooks[$name]['module'] = $module;
-        $hooks[$name]['configure'] = isset($info['configure']) ? $info['configure'] : '';
-        $hooks[$name]['settings'] = ultimate_cron_get_default_settings($module, $name, ultimate_cron_easy_hooks_rule($hook));
-      }
-    }
-    if ($cronapi = module_invoke($module, 'cronapi', 'list')) {
-      foreach ($cronapi as $name => $description) {
-        $hooks[$name]['description'] = $description;
-        $hooks[$name]['module'] = $module;
-        $hooks[$name]['settings'] = ultimate_cron_get_default_settings($module, $name, ultimate_cron_easy_hooks_rule('cron'));
-        $hooks[$name]['configure'] = module_invoke($module, 'cronapi', 'configure', $name);
-      }
-    }
+    $hooks += ultimate_cron_get_module_hooks($module);
   }
 
-  foreach ($hooks as $name => &$hook) {
-    $hook['callback'] = $hook['function'] = $name;
-    $hook['background_process'] = array();
-    $hook['delta'] = $delta++;
-  }
+  // Generate list of jobs provided by plugins.
+  $hooks += ultimate_cron_get_plugin_hooks();
 
-  // Remove ourselves from the list
-  unset($hooks['ultimate_cron_cron']);
+  // Add default values to hooks.
+  ultimate_cron_prepare_hooks($hooks);
 
-  // Allow other to manipulate the hook list
+  // Allow other to manipulate the hook list.
   drupal_alter('cron', $hooks);
 
-  return $hooks;
+  // Keep track on when we first registered new cron jobs.
+  // This is used for as a base for time comparison in behind schedule
+  // calculation for jobs that haven't run.
+  $registered = variable_get('ultimate_cron_hooks_registered', array());
+  $new = array();
+  foreach ($hooks as $name => $hook) {
+    $new[$name] = empty($registered[$name]) ? REQUEST_TIME : $registered[$name];
+  }
+  if ($registered != $new) {
+    variable_set('ultimate_cron_hooks_registered', $new);
+  }
+
+  $cache = $hooks;
+  cache_set('ultimate_cron_hooks', $cache);
+  return $cache;
 }
 
-/**
- * Get default settings for job.
- *
- * @param type $module
- * @param type $name
- * @return array
- */
-function ultimate_cron_get_default_settings($module, $name, $default_rule) {
-  $conf = module_invoke($module, 'cronapi', 'settings', $name);
-  if (!is_array($conf)) {
-    $conf = array();
-  }
-  $rule = module_invoke($module, 'cronapi', 'rule', $name);
-  if (empty($conf['rules']) && !empty($rule)) {
-    $conf['rules'] = is_array($rule) ? $rule : array($rule);
-  }
-  $conf += _ultimate_cron_default_settings($default_rule);
-  return $conf;
-}
+// ---------- CRON RULE FUNCTIONS ----------
 
 /**
- * Get settings for a function.
- *
- * @param $name
- * @return array
- *   Settings for function
+ * Form element validator for cron rules.
  */
-function ultimate_cron_get_settings($name) {
-  $settings = array();
-  if (module_exists('ctools')) {
-    ctools_include('export');
-    $function = ctools_export_crud_load('ultimate_cron', $name);
-    if ($function) {
-      $settings = (array) $function->settings;
+function ultimate_cron_plugin_crontab_element_validate_rule($element, &$form_state) {
+  $rules = array();
+  $value = $element['#value'];
+  if (!empty($value)) {
+    $rules = explode(';', $value);
+    $rules = array_map('trim', $rules);
+  }
+  foreach ($rules as $rule) {
+    if (!ultimate_cron_validate_rule($rule)) {
+      form_error($element, t('%name: %rule is not a valid rule.', array('%name' => $element['#title'], '%rule' => $rule)));
     }
   }
-  else {
-    $function = db_query("SELECT settings FROM {ultimate_cron} WHERE name = :name", array(':name' => $name))->fetchObject();
-    if (!empty($function) && !empty($function->settings)) {
-      $settings = (array) unserialize($function->settings);
-    }
-  }
-  if (empty($settings['catch_up'])) {
-    unset($settings['catch_up']);
-  }
-  return $settings;
-}
-
-/**
- * CRUD save. Also used for ctools integration.
- * @param object $object
- *   object to be saved ->name containing unique machine name.
- * @return boolean
- *   result of query.
- */
-function ultimate_cron_crud_save($object) {
-  return db_merge('ultimate_cron')
-    ->key(array('name' => $object->name))
-    ->fields(array(
-      'settings' => serialize($object->settings),
-    ))
-    ->execute();
-}
-
-/**
- * Set settings for a function.
- *
- * @param $name
- *   Function to set settings for.
- * @param $settings
- *   Settings data
- * @return boolean
- *   TRUE on success, FALSE on failure.
- */
-function ultimate_cron_set_settings($name, $settings) {
-  if (module_exists('ctools')) {
-    ctools_include('export');
-    $function = ctools_export_crud_new('ultimate_cron');
-    $function->name = $name;
-    $function->settings = $settings;
-    return ctools_export_crud_save('ultimate_cron', $function);
-  }
-  else {
-    $function = new stdClass();
-    $function->name = $name;
-    $function->settings = $settings;
-    return ultimate_cron_crud_save($function);
-  }
-}
-
-/**
- * Get latest log line for a function.
- *
- * @param $name
- *   Function to get latest log line for,
- * @return object
- *   Log line.
- */
-function ultimate_cron_get_log($name) {
-  $log = db_query_range("
-    SELECT l.* FROM {ultimate_cron_log} l
-    WHERE l.name = :name
-    ORDER BY l.start_stamp DESC",
-    0, 1, array(':name' => $name))
-      ->fetchAssoc();
-  if ($log) {
-    $log['start'] = $log['start_stamp'];
-    $log['status'] = $log['exec_status'];
-    $log['end'] = $log['end_stamp'];
-  }
-  return $log;
-}
-
-/**
- * Store watchdog error messages for later use.
- *
- * @staticvar string $log
- * @param $msg
- *   Message to record.
- * @param $reset
- *   Reset recorded message.
- * @return string
- *   Message recorded.
- */
-function ultimate_cron_record_log($msg = NULL, $reset = FALSE, $severity = -1) {
-  $log = &drupal_static('ultimate_cron_record_log', array());
-  if ($reset) {
-    $log = array();
-  }
-  $log += array('msg' => '', 'severity' => -1);
-  if ($msg) {
-    $log['msg'] .= "$msg\n";
-  }
-  $log['severity'] = $log['severity'] < 0 || ($severity >= 0 && $severity < $log['severity']) ? $severity : $log['severity'];
-  return $log['msg'];
 }
 
 /**
  * Check if rule is valid.
  *
- * @param $rule
- *   rule to validate.
- * @return
+ * @param string $rule
+ *   The rule to validate.
+ *
+ * @return bool
  *   TRUE if valid, FALSE if not.
  */
 function ultimate_cron_validate_rule($rule) {
-  require_once 'CronRule.class.php';
-  $cron = new CronRule($rule);
+  $cron = CronRule::factory($rule);
   if (!$cron->isValid()) {
     return FALSE;
   }
@@ -1236,189 +1572,170 @@ function ultimate_cron_validate_rule($rule) {
 }
 
 /**
- * Check if rule is scheduled to run at a given time.
+ * Return blank values for all keys in an array.
  *
- * @param $rules
- *   rules to validate.
- * @param $last_run
- *   last time the rule was run.
- * @param $now
- *   time of validation, set to NULL for now.
- * @param $catch_up
- *   run if we missed our time window?
- * @return boolean
- *   TRUE if rule is scheduled to run, FALSE if not.
- */
-function ultimate_cron_should_run($rules, $job_last_ran, $now = NULL, $catch_up = 0, $offset = 0) {
-  $now = is_null($now) ? time() : $now;
-  require_once 'CronRule.class.php';
-  $cron = new CronRule();
-  foreach ($rules as $rule) {
-    $cron->rule = $rule;
-    $cron->offset = $offset;
-    $cron_last_ran = $cron->getLastRan($now);
-    if ($job_last_ran < $cron_last_ran && $cron_last_ran <= $now) {
-      if ($now <= $cron_last_ran + $catch_up) {
-        return TRUE;
-      }
-    }
-  }
-  return FALSE;
-}
-
-/**
- * Get a list of the "easy-hooks".
+ * @param array $array
+ *   Array to generate blank values from.
  *
  * @return array
- *    hooks (hook_name => hook_description).
+ *   Array with same keys as input, but with blank values (empty string).
  */
-function ultimate_cron_easy_hooks() {
-  return array(
-    'cron'    => 'Default cron handler',
-    'hourly'  => 'Hourly',
-    'daily'   => 'Daily',
-    'weekly'  => 'Weekly',
-    'monthly' => 'Monthly',
-    'yearly'  => 'Yearly'
-  );
+function ultimate_cron_blank_values($array) {
+  $result = array();
+  foreach ($array as $key => $value) {
+    switch (gettype($value)) {
+      case 'array':
+        $result[$key] = array();
+        break;
+
+      default:
+        $result[$key] = '';
+    }
+  }
+  return $result;
 }
 
 /**
- * Get rule(s) for easy hook(s)
+ * Page callback for running scheduled jobs.
+ */
+function ultimate_cron_run_scheduled_page($dest = NULL) {
+  ultimate_cron_run_scheduled(TRUE);
+  $dest = $dest ? $dest : 'admin/config/system/cron';
+  drupal_goto($dest);
+}
+
+/**
+ * Run scheduled jobs.
  *
- * @param $hook
- *   Hook to get rule for (optional).
- * @return mixed
- *   Rule for $hook if specified, otherwise all rules for all easy hooks.
+ * @param bool $set_message
+ *   Set Drupal system message instead of watchdog logging.
  */
-function ultimate_cron_easy_hooks_rule($hook = NULL) {
-  $rules = array(
-    'cron'    => variable_get('ultimate_cron_rule', ULTIMATE_CRON_RULE),
-    'hourly'  => ULTIMATE_CRON_HOURLY_RULE,
-    'daily'   => ULTIMATE_CRON_DAILY_RULE,
-    'weekly'  => ULTIMATE_CRON_WEEKLY_RULE,
-    'monthly' => ULTIMATE_CRON_MONTHLY_RULE,
-    'yearly'  => ULTIMATE_CRON_YEARLY_RULE,
-  );
-  return isset($rules[$hook]) ? $rules[$hook] : variable_get('ultimate_cron_rule', ULTIMATE_CRON_RULE);
+function ultimate_cron_run_scheduled($set_message = TRUE) {
+  if (!variable_get('maintenance_mode', 0)) {
+    ultimate_cron_run_launchers();
+  }
+  else {
+    ultimate_cron_watchdog_message('ultimate_cron', 'Cannot launch scheduled jobs while in maintenance mode!', array(), WATCHDOG_NOTICE, 'error', $set_message);
+  }
 }
 
 /**
- * Get module name
- * @param $module
+ * Run all launchers.
+ */
+function ultimate_cron_run_launchers($launchers = NULL) {
+  _ultimate_cron_variable_save('cron_last', time());
+
+  $launcher_jobs = array();
+  foreach (_ultimate_cron_job_load_all() as $job) {
+    $launcher = $job->getPlugin('launcher');
+    if (!isset($launchers) || in_array($launcher->name, $launchers)) {
+      $launcher_jobs[$launcher->name]['launcher'] = $launcher;
+      $launcher_jobs[$launcher->name]['sort'] = array($launcher->weight);
+      $launcher_jobs[$launcher->name]['jobs'][$job->name] = $job;
+      $launcher_jobs[$launcher->name]['jobs'][$job->name]->sort = array($job->loadLatestLogEntry()->start_time);
+    }
+  }
+
+  uasort($launcher_jobs, '_ultimate_cron_multi_column_sort');
+
+  foreach ($launcher_jobs as $name => $launcher_job) {
+    uasort($launcher_job['jobs'], '_ultimate_cron_multi_column_sort');
+    $launcher_job['launcher']->launchJobs($launcher_job['jobs']);
+  }
+}
+
+/**
+ * Log message either to watchdog or to screen.
+ *
+ * @param string $type
+ *   The category to which this message belongs. Can be any string, but the
+ *   general practice is to use the name of the module calling watchdog().
+ * @param string $message
+ *   The message to store in the log. Keep $message translatable
+ *   by not concatenating dynamic values into it! Variables in the
+ *   message should be added by using placeholder strings alongside
+ *   the variables argument to declare the value of the placeholders.
+ *   See t() for documentation on how $message and $variables interact.
+ * @param array $variables
+ *   Array of variables to replace in the message on display or
+ *   NULL if message is already translated or not possible to
+ *   translate.
+ * @param int $severity
+ *   The severity of the message; one of the following values as defined in
+ *   @link http://www.faqs.org/rfcs/rfc3164.html RFC 3164: @endlink
+ *   - WATCHDOG_EMERGENCY: Emergency, system is unusable.
+ *   - WATCHDOG_ALERT: Alert, action must be taken immediately.
+ *   - WATCHDOG_CRITICAL: Critical conditions.
+ *   - WATCHDOG_ERROR: Error conditions.
+ *   - WATCHDOG_WARNING: Warning conditions.
+ *   - WATCHDOG_NOTICE: (default) Normal but significant conditions.
+ *   - WATCHDOG_INFO: Informational messages.
+ *   - WATCHDOG_DEBUG: Debug-level messages.
+ * @param string $status
+ *   The message's type.
+ *   supported:
+ *   - 'status'
+ *   - 'warning'
+ *   - 'error'
+ * @param bool $set_message
+ *   Use drupal_set_message() instead of watchdog logging.
+ */
+function ultimate_cron_watchdog_message($type, $message, $variables, $severity, $status, $set_message) {
+  if ($set_message) {
+    drupal_set_message(t($message, $variables), $status);
+  }
+  else {
+    watchdog($type, $message, $variables, $severity);
+  }
+}
+
+/**
+ * Custom sort callback for sorting cron jobs by start time.
+ */
+function _ultimate_cron_sort_jobs_by_start_time($a, $b) {
+  return $a->log_entry->start_time == $b->log_entry->start_time ? 0 : ($a->log_entry->start_time > $b->log_entry->start_time ? 1 : -1);
+}
+
+/**
+ * Sort callback for multiple column sort.
+ */
+function _ultimate_cron_multi_column_sort($a, $b) {
+  $a = (array) $a;
+  $b = (array) $b;
+  foreach ($a['sort'] as $i => $sort) {
+    if ($a['sort'][$i] == $b['sort'][$i]) {
+      continue;
+    }
+    return $a['sort'][$i] < $b['sort'][$i] ? -1 : 1;
+  }
+  return 0;
+}
+
+/**
+ * Get transactional safe connection.
+ *
  * @return string
- *   Name of module
+ *   Connection target.
  */
-function ultimate_cron_module_name($module) {
-  $file = drupal_get_path('module', $module) . '/' . $module . '.info';
-  $info = drupal_parse_info_file($file);
-  return $info['name'] ? $info['name'] : $module;
+function _ultimate_cron_get_transactional_safe_connection() {
+  return !variable_get('ultimate_cron_bypass_transactional_safe_connection') && Database::getConnection()->inTransaction() ? 'ultimate_cron' : 'default';
 }
 
 /**
- * Load all cronjob settings and processes.
+ * Get class for a specific task.
  *
- * @return array
- *   Array of cronjobs and their data.
+ * @param string $name
+ *   Name of task.
+ *
+ * @return string
+ *   Name of class.
  */
-function _ultimate_cron_preload_cron_data() {
-  $handle_prefix = variable_get('ultimate_cron_handle_prefix', ULTIMATE_CRON_HANDLE_PREFIX);
-  if (module_exists('ctools')) {
-    ctools_include('export');
-    $functions = ctools_export_crud_load_all('ultimate_cron');
-  }
-  else {
-    $functions = db_select('ultimate_cron', 'u')
-      ->fields('u', array('name', 'settings'))
-      ->execute()
-      ->fetchAllAssoc('name', PDO::FETCH_ASSOC);
-    foreach ($functions as &$function) {
-      $function = (object)$function;
-      if (!empty($function->settings)) {
-        $function->settings = unserialize($function->settings);
-      }
-    }
-  }
-  $hooks = ultimate_cron_get_hooks();
-  if (function_exists('background_process_update_status')) {
-    $query = db_select('background_process', 'b')
-      ->fields('b', array('handle', 'service_host'))
-      ->condition('handle', $handle_prefix . '%', 'LIKE');
-    $query->addField('b', 'start_stamp', 'start');
-    $query->addField('b', 'exec_status', 'status');
-    $processes = $query->execute()->fetchAllAssoc('handle', PDO::FETCH_ASSOC);
-  }
-  else {
-    $processes = db_select('background_process', 'b')
-      ->fields('b', array('handle', 'service_host', 'start', 'status'))
-      ->condition('handle', $handle_prefix . '%', 'LIKE')
-      ->execute()
-      ->fetchAllAssoc('handle', PDO::FETCH_ASSOC);
-  }
-  $data = array();
-  foreach ($hooks as $name => $hook) {
-    $settings = empty($functions[$name]->settings) ? array() : $functions[$name]->settings;
-    $settings += $hook['settings'];
-    $handle = $handle_prefix . $name;
-    $data[$name] = array(
-      'settings' => $settings,
-      'background_process' => empty($processes[$handle]) ? NULL : (object)$processes[$handle],
-    );
-  }
-  return $data;
-}
-
-/**
- * Return a list of modules that are incompatible with Ultimate Cron
- */
-function _ultimate_cron_incompatible_modules() {
-  static $modules = NULL;
-  if (isset($modules)) {
-    return $modules;
-  }
-  $modules = array();
-  $candidates = array('parallel_cron');
-  foreach ($candidates as $module) {
-    if (module_exists($module)) {
-      $modules[$module] = ultimate_cron_module_name($module);
-    }
-  }
-  return $modules;
-}
-
-/**
- * Get service hosts defined in the system.
- */
-function ultimate_cron_get_service_groups() {
-  if (function_exists('background_process_get_service_groups')) {
-    return background_process_get_service_groups();
-  }
-
-  // Fallback for setups that havent upgraded Background Process.
-  // We have this to avoid upgrade dependencies or majer version bump.
-  $service_groups = variable_get('background_process_service_groups', array());
-  $service_groups += array(
-    'default' => array(
-      'hosts' => array(variable_get('background_process_default_service_host', 'default')),
-    ),
+function _ultimate_cron_get_class($name) {
+  static $defaults = array(
+    'job' => 'UltimateCronJob',
+    'lock' => 'UltimateCronLock',
+    'progress' => 'UltimateCronProgress',
+    'signal' => 'UltimateCronSignal',
   );
-  foreach ($service_groups as &$service_group) {
-    $service_group += array(
-      'method' => 'background_process_service_group_random'
-    );
-  }
-  return $service_groups;
-}
-
-/**
- * Smelly code; $default_rule determines if we should populate ...
- */
-function _ultimate_cron_default_settings($default_rule = NULL) {
-  return array(
-    'enabled' => TRUE,
-    'rules' => $default_rule ? array($default_rule) : array(),
-    'catch_up' => $default_rule ? variable_get('ultimate_cron_catch_up', ULTIMATE_CRON_CATCH_UP) : '',
-    'queue_lease_time' => '',
-    'queue_polling_throttle' => ''
-  );
+  return variable_get('ultimate_cron_class_' . $name, $defaults[$name]);
 }

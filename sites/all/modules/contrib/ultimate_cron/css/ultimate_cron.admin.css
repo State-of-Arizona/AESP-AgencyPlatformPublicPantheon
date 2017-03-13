@@ -13,8 +13,8 @@
 .ultimate-cron-admin-status-success,
 .ultimate-cron-admin-status-warning,
 .ultimate-cron-admin-status-running {
-  background-position: center !important;
-  background-repeat: no-repeat !important;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 a.ultimate-cron-admin-status-info,

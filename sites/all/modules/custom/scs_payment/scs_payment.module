@@ -1,9 +1,9 @@
 <?php
 /** * @file
  * The scs_payment.module provide a payment method which admin could use for credit card payment.
- * 
+ *
  */
-  
+
 define('SCS_PAYMENT_PENDING', 'Pending');
 define('SCS_PAYMENT_APPROVED', 'Approved');
 define('SCS_PAYMENT_DECLINED', 'Declined');
@@ -13,42 +13,45 @@ const SCS_TOKEN_LIFETIME = 900; //The token lifetime, e.g. for how many seconds 
 /**
  * Implements hook_menu().
  */
-function scs_payment_menu() {
+function scs_payment_menu()
+{
   $items = array();
-   
+
   $items['scs_payment/failed'] = array(
     'title' => 'SCS Payment Was Declined',
     'page callback' => 'scs_payment_failed',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  
+
+
   $items['scs_payment/return'] = array(
     'title' => 'SCS Payment Checkout return url',
     'page callback' => 'scs_payment_return',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-  ); 
+  );
 
   $items['scs_payment/confirmation/%entity_object/%/%'] = array(
-    'title' => 'Confirmation Page', 
+    'title' => 'Confirmation Page',
     'load arguments' => array('payment'),
-    'page callback' => 'scs_payment_confirmation', 
+    'page callback' => 'scs_payment_confirmation',
     'page arguments' => array(2, 3, 4),
-    'access callback' => TRUE, 
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  
+
   return $items;
 }
 
 /**
  * This hook use to handle the customer return from the SCS payment with Cancelled.
  */
-function scs_payment_menu_alter(&$items) {
-  if(isset($items['node/%node/webform-continue/%webform_menu_submission/%'])) {
+function scs_payment_menu_alter(&$items)
+{
+  if (isset($items['node/%node/webform-continue/%webform_menu_submission/%'])) {
     $items['node/%/webform-continue/%/%']['page callback'] = 'scs_payment_cancel_message';
-    $items['node/%/webform-continue/%/%']['access callback'] = 'scs_payment_cancel_webform_continue'; 
+    $items['node/%/webform-continue/%/%']['access callback'] = 'scs_payment_cancel_webform_continue';
     $items['node/%/webform-continue/%/%']['page arguments'] = array(1, 3, 4);
   }
 }
@@ -56,40 +59,44 @@ function scs_payment_menu_alter(&$items) {
 /**
  * could use this function later on to fix the access call back if need base on the requirement.
  */
-function scs_payment_cancel_webform_continue(){
+function scs_payment_cancel_webform_continue()
+{
   return true;
 }
 
-function scs_payment_cancel_message($nid, $sid, $page_num) {
+function scs_payment_cancel_message($nid, $sid, $page_num)
+{
   module_load_include('inc', 'webform', 'includes/webform.submissions');
   $submission = webform_get_submission($nid, $sid);
-   
-  if(is_object($submission)) {
+
+  if (is_object($submission)) {
     //get the payment pid base on the submission id n nid.
     $pid = get_pid_by_sid($nid, $sid);
 
     //get the payment method id
     $query = db_select('payment', 'p')
-              ->condition('p.pid', $pid, '=') 
-              ->fields('p', array('pmid'));
+      ->condition('p.pid', $pid, '=')
+      ->fields('p', array('pmid'));
 
     $pmid = $query->execute()->fetchObject();
 
     $messsage = '';
 
-    if (isset($pmid->pmid) && !empty($pmid->pmid)) { 
+    if (isset($pmid->pmid) && !empty($pmid->pmid)) {
       $url = drupal_get_path_alias('node/' . $nid);
       $message = variable_get('scs_cancelled_message_' . $pmid->pmid, '');
       $message = str_replace('[nid]', '/' . $url, $message);
-    } 
+    }
 
     return $message;
   }
 }
+
 /**
  * Set Failed SCS Payment method
  */
-function scs_payment_failed() {
+function scs_payment_failed()
+{
   return 'The payment was declined.';
 }
 
@@ -97,7 +104,8 @@ function scs_payment_failed() {
  * Sets the page title dynamically based on the purchase description.
  * @TODO: Is this title the best fit?
  */
-function scs_payment_title($payment) {
+function scs_payment_title($payment)
+{
   drupal_set_title($payment->description);
 }
 
@@ -107,99 +115,106 @@ function scs_payment_title($payment) {
  * this hook to check for one time submission token. If the Token is Expired or not exist in database,
  * then we will redirect anonymous user to node/sid/done?sid without token value.
  */
-function scs_payment_webform_submission_load(&$submissions) {
-  //extra one time check 
+function scs_payment_webform_submission_load(&$submissions)
+{
+  //extra one time check
   $hash_query = !empty($_GET['token']) ? $_GET['token'] : NULL;
-  $sid = !empty($_GET['sid']) ? $_GET['sid'] : NULL; 
+  $sid = !empty($_GET['sid']) ? $_GET['sid'] : NULL;
   if (!empty($hash_query) && !empty($sid)) {
-    $one_time_token = load_token($hash_query, $submissions[$sid]->nid); 
+    $one_time_token = load_token($hash_query, $submissions[$sid]->nid);
     //redirect if the token time has been expired or token does not exist in database
-    if ($one_time_token == FALSE || $one_time_token == 'EXPIRED') {  
+    if ($one_time_token == FALSE || $one_time_token == 'EXPIRED') {
       $options = array();
       if ($submissions) {
         $options['query']['sid'] = $submissions[$sid]->sid;
       }
-      drupal_goto('node/' . $submissions[$sid]->nid . '/done', $options);  
+      drupal_goto('node/' . $submissions[$sid]->nid . '/done', $options);
     }
-  }  
+  }
 }
 
 /**
  * This hook_url_outbound_alter only alter the link for webform
  */
-function scs_payment_url_outbound_alter(&$path, &$options, $original_path) { 
+function scs_payment_url_outbound_alter(&$path, &$options, $original_path)
+{
   //Only add in the query token if the query in the URL contains sid, which mean the webform submission id.
-  if (isset($options['query']) && isset($options['query']['sid'])) { 
-    if ($hash = scs_payment_webform_hash()) { 
+  if (isset($options['query']) && isset($options['query']['sid'])) {
+    if ($hash = scs_payment_webform_hash()) {
       $options['query']['token'] = $hash;
     }
   }
 }
- 
+
 /**
- * Use this function to set the token so the anonymous user could view the form submission 
+ * Use this function to set the token so the anonymous user could view the form submission
  */
-function scs_payment_webform_hash($value = '') {
+function scs_payment_webform_hash($value = '')
+{
   $hash = &drupal_static(__FUNCTION__);
-  
+
   if (!empty($value)) {
     $hash = $value;
   }
-  
+
   return $hash;
-  
+
 }
 
- 
+
 /**
  * Return callback.
  */
-function scs_payment_return() {
-  global $base_url, $base_path;  
+function scs_payment_return()
+{
+  global $base_url, $base_path;
   //Security Concern, right now only orderNumber is the one we could use to get the payment information.
   $paymentstatus = isset($_POST['paymentStatus']) ? $_POST['paymentStatus'] : 0;
-  $authorizationcode = isset($_POST['authorizationCode']) ? $_POST['authorizationCode'] : NULL; 
-  $ordernumber = isset($_POST['orderNumber']) ? $_POST['orderNumber'] : 0;  
-  watchdog('SCS Payment Post', '<pre>' . print_r($_POST, TRUE) . '</pre>'); 
+  $authorizationcode = isset($_POST['authorizationCode']) ? $_POST['authorizationCode'] : NULL;
+  $ordernumber = isset($_POST['orderNumber']) ? $_POST['orderNumber'] : 0;
+  watchdog('SCS Payment Post', '<pre>' . print_r($_POST, TRUE) . '</pre>');
   watchdog('SCS header url', $base_url . $base_path . 'scs_payment/confirmation/' . $ordernumber);
-  
+
   if ($paymentstatus == '1' && $authorizationcode != '' && $ordernumber != 0) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    watchdog('SCS Payment return', $paymentstatus . ' and ' . $authorizationcode); 
+    watchdog('SCS Payment return', $paymentstatus . ' and ' . $authorizationcode);
     //Redirect to Confirmation Page
     $md5_pid = md5($ordernumber . 'extra_string');
     //update authorization code
-    //need to load the payment object base on the order number 
+    //need to load the payment object base on the order number
     $payment = entity_load_single('payment', $ordernumber);
     $submission = webform_get_submission($payment->context_data['nid'], $payment->context_data['sid']);
     $node = node_load($submission->nid);
-    //need to insert/update the $authorizationCode into the "scs_authorization_code". 
+    //need to insert/update the $authorizationCode into the "scs_authorization_code".
     $scs_authorization_code = '';
     foreach ($node->webform['components'] as $key => $component) {
       //This one "scs_authorization_code" is custom, so make sure to have it available
       if ($component['form_key'] == 'scs_authorization_code') {
-        $scs_authorization_code = $component['cid']; 
+        $scs_authorization_code = $component['cid'];
         $submission->data[$scs_authorization_code][0] = $authorizationcode;
         //finish webform submission
         $submission->is_draft = 0;
         //update scs_authorization_code field with the $authorizationCode. this will later on use for the Permit id for SCS payment
-        $update = webform_submission_update($node, $submission);  
+        $update = webform_submission_update($node, $submission);
       }
     }
-    $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_SUCCESS)); 
-    entity_save('payment', $payment); 
-    header("Location: " . $base_url . $base_path . 'scs_payment/confirmation/' . $ordernumber . '/' . $md5_pid . '/' . $authorizationcode, TRUE, 200);
-  } 
-  else {
-    //Failed Payment - set status to failed and redirect to the failed page.  
-    $payment = entity_load_single('payment', $ordernumber); 
-    $payment->setStatus(new PaymentStatusItem('payment_status_failed')); 
+    $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
     $payment->finish();
-    watchdog('SCS Payment failed', 'payment failed for order : ' . $ordernumber); 
-    drupal_goto( $base_url . $base_path . 'scs_payment/failed');
+    // @TODO: code is commented in the Payment Method Select module to prevent header standard confirmation page.
+    // @TODO:  commented line at 132 of WebformPaymentContext.php
+    // Sends HTTP 200 Location response to the SCS Payment Server.
+    // Server retrieves that value, and then uses it to send them to this URL
+    header("Location: " . $base_url . $base_path . 'scs_payment/confirmation/' . $ordernumber . '/' . $md5_pid . '/' . $authorizationcode, TRUE, 200);
+
+  } else {
+    //Failed Payment - set status to failed and redirect to the failed page.
+    $payment = entity_load_single('payment', $ordernumber);
+    $payment->setStatus(new PaymentStatusItem('payment_status_failed'));
+    $payment->finish();
+    watchdog('SCS Payment failed', 'payment failed for order : ' . $ordernumber);
+    //drupal_goto( $base_url . $base_path . 'scs_payment/failed');
   }
-  watchdog('SCS Payment', 'after drupal_goto'); 
-  exit; 
+  exit;
 }
 
 
@@ -211,84 +226,93 @@ function scs_payment_return() {
  * @$payment is a Payment Object
  *
  */
-function scs_payment_confirmation($payment, $md5_pid, $authorizationcode) { 
-  global $user, $base_url, $base_path;  
-  
+function scs_payment_confirmation($payment, $md5_pid, $authorizationcode)
+{
+  global $user, $base_url, $base_path;
+  watchdog('scs payment confirmation', 'inside scs_payment_confirmation()');
+
   if ($md5_pid == md5($payment->pid . 'extra_string')) {
-    $submission = webform_get_submission($payment->context_data['nid'], $payment->context_data['sid']); 
-    
+    $submission = webform_get_submission($payment->context_data['nid'], $payment->context_data['sid']);
+
     //pass in the sid to the view pdf to generate the file, and may be nid
-    $hash = webform_get_submission_access_token($submission); 
+    $hash = webform_get_submission_access_token($submission);
     //check for the 1 time token, if not in the database, then generate one,
-    $one_time_token = load_token($hash, $payment->context_data['nid']); 
+    $one_time_token = load_token($hash, $payment->context_data['nid']);
     if ($one_time_token == FALSE) {
       $one_time_token = create_token($payment->pid, $hash);
     }
     //Set the token/hash so later on we could use it for anonymous user to view the confirmation page
-    scs_payment_webform_hash($hash);  
-    $payment->finish();  
-  } 
-  else {
-    drupal_goto( $base_url . $base_path . 'scs_payment/failed');
+    scs_payment_webform_hash($hash);
+    $options = array();
+    $options['query']['sid'] = $payment->context_data['sid'];
+    drupal_goto('node/' . $payment->context_data['nid'] . '/done', $options);
+  } else {
+    drupal_goto($base_url . $base_path . 'scs_payment/failed');
   }
 }
-  
+
 /*
  * Implementation hook_access().
  */
-function scs_return_access() {
+function scs_return_access()
+{
   return TRUE;
 }
 
 /*
  * Processes the webform confirmation page.
  */
-function scs_payment_webform_confirmation($payment) {
+function scs_payment_webform_confirmation($payment)
+{
   $node = node_load($payment->context_data['nid']);
   $node->payment = $payment;
   return _webform_confirmation($node);
 }
 
-function scs_payment_commerce_confirmation($payment) {
+function scs_payment_commerce_confirmation($payment)
+{
   return drupla_goto('checkout');
 }
-      
-function scs_payment_payment_status_info() {
+
+function scs_payment_payment_status_info()
+{
   return array(
     new PaymentStatusInfo(array(
       'description' => t('Pending approval'),
-      'status' => SCS_PAYMENT_PENDING, 
+      'status' => SCS_PAYMENT_PENDING,
       'title' => t('Pending (waiting for SCS approval)'),
     )),
     new PaymentStatusInfo(array(
       'description' => t('Approved'),
-      'status' => SCS_PAYMENT_APPROVED, 
+      'status' => SCS_PAYMENT_APPROVED,
       'title' => t('Approved (approved by SCS)'),
     )),
     new PaymentStatusInfo(array(
       'description' => t('Declined'),
-      'status' => SCS_PAYMENT_DECLINED, 
+      'status' => SCS_PAYMENT_DECLINED,
       'title' => t('Declined (Declined by SCS)'),
     )),
   );
 }
 
- 
+
 //Need to use this hook below to get the new payment method 
 
-function scs_payment_payment_method_controller_info() {
+function scs_payment_payment_method_controller_info()
+{
   return array(
-    'PaymentMethodSCSController', 
+    'PaymentMethodSCSController',
   );
 }
 
 /**
  * Implements hook_ENTITY_TYPE_ACTION().
  */
-function scs_payment_payment_method_insert(PaymentMethod $payment_method) {
+function scs_payment_payment_method_insert(PaymentMethod $payment_method)
+{
   if ($payment_method->controller->name == 'PaymentMethodSCSController') {
     $values = $payment_method->controller_data += $payment_method->controller->controller_data_defaults;
-    $values['pmid'] = $payment_method->pmid; 
+    $values['pmid'] = $payment_method->pmid;
     drupal_write_record('scs_payment_method', $values);
   }
 }
@@ -296,8 +320,9 @@ function scs_payment_payment_method_insert(PaymentMethod $payment_method) {
 
 /**
  * Implements hook_entity_load().
-*/ 
-function scs_payment_entity_load(array $entities, $entity_type) {
+ */
+function scs_payment_entity_load(array $entities, $entity_type)
+{
   if ($entity_type == 'payment_method') {
     $pmids = array();
     foreach ($entities as $payment_method) {
@@ -312,8 +337,8 @@ function scs_payment_entity_load(array $entities, $entity_type) {
       $result = $query->execute();
       while ($data = $result->fetchAssoc()) {
         $payment_method = $entities[$data['pmid']];
-        $payment_method->controller_data = (array) $data;
-        $payment_method->controller_data['debug'] = (int) $payment_method->controller_data['debug'];
+        $payment_method->controller_data = (array)$data;
+        $payment_method->controller_data['debug'] = (int)$payment_method->controller_data['debug'];
         unset($payment_method->controller_data['pmid']);
       }
     }
@@ -323,7 +348,8 @@ function scs_payment_entity_load(array $entities, $entity_type) {
 /**
  * Implements hook_ENTITY_TYPE_ACTION().
  */
-function scs_payment_payment_method_update(PaymentMethod $payment_method) {
+function scs_payment_payment_method_update(PaymentMethod $payment_method)
+{
   if ($payment_method->controller->name == 'PaymentMethodSCSController') {
     $values = $payment_method->controller_data += $payment_method->controller->controller_data_defaults;
     $values['pmid'] = $payment_method->pmid;
@@ -334,7 +360,8 @@ function scs_payment_payment_method_update(PaymentMethod $payment_method) {
 /**
  * Implements hook_ENTITY_TYPE_ACTION().
  */
-function scs_payment_payment_method_delete($entity) {
+function scs_payment_payment_method_delete($entity)
+{
   if ($entity->controller->name == 'PaymentMethodSCSController') {
     db_delete('scs_payment_method')
       ->condition('pmid', $entity->pmid)
@@ -346,8 +373,9 @@ function scs_payment_payment_method_delete($entity) {
  * Form build callback: implements
  * PaymentMethodController::payment_method_configuration_form_elements_callback.
  */
-function scs_payment_payment_method_configuration_form_elements(array $form, array &$form_state) {
- 
+function scs_payment_payment_method_configuration_form_elements(array $form, array &$form_state)
+{
+
   $payment_method = $form_state['payment_method'];
   $controller = $payment_method->controller;
   $controller_data = $payment_method->controller_data + $controller->controller_data_defaults;
@@ -397,22 +425,22 @@ function scs_payment_payment_method_configuration_form_elements(array $form, arr
     '#title' => t('Server'),
     '#type' => 'radios',
   );
-  
+
   $form['merchant_information']['debug'] = array(
-    '#default_value' => $controller_data['debug'], 
-    '#type' => 'checkbox', 
+    '#default_value' => $controller_data['debug'],
+    '#type' => 'checkbox',
     '#title' => t('Turn on Debug Mode'),
   );
-   
+
   //Cancel message
   $form['scs_cancel'] = array(
     '#title' => t('SCS Cancellation Message'),
     '#type' => 'fieldset',
   );
-  
+
   $pmid = '';
-  
-  if(isset($form_state['build_info']['args'][0]->pmid) && $form_state['build_info']['args'][0]->pmid != '0') {
+
+  if (isset($form_state['build_info']['args'][0]->pmid) && $form_state['build_info']['args'][0]->pmid != '0') {
     $pmid = $form_state['build_info']['args'][0]->pmid;
   }
   //need to get the nid for the form
@@ -423,16 +451,17 @@ function scs_payment_payment_method_configuration_form_elements(array $form, arr
     '#required' => TRUE,
     '#type' => 'textarea',
   );
-  
+
   return $form;
-  
-} 
+
+}
 
 /**
  * Implements form validate callback for
  * paypal_payment_ec_payment_method_configuration_form_elements().
  */
-function scs_payment_payment_method_configuration_form_elements_validate(array $form, array &$form_state) {
+function scs_payment_payment_method_configuration_form_elements_validate(array $form, array &$form_state)
+{
   $values = drupal_array_get_nested_value($form_state['values'], $form['#parents']);
 
   $controller_data = &$form_state['payment_method']->controller_data;
@@ -443,50 +472,49 @@ function scs_payment_payment_method_configuration_form_elements_validate(array $
   $controller_data['gao_doc_no_agency'] = $values['merchant_information']['gao_doc_no_agency'];
   //$controller_data['gao_agency'] = $values['merchant_information']['gao_agency'];
   $controller_data['server'] = $values['merchant_information']['server'];
-  $controller_data['debug'] = $values['merchant_information']['debug']; 
-  //need to validate if any 
+  $controller_data['debug'] = $values['merchant_information']['debug'];
+  //need to validate if any
   //do variable_set for message
-  $message = $values['scs_cancel']['message']; 
-  if(isset($form_state['build_info']['args'][0]->pmid) && !empty($message)) {
+  $message = $values['scs_cancel']['message'];
+  if (isset($form_state['build_info']['args'][0]->pmid) && !empty($message)) {
     $pmid = $form_state['build_info']['args'][0]->pmid;
     variable_set('scs_cancelled_message_' . $pmid, $message);
   }
 }
- 
- 
+
+
 /*
 * Returns token string, or Expired string, or False
 */
-function load_token($token, $nid) { 
+function load_token($token, $nid)
+{
   $query = db_select('scs_payment_token', 't')
-            ->condition('t.token', $token, '=') 
-            ->fields('t', array('token', 'created'));
+    ->condition('t.token', $token, '=')
+    ->fields('t', array('token', 'created'));
 
   $token = $query->execute()->fetchObject();
-  
-  if (isset($token->token) && !empty($token->token)) { 
+
+  if (isset($token->token) && !empty($token->token)) {
     //Get token life time
     $count_query = db_select('webform_temp_file_expired_config', 't')
-            ->condition('t.nid', $nid, '=') 
-            ->fields('t', array('count'));
+      ->condition('t.nid', $nid, '=')
+      ->fields('t', array('count'));
 
     $count = $count_query->execute()->fetchObject();
-    
+
     $seconds = 900;
-    if (isset($count->count) && !empty($count->count) && $count->count != '0') { 
+    if (isset($count->count) && !empty($count->count) && $count->count != '0') {
       //convert minutes to seconds
-      $seconds = (int)($count->count) * 60;  
+      $seconds = (int)($count->count) * 60;
     }
-    
-    $created = (int)$token->created + (int)$seconds; 
-    if ((int)($created) > (int)REQUEST_TIME) { 
-      return $token->token; 
-    } 
-    else { 
+
+    $created = (int)$token->created + (int)$seconds;
+    if ((int)($created) > (int)REQUEST_TIME) {
+      return $token->token;
+    } else {
       return 'EXPIRED';
     }
-  } 
-  else { 
+  } else {
     return FALSE;
   }
 }
@@ -494,24 +522,26 @@ function load_token($token, $nid) {
 /*
 * Create token base on the webform Hash value, $pid == $sid. This is only use for webform token
 */
-function create_token($pid, $hash) {   
-  $result = db_insert('scs_payment_token') // Table name no longer needs {}
-            ->fields(array(
-              'created' => REQUEST_TIME,
-              'pid' => $pid,
-              'token' => $hash,
-            ))
-            ->execute();
- 
+function create_token($pid, $hash)
+{
+  $result = db_insert('scs_payment_token')// Table name no longer needs {}
+  ->fields(array(
+    'created' => REQUEST_TIME,
+    'pid' => $pid,
+    'token' => $hash,
+  ))
+    ->execute();
+
   return $result;
 }
 
 /**
  * hook to added in extra field to the line item.
  */
-function scs_payment_element_info_alter(&$element) {
+function scs_payment_element_info_alter(&$element)
+{
   if (isset($element['payment_line_item']) == TRUE) {
-    $element['payment_line_item']['#process'][]        = 'scs_payment_element_process_line_item';
+    $element['payment_line_item']['#process'][] = 'scs_payment_element_process_line_item';
     //$element['payment_line_item']['#element_validate'] = array('scs_payment_element_validate_line_item');
   }
 }
@@ -519,15 +549,15 @@ function scs_payment_element_info_alter(&$element) {
 /**
  * Callback function set in hook_element_info_alter() hook
  */
-function scs_payment_element_process_line_item(array $element, array &$form_state, array $form) {
+function scs_payment_element_process_line_item(array $element, array &$form_state, array $form)
+{
   module_load_include('inc', 'webform', 'includes/webform.components');
-  $node = webform_paymethod_select_get_node($form, $form_state); 
- 
+  $node = webform_paymethod_select_get_node($form, $form_state);
+
   $form_builder = isset($form_state['payment_line_item_other_components']);
   if ($form_builder) {
     $other_components = $form_state['payment_line_item_other_components'];
-  }
-  else {
+  } else {
     $other_components = webform_component_list($node, FALSE);
     foreach ($other_components as $cid => $component) {
       if ($node->webform['components'][$cid]['type'] == 'paymethod_select') {
@@ -542,16 +572,16 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
 
   $parents = isset($element['#parents']) ? $element['#parents'] : array('extra', 'line_items', 'items');
 
-  foreach($element as $key => &$line_element) {
+  foreach ($element as $key => &$line_element) {
 
     if (strpos($key, 'container_') === 0) {
       $index = str_replace('container_', '', $key);
       $defaults = NULL;
-      if (   isset($element['#default_value'][$index]) == TRUE
-          && is_object($element['#default_value'][$index]) == TRUE) {
+      if (isset($element['#default_value'][$index]) == TRUE
+        && is_object($element['#default_value'][$index]) == TRUE
+      ) {
         $defaults = $element['#default_value'][$index];
-      }
-      else {
+      } else {
         $defaults = new Drupal\webform_paymethod_select\PaymethodLineItem(array(
           'amount' => '',
           'amount_source' => 'fixed',
@@ -565,90 +595,90 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
       }
 
       $radio_id = drupal_html_id('webform-paymethod-select-' . $key . '-amount-source');
-       
+
       $line_element['product_code_id'] = array(
-        '#type'          => 'textfield',
-        '#title'         => t('Product Code'),
-        '#size'          => '10',
-        '#maxlength'     => '50',
-        '#required'      => FALSE,
+        '#type' => 'textfield',
+        '#title' => t('Product Code'),
+        '#size' => '10',
+        '#maxlength' => '50',
+        '#required' => FALSE,
         '#default_value' => $defaults->product_code_id,
         '#wrapper_attributes' => array(
           'class' => array('webform-paymethod-select-amount-option'),
         ),
-        '#states'        => array(
+        '#states' => array(
           'disabled' => array(".$radio_id" => array('value' => 'component')),
         ),
         '#weight' => -8,
       );
-       
+
       $line_element['product_function'] = array(
-        '#type'          => 'textfield',
-        '#title'         => t('Function ID'),
-        '#size'          => '5',
-        '#maxlength'     => '20',
-        '#required'      => FALSE,
+        '#type' => 'textfield',
+        '#title' => t('Function ID'),
+        '#size' => '5',
+        '#maxlength' => '20',
+        '#required' => FALSE,
         '#default_value' => $defaults->product_function,
         '#wrapper_attributes' => array(
           'class' => array('webform-paymethod-select-amount-option'),
         ),
-        '#states'        => array(
+        '#states' => array(
           'disabled' => array(".$radio_id" => array('value' => 'component')),
         ),
         '#weight' => -10,
-      ); 
-      
+      );
+
       $line_element['product_revenue_source'] = array(
-        '#type'          => 'textfield',
-        '#title'         => t('Product Revenue Source'),
-        '#size'          => '4',
-        '#maxlength'     => '20',
-        '#required'      => FALSE,
+        '#type' => 'textfield',
+        '#title' => t('Product Revenue Source'),
+        '#size' => '4',
+        '#maxlength' => '20',
+        '#required' => FALSE,
         '#default_value' => $defaults->product_revenue_source,
         '#wrapper_attributes' => array(
           'class' => array('webform-paymethod-select-amount-option'),
         ),
-        '#states'        => array(
+        '#states' => array(
           'disabled' => array(".$radio_id" => array('value' => 'component')),
         ),
         '#weight' => -9,
       );
-  
+
       // Added in accounting_template and department_revenue_source base on client request.
       $line_element['product_accounting_template'] = array(
-        '#type'          => 'textfield',
-        '#title'         => t('Accounting Template'),
-        '#size'          => '10',
-        '#maxlength'     => '50',
-        '#required'      => FALSE,
+        '#type' => 'textfield',
+        '#title' => t('Accounting Template'),
+        '#size' => '10',
+        '#maxlength' => '50',
+        '#required' => FALSE,
         '#default_value' => (isset($defaults->product_accounting_template) ? $defaults->product_accounting_template : ''),
         '#wrapper_attributes' => array(
           'class' => array('webform-paymethod-select-amount-option'),
         ),
-        '#states'        => array(
+        '#states' => array(
           'disabled' => array(".$radio_id" => array('value' => 'component')),
         ),
         '#weight' => -7,
       );
-      
+
       $line_element['product_department_revenue_source'] = array(
-        '#type'          => 'textfield',
-        '#title'         => t('Department Revenue Source'),
-        '#size'          => '10',
-        '#maxlength'     => '50',
-        '#required'      => FALSE,
+        '#type' => 'textfield',
+        '#title' => t('Department Revenue Source'),
+        '#size' => '10',
+        '#maxlength' => '50',
+        '#required' => FALSE,
         '#default_value' => (isset($defaults->product_department_revenue_source) ? $defaults->product_department_revenue_source : ''),
         '#wrapper_attributes' => array(
           'class' => array('webform-paymethod-select-amount-option'),
         ),
-        '#states'        => array(
+        '#states' => array(
           'disabled' => array(".$radio_id" => array('value' => 'component')),
         ),
         '#weight' => -6,
       );
     }
   }
-  
+
   return $element;
 }
 
@@ -657,7 +687,8 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
  * insert in extra settings for SCS payment base on client request
  * admin/config/services/payment/global
  */
-function scs_payment_form_alter(&$form, &$form_state, $form_id) {
+function scs_payment_form_alter(&$form, &$form_state, $form_id)
+{
   if ($form_id == "payment_form_global_configuration") {
     $form['scs_url_information'] = array(
       '#title' => t('Config SCS url'),

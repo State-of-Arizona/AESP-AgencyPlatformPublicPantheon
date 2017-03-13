@@ -1,22 +1,80 @@
 <?php
 
 /**
+ * @file
+ * Installation functions.
+ */
+
+
+/**
+* Change search engine layout option from tags to fixed values.
+*/
+function google_cse_update_7200() {
+
+  switch (variable_get('google_cse_custom_results_display', '')) {
+    case '<gcse:search></gcse:search>':
+      $new_value = 'overlay';
+      break;
+
+    case '<gcse:searchbox-only></gcse:searchbox-only><gcse:searchresults-only></gcse:searchresults-only>':
+      $new_value = 'two-page';
+      break;
+
+    case '<gcse:search></gcse:search>&nbsp;':
+      $new_value = 'full-width';
+      break;
+
+    case '<gcse:searchbox></gcse:searchbox><gcse:searchresults></gcse:searchresults>':
+      $new_value = 'two-column';
+      break;
+
+    case '<gcse:search></gcse:search>&nbsp;&nbsp;':
+      $new_value = 'compact';
+      break;
+
+    case '<gcse:searchresults-only></gcse:searchresults-only>':
+      $new_value = 'results-only';
+      break;
+
+    case '<gcse:searchbox-only></gcse:searchbox-only>':
+      $new_value = 'google-hosted';
+      break;
+
+    default:
+      $new_value = 'results-only';
+  }
+
+  variable_set('google_cse_custom_results_display', $new_value);
+}
+
+/**
+ * Delete irrelevant gadget variable.
+ */
+function google_cse_update_7201() {
+  variable_del('google_cse_results_gadget');
+}
+
+/**
  * Implements hook_uninstall().
  */
 function google_cse_uninstall() {
   variable_del('google_cse_cof_google');
   variable_del('google_cse_cof_here');
   variable_del('google_cse_cr');
+  variable_del('google_cse_custom_css');
+  variable_del('google_cse_custom_results_display');
   variable_del('google_cse_cx');
   variable_del('google_cse_domain');
   variable_del('google_cse_gl');
   variable_del('google_cse_hl');
   variable_del('google_cse_ie');
+  variable_del('google_cse_limit_domain');
   variable_del('google_cse_locale_hl');
   variable_del('google_cse_locale_lr');
   variable_del('google_cse_lr');
   variable_del('google_cse_oe');
   variable_del('google_cse_results_display');
+  variable_del('google_cse_results_display_images');
   variable_del('google_cse_results_gadget');
   variable_del('google_cse_results_prefix');
   variable_del('google_cse_results_searchbox_width');
@@ -27,6 +85,8 @@ function google_cse_uninstall() {
   variable_del('google_cse_safe');
   variable_del('google_cse_searchbox_width');
   variable_del('google_cse_sitesearch');
+  variable_del('google_cse_sitesearch_form');
   variable_del('google_cse_sitesearch_default');
   variable_del('google_cse_sitesearch_option');
+  variable_del('google_cse_use_adv');
 }

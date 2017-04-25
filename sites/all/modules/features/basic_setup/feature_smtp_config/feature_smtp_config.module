@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Feature SMTP Config feature.
+ */
+
+include_once 'feature_smtp_config.features.inc';

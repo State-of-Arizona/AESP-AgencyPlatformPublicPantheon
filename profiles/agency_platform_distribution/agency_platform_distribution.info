@@ -52,6 +52,7 @@ dependencies[] = context_bool_field
 dependencies[] = feature_basic_config
 dependencies[] = feature_basic_content
 dependencies[] = feature_sliver
+dependencies[] = feature_smtp_config
 
 ;others
 dependencies[] = extlink

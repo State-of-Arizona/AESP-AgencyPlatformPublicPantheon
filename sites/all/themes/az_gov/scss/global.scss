@@ -593,7 +593,7 @@ html, body {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
       padding: 20px;
       width: 100%;
-      @media(min-width: 450px) {
+      @media(min-width: 400px) {
         & {
           width: 70%;
         }
@@ -607,13 +607,23 @@ html, body {
 
       > div {
         float: left;
-        width: 50%;
+        width:100%;
+        @media(min-width: 450px) {
+          & {
+            width: 50%;
+          }
+        }
       }
     }
     .footer-map {
       margin: 0 auto;
       float: left;
-      @media(min-width: 450px) {
+      @media(max-width: 400px) {
+        & {
+          display: none;
+        }
+      }
+      @media(min-width: 400px) {
         & {
           width: 30%;
         }

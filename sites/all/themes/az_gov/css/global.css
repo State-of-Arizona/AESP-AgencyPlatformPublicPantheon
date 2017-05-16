@@ -553,7 +553,7 @@ html, body {
   padding: 20px;
   width: 100%;
 }
-@media (min-width: 450px) {
+@media (min-width: 400px) {
   #footer-contact .footer-info .footer-address {
     width: 70%;
   }
@@ -566,13 +566,23 @@ html, body {
 }
 #footer-contact .footer-info .footer-address > div {
   float: left;
-  width: 50%;
+  width: 100%;
+}
+@media (min-width: 450px) {
+  #footer-contact .footer-info .footer-address > div {
+    width: 50%;
+  }
 }
 #footer-contact .footer-info .footer-map {
   margin: 0 auto;
   float: left;
 }
-@media (min-width: 450px) {
+@media (max-width: 400px) {
+  #footer-contact .footer-info .footer-map {
+    display: none;
+  }
+}
+@media (min-width: 400px) {
   #footer-contact .footer-info .footer-map {
     width: 30%;
   }

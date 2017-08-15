@@ -11,12 +11,17 @@ function search404_install() {
   variable_set('site_404', 'search404');
 }
 
+/**
+ * Implements hook_uninstall().
+ */
 function search404_uninstall() {
   if (variable_get('site_404', '') == 'search404') {
     variable_del('site_404');
   }
+  variable_del('search404_no_redirect');
   variable_del('search404_redirect_301');
   variable_del('search404_do_google_cse');
+  variable_del('search404_do_google_cse_adv');
   variable_del('search404_do_search_by_page');
   variable_del('search404_first');
   variable_del('search404_jump');

@@ -1,0 +1,670 @@
+<?php
+/**
+ * @file
+ * Tests for search404.module.
+ */
+
+/**
+ * Test case for Single result redirect option.
+ */
+class SingleResultTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Single result redirect',
+      'description' => 'Test if, Jump directly to the search result when there is only one result ',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test to single result check.
+   */
+  public function testSingleResultCheck() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_jump' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+  /**
+   * Test to first item on multiple result check.
+   */
+  public function testFirstItemOnMultipleResultsCheck() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_first' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for first item on multi result option.
+ */
+class FirstItemOnMultiResultTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'First item on multiple results',
+      'description' => 'Test if, Jump directly to the first search result even when there are multiple results',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for first item on multiple result option.
+   */
+  public function testFirstItemOnMultipleResultsCheck() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_first' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for search with custom path.
+ */
+class SearchWithCustomPathTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Search with custom path.',
+      'description' => 'Do a "Search" with custom path instead of a Drupal Search when a 404 occurs.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for search with custom path on 404 check.
+   */
+  public function testSearchWithCustomPathOn404Check() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_do_custom_search' => TRUE),
+      t('Save configuration')
+    );
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_custom_search_path' => 'search/testpath'),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for 404 no redirect.
+ */
+class Search404NoRedirectTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Execute the callback directly instead of redirecting.',
+      'description' => 'This experimental feature notably allows to force 404 when using a custom search path.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for search 404 no redirect check.
+   */
+  public function testSearch404NoRedirectCheck() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_no_redirect' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases - 301 redirect for 302.
+ */
+class Search301RedirectFor302TestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Use a 301 Redirect instead of 302 Redirect.',
+      'description' => 'This applies when the option to jump to first result is enabled and also for search404 results pages other than for Core, Apache Solr, Lucene and Xapian.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for search 301 redirect for 302 check.
+   */
+  public function testSearch301RedirectFor302Check() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_redirect_301' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for disable auto search.
+ */
+class DisableAutoSearchTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Disable auto search.',
+      'description' => 'Disable automatically searching for the keywords when a page is not found and instead show the populated search form with the keywords. Useful for large sites to reduce server loads.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for disable auto search option.
+   */
+  public function testDisableAutoSearchCheck() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_skip_auto_search' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for disable error message option.
+ */
+class DisableErrorMsgTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Disable error message.',
+      'description' => 'Disable the Drupal error message when search results are shown on a 404 page.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for disable auto search option.
+   */
+  public function testDisableAutoSearchCheck() {
+    $this->drupalLogin($this->big_user);
+    $this->drupalPost(
+      'admin/config/search/search404',
+      array('search404_disable_error_message' => TRUE),
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for search by page on 404.
+ */
+class SearchByPageOn404TestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Search by page when a 404 occurs',
+      'description' => 'Do a "Search by page" Search instead of a Drupal Search when a 404 occurs',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for search by page on 404 option.
+   */
+  public function testSearchByPageOn404Check() {
+    $this->drupalLogin($this->big_user);
+    $search404_do_search_by_page = TRUE;
+    $this->drupalGet('admin/config/search/search404');
+    module_enable(array('search_by_page'), FALSE);
+    $this->assertTrue(module_exists('search_by_page'), 'Enable search_by_page module.');
+    $this->assertFieldByName('search404_do_search_by_page', $search404_do_search_by_page, 'Validate Search by page buid field');
+    $edit = array(
+      'search404_do_search_by_page' => $search404_do_search_by_page,
+    );
+    $this->drupalPost(
+      'admin/config/search/search404',
+      $edit,
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for Google CSE Search on 404.
+ */
+class GoogleCSESearchOn404TestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Google CSE Search when a 404 occurs ',
+      'description' => 'Google CSE Search instead of a Drupal Search when a 404 occurs.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for GoogleCSE search on 404 option.
+   */
+  public function testGoogleCseSearchOn404Check() {
+    $this->drupalLogin($this->big_user);
+    $search404_do_google_cse = TRUE;
+    $this->drupalGet('admin/config/search/search404');
+    module_enable(array('google_cse'), FALSE);
+    $this->assertTrue(module_exists('google_cse'), 'Enable google_cse module.');
+    $this->assertFieldByName('search404_do_google_cse', $search404_do_google_cse, 'Validate search404_do_google_cse buid field');
+    $edit = array(
+      'search404_do_google_cse' => $search404_do_google_cse,
+    );
+    $this->drupalPost(
+      'admin/config/search/search404',
+      NULL,
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for Advanced Google CSE Search on 404.
+ */
+class AdvancedGoogleCSESearchOn404TestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Advanced Google CSE Search when a 404 occurs',
+      'description' => 'Do a "Google CSE Advanced" search instead of a Drupal Search when a 404 occurs.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for Advanced Google CSE Search on 404 option.
+   */
+  public function testAdvancedGoogleCseSearchOn404Check() {
+    $this->drupalLogin($this->big_user);
+    $search404_do_google_cse_adv = TRUE;
+    $this->drupalGet('admin/config/search/search404');
+    module_enable(array('google_cse_adv'), FALSE);
+    $this->assertTrue(module_exists('google_cse_adv'), 'Enable google_cse_adv module.');
+    $this->assertFieldByName('search404_do_google_cse_adv', $search404_do_google_cse_adv, 'Validate Advanced GoogleCSE Search build field');
+    $edit = array(
+      'search404_do_google_cse_adv' => $search404_do_google_cse_adv,
+    );
+    $this->drupalPost(
+      'admin/config/search/search404',
+      NULL,
+      t('Save configuration')
+    );
+  }
+
+}
+
+/**
+ * Test cases for Advanced Settings Search Config on 404.
+ */
+class AdvancedSettingsTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implement getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Validate advanced settings section',
+      'description' => 'Validate advanced settings section elements in Search404 module config section.',
+      'group' => 'Search404',
+    );
+  }
+
+  /**
+   * Implementation setUp().
+   */
+  public function setUp() {
+    parent::setUp('search404', $permissions);
+    // Create users.
+    $this->big_user = $this->drupalCreateUser(array('administer search'));
+  }
+
+  /**
+   * Test Search404 configuration page.
+   */
+  public function testSearch404ConfigPage() {
+    $this->accessSearch404ConfigPage();
+  }
+
+  /**
+   * Function to access Search404 configuration page.
+   */
+  public function accessSearch404ConfigPage() {
+    // First retrieve the page once.
+    $this->drupalGet('admin/config/search/search404');
+  }
+
+  /**
+   * Test for Advanced Settings on Search404 Config.
+   */
+  public function testAdvancedSettingsCheck() {
+    $this->drupalLogin($this->big_user);
+    $search404_use_or = TRUE;
+    $search404_do_custom_search = TRUE;
+    $search404_custom_search_path = TRUE;
+    $search404_use_search_engine = TRUE;
+    $search404_ignore = TRUE;
+    $search404_ignore_extensions = TRUE;
+    $search404_ignore_query = TRUE;
+    $search404_page_title = TRUE;
+
+    $this->drupalGet('admin/config/search/search404');
+
+    $this->assertFieldByName('search404_use_or', $search404_use_or, 'Validate Use OR between keywords when searching');
+    $this->assertFieldByName('search404_do_custom_search', $search404_do_custom_search, 'Validate "Search" with custom path instead of a Drupal Search when a 404 occurs.');
+    $this->assertFieldByName('search404_use_search_engine', $search404_use_search_engine, 'Validate Use auto-detection of keywords from search engine referer.');
+    $this->assertFieldByName('search404_ignore', $search404_ignore, 'Validate words to ignore.');
+    $this->assertFieldByName('search404_ignore_extensions', $search404_ignore_extensions, 'Validate extensions to ignore.');
+    $this->assertFieldByName('search404_ignore_query', $search404_ignore_query, 'Validate extensions to abort search.');
+    $this->assertFieldByName('search404_page_title', $search404_page_title, 'Validate custom page title.');
+
+    $edit = array(
+      'search404_use_or' => $search404_use_or,
+      'search404_do_custom_search' => $search404_do_custom_search,
+      'search404_custom_search_path' => $search404_custom_search_path,
+      'search404_use_search_engine' => $search404_use_search_engine,
+      'search404_ignore' => $search404_ignore,
+      'search404_ignore_extensions' => $search404_ignore_extensions,
+      'search404_ignore_query' => $search404_ignore_query,
+      'search404_page_title' => $search404_page_title,
+    );
+
+    $this->drupalPost(
+      'admin/config/search/search404',
+      $edit,
+      t('Save configuration')
+    );
+  }
+
+}

@@ -1,0 +1,28 @@
+#page   .form-item {
+    padding:  0px;
+}
+
+#page div[class*='amount-source'], #page div[class*='quantity-source'], #page div[class*='description'], #page div[class*='tax-rate'] {
+    display:block;
+    clear:both;
+}
+
+#page div[class*='amount-source'], #page div[class*='amount-component'],#page #webform-component-edit-form div[class*='quantity-source'], #page #webform-component-edit-form div[class*='quantity-component']{
+    padding-top:20px;
+}
+
+
+#page div[class*='-amount '], #page div[class*='-quantity'], #page div[class*='tax-rate']{
+    padding-top:0px;
+}
+
+#form-builder .form-builder-wrapper fieldset.form-builder-group .payment-line-item-container .webform-paymethod-select-quantity-option,
+form .payment-line-item-container .webform-paymethod-select-quantity-option {
+    clear: both;
+    float: none;
+    margin-left: 2em;
+}
+
+#page div[class*='amount-component'] .disabled, #page #webform-component-edit-form div[class*='quantity-component'] .disabled {
+    display:none;
+}

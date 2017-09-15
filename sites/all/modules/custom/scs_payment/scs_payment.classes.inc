@@ -52,16 +52,13 @@ class PaymentMethodSCSController extends PaymentMethodController {
   /*
    * Process the payment request with curl.
    */
-  function request(Payment $payment) {  
+  function request(Payment $payment) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
     //get the product codes and then add it to the payment object 
     $submission = webform_get_submission($payment->context_data['nid'], $payment->context_data['sid']);
-    $node = node_load($payment->context_data['nid']); 
+    $node = node_load($payment->context_data['nid']);
+    watchdog('scs_payment', print_r($node, 1));
     $product_code_value = '';
-		/*dsm('payment');
-		dsm($payment);
-    dsm('submission');
-		dsm($submission);*/
     foreach ($node->webform['cids'] as $key => $component) {
       if ($key == 'product_code') {
         $product_code_cid = $node->webform['cids'][$key];   
@@ -177,7 +174,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
  
     // This would be the Payment Description. other other one is the lineitem description would be 
     // use for each product.
-    $xml->element('summaryDescription', $payment->description); 
+    $xml->element('summaryDescription', scs_payment_webform_payment_notes_load($payment->context_data['nid']));
     $xml->push('lineItemList'); 
     // Start Foreach 
     foreach ($payment->line_items as $product) {
@@ -192,7 +189,8 @@ class PaymentMethodSCSController extends PaymentMethodController {
 			if($product->amount == 0) {
 				$xml->element('amount', '0');
 			} else {
-      	$xml->element('amount', ($product->amount)*100);
+			    $amount = strval(100*(floatval($product->amount) + floatval($product->amount) * $product->tax_rate));
+      	$xml->element('amount', $amount );
       }
       $xml->element('quantity', $product->quantity);
       $xml->pop();  

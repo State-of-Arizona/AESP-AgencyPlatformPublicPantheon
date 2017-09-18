@@ -664,7 +664,7 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
       );
 
       $line_element['description'] = array(
-        '#type' => 'textfield',l
+        '#type' => 'textfield',
         '#title' => t('Description'),
         '#default_value' => (isset($defaults->description) ? $defaults->description : ''),
         '#required' => TRUE,

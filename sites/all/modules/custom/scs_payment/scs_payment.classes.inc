@@ -178,22 +178,24 @@ class PaymentMethodSCSController extends PaymentMethodController {
     $xml->push('lineItemList'); 
     // Start Foreach 
     foreach ($payment->line_items as $product) {
-      $xml->push('lineItem');
-      $xml->element('gaoProductCode', $product->product_code_id);
-      $xml->element('function', $product->product_function);
-      $xml->element('revenueSource', $product->product_revenue_source);
-      $xml->element('AccountingTemplate', (isset($product->product_accounting_template) ? $product->product_accounting_template : ''));
-      $xml->element('departmentRevenueSource', (isset($product->product_department_revenue_source) ? $product->product_department_revenue_source : ''));
-      $xml->element('gaoAgency', $payment->method->controller_data['gao_doc_no_agency']);
-      $xml->element('gaoDescription', htmlentities($product->description));  
-			if($product->amount == 0) {
-				$xml->element('amount', '0');
-			} else {
-			    $amount = strval(100*(floatval($product->amount) + floatval($product->amount) * $product->tax_rate));
-      	$xml->element('amount', $amount );
-      }
-      $xml->element('quantity', $product->quantity);
-      $xml->pop();  
+        if($product->quantity > 0) {
+            $xml->push('lineItem');
+            $xml->element('gaoProductCode', $product->product_code_id);
+            $xml->element('function', $product->product_function);
+            $xml->element('revenueSource', $product->product_revenue_source);
+            $xml->element('AccountingTemplate', (isset($product->product_accounting_template) ? $product->product_accounting_template : ''));
+            $xml->element('departmentRevenueSource', (isset($product->product_department_revenue_source) ? $product->product_department_revenue_source : ''));
+            $xml->element('gaoAgency', $payment->method->controller_data['gao_doc_no_agency']);
+            $xml->element('gaoDescription', htmlentities($product->description));
+            if ($product->amount == 0) {
+                $xml->element('amount', '0');
+            } else {
+                $amount = strval(100 * (floatval($product->amount) + floatval($product->amount) * $product->tax_rate));
+                $xml->element('amount', $amount);
+            }
+            $xml->element('quantity', $product->quantity);
+            $xml->pop();
+        }
     }
     // End Foreach
     $xml->pop();

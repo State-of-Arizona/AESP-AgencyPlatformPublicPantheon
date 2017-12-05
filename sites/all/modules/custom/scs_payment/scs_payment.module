@@ -849,17 +849,36 @@ function scs_payment_webform_component_edit_form_validate (&$form, &$form_state)
 function scs_payment_webform_submission_presave($node, &$submission) {
     foreach ($node->webform['components'] as $key => $component) {
     if ($component['type'] == 'paymethod_select') {
+        $component_quantity = FALSE;
+        $valid_quantity = 0;
        foreach ($component['extra']['line_items'] as $key => $line_item) {
+           //checking for a quantity component
             if (isset($line_item->quantity_source) && $line_item->quantity_source == 'component') {
+                $component_quantity = TRUE;
                 $cid = $line_item->quantity_component;
-                if(is_numeric($cid) && is_numeric($submission->data[$cid][0])){
+                if(is_numeric($cid) && is_numeric($submission->data[$cid][0]) && ($submission->data[$cid][0] > 0)){
+                    $line_item->quantity = $submission->data[$cid][0];
+                    $valid_quantity++;
+                }
+                elseif(is_null($submission->data[$cid][0])){
+                    //setting quantity to 0, this is for hidden components
+                    $line_item->quantity = 0;
+                }
+                elseif (is_numeric($cid) && is_numeric($submission->data[$cid][0]) && ($submission->data[$cid][0] == 0)){
                     $line_item->quantity = $submission->data[$cid][0];
                 }
                 else{
+                    //setting error if quantity component is not numeric or null
                     form_set_error($component['form_key'], 'You must enter a valid quantity.');
+                    $line_item->quantity = 0;
                 }
+            }elseif ( isset($line_item->quantity_source) && $line_item->quantity_source == 'fixed' && is_numeric($line_item->quantity) && $line_item->quantity > 0) {
+                $valid_quantity++;
             }
        }
+        if ($valid_quantity < 1 && $component_quantity) {
+            form_set_error($component['form_key'], 'You must enter a valid quantity.');
+        }
     }
   }
 }
@@ -894,3 +913,12 @@ function scs_payment_get_numeric_components($nid) {
     return $components;
 }
 
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ * deleting tokens when payments are deleted
+ */
+function scs_payment_payment_delete($entity) {
+    db_delete('scs_payment_token')
+        ->condition('pid', $entity->pid)
+        ->execute();
+}

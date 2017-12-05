@@ -1,5 +1,4 @@
 <div id="zone-branding" class="zone">
-  <div class="silhouette">
     <div id="region-branding" class="clearfix">
       <?php if ($logo || $site_name || $site_slogan): ?>
         <div class="site-details clearfix">
@@ -37,5 +36,4 @@
     <?php if ($page['menu']) : ?>
       <?php print render($page['menu']); ?>
     <?php endif; ?>
-  </div>
 </div>

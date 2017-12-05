@@ -44,7 +44,7 @@ function feature_smtp_config_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'smtp_password';
-  $strongarm->value = 'digital@az123';
+  $strongarm->value = 'placeholder';
   $export['smtp_password'] = $strongarm;
 
   $strongarm = new stdClass();

@@ -118,20 +118,23 @@ function scs_payment_title($payment) {
  * then we will redirect anonymous user to node/sid/done?sid without token value.
  */
 function scs_payment_webform_submission_load(&$submissions) {
-  //extra one time check
-  $hash_query = !empty($_GET['token']) ? $_GET['token'] : NULL;
-  $sid = !empty($_GET['sid']) ? $_GET['sid'] : NULL;
-  if (!empty($hash_query) && !empty($sid)) {
-    $one_time_token = load_token($hash_query, $submissions[$sid]->nid);
-    //redirect if the token time has been expired or token does not exist in database
-    if ($one_time_token == FALSE || $one_time_token == 'EXPIRED') {
-      $options = array();
-      if ($submissions) {
-        $options['query']['sid'] = $submissions[$sid]->sid;
-      }
-      drupal_goto('node/' . $submissions[$sid]->nid . '/done', $options);
+    $sid = !empty($_GET['sid']) ? $_GET['sid'] : NULL;
+    if(!empty($submissions[$sid]->payments)) {
+        //extra one time check
+        $hash_query = !empty($_GET['token']) ? $_GET['token'] : NULL;
+        if (!empty($hash_query) && !empty($sid)) {
+            $one_time_token = load_token($hash_query, $submissions[$sid]->nid);
+            //redirect if the token time has been expired or token does not exist in database
+            if ($one_time_token == FALSE || $one_time_token == 'EXPIRED') {
+                $options = array();
+                if ($submissions) {
+                    $options['query']['sid'] = $submissions[$sid]->sid;
+                }
+                //commenting out goto because this function is broken.
+                //drupal_goto('node/' . $submissions[$sid]->nid . '/done', $options);
+            }
+        }
     }
-  }
 }
 
 /**

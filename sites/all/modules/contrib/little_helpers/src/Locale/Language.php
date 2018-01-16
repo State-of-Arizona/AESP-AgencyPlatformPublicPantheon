@@ -3,7 +3,7 @@
 namespace Drupal\little_helpers\Locale;
 
 /**
- * Model object for the {languages} table
+ * Model object for the {languages} table.
  */
 class Language {
   /**
@@ -42,10 +42,10 @@ class Language {
    */
   public static function fromPredefined($langcode) {
     include_once DRUPAL_ROOT . '/includes/iso.inc';
-    $predefined = _locale_get_predefined_list();
-    $predefined = &$predefined[$langcode];
-    $class = get_called_class();
-    $instance = new $class(array('language' => $langcode));
+    $predefined          = _locale_get_predefined_list();
+    $predefined          = &$predefined[$langcode];
+    $class               = get_called_class();
+    $instance            = new $class(array('language' => $langcode));
     $instance->name      = $predefined[0];
     $instance->native    = isset($predefined[1]) ? $predefined[1] : $predefined[0];
     $instance->direction = isset($predefined[2]) ? $predefined[2] : LANGUAGE_LTR;
@@ -54,8 +54,9 @@ class Language {
 
   /**
    * Load language from database.
-   * 
+   *
    * @param string language code of the language to load from DB.
+   *
    * @return Language object if there is such a language in the database, else NULL.
    */
   public static function load($langcode) {
@@ -72,6 +73,7 @@ class Language {
 
   /**
    * Save language to the database and call hooks as needed.
+   *
    * @return $this for chaining
    */
   public function save() {
@@ -94,7 +96,8 @@ class Language {
         $this->setAsDefault();
       }
       $update = TRUE;
-    } else {
+    }
+    else {
       \db_insert('languages')
         ->fields($data)
         ->execute();
@@ -115,11 +118,13 @@ class Language {
   }
 
   /**
-   * Set this language as the default language
+   * Set this language as the default language.
+   *
    * @return $this for chaining
    */
   public function setAsDefault() {
-    \variable_set('language_default', (object)(array) $this);
+    \variable_set('language_default', (object) (array) $this);
     return $this;
   }
+
 }

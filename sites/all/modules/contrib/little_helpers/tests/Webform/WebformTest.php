@@ -1,8 +1,11 @@
 <?php
 
+use Drupal\Tests\DrupalUnitTestCase;
+
 namespace Drupal\little_helpers\Webform;
 
-class WebformTest extends \Drupal\Tests\DrupalUnitTestCase {
+class WebformTest extends DrupalUnitTestCase {
+
   public static function nodeStub() {
     $webform['redirect_url'] = 'node/167';
     $webform['components'][1] = array(
@@ -66,10 +69,11 @@ class WebformTest extends \Drupal\Tests\DrupalUnitTestCase {
     $component = $webform->component(6);
     $this->assertEqual('email_subject', $component['form_key']);
   }
-  
+
   public function testComponent_ReturnsNULLForUnknownComponent() {
     $node = self::nodeStub();
     $webform = new Webform($node);
     $this->assertNull($webform->component(12));
   }
+
 }

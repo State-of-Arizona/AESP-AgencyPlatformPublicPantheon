@@ -19,10 +19,20 @@ class Field {
   public $deleted = 0;
   public $settings = array();
 
+  /**
+   * Get a list of fields by their type.
+   */
+  public static function byType($type) {
+    $fields = [];
+    foreach (\field_read_fields(['type' => $type]) as $info) {
+      $fields[$info['field_name']] = new static($info);
+    }
+    return $fields;
+  }
+
   public static function byName($name) {
-    $class = \get_called_class();
     if ($data = \field_read_field($name)) {
-      return new $class($data);
+      return new static($data);
     }
     return FALSE;
   }
@@ -42,8 +52,8 @@ class Field {
 
   /**
    * Load default data for this field-type.
-   * 
-   * @see \field_create_field().
+   *
+   * @see \field_create_field()
    */
   public function setType($type) {
     $field_type = \field_info_field_types($type);
@@ -54,14 +64,15 @@ class Field {
 
   /**
    * Save field configuration to database.
-   * 
-   * @see \field_update_field().
-   * @see \field_create_field().
+   *
+   * @see \field_update_field()
+   * @see \field_create_field()
    */
   public function save() {
     if (isset($this->id)) {
       \field_update_field((array) $this);
-    } else {
+    }
+    else {
       foreach (\field_create_field((array) $this) as $k => $v) {
         $this->$k = $v;
       }
@@ -72,7 +83,7 @@ class Field {
   /**
    * Delete an existing field.
    *
-   * @see \field_delete_field().
+   * @see \field_delete_field()
    */
   public function delete() {
     field_delete_field($this->field_name);
@@ -83,7 +94,7 @@ class Field {
    *
    * @param $newName string
    *
-   * NOTE: This might need additional adjustments for contrib modules
+   *   NOTE: This might need additional adjustments for contrib modules
    *   that store field_names (ie. views, context, cck_blocks).
    */
   public function rename($newName) {
@@ -102,4 +113,5 @@ class Field {
     }
     $this->field_name = $n;
   }
+
 }

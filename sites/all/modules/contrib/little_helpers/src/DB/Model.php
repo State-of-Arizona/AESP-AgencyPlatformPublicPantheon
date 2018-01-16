@@ -35,7 +35,8 @@ abstract class Model {
   public function save() {
     if ($this->isNew()) {
       $this->insert();
-    } else {
+    }
+    else {
       $this->update();
     }
     $this->new = FALSE;
@@ -79,4 +80,5 @@ abstract class Model {
     }
     return $data;
   }
+
 }

@@ -9,6 +9,19 @@ class Bundle implements BundleInterface {
     $this->entity_type = $entity_type;
     $this->bundle = $bundle;
   }
-  public function getBundleName() { return $this->bundle; }
-  public function getEntityType() { return $this->entity_type; }
+
+  /**
+   *
+   */
+  public function getBundleName() {
+    return $this->bundle;
+  }
+
+  /**
+   *
+   */
+  public function getEntityType() {
+    return $this->entity_type;
+  }
+
 }

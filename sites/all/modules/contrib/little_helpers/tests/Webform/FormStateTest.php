@@ -1,15 +1,11 @@
 <?php
 
+use Drupal\Tests\DrupalWebTestCase;
+
 namespace Drupal\little_helpers\Webform;
 
-class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
+class FormStateTest extends DrupalWebTestCase {
   protected $webformNode = NULL;
-
-  /*
-  public function __construct($test_id = NULL) {
-    parent::__construct($test_id);
-  }
-  */
 
   public static function getInfo() {
     return array(
@@ -18,12 +14,14 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
       'group'       => t('little_helpers'),
     );
   }
+
   public function setUp() {
     // Enable any modules required for the test. This should be an array of
     // module names.
     parent::setUp(array('little_helpers'));
     $this->nodeStub();
   }
+
   /**
    * Implemenation of tearDown().
    */
@@ -76,6 +74,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
 
     return $form_state;
   }
+
   protected function formStateFirstPageProcessedStub() {
     $form_state = array(
       'values' => array(
@@ -111,6 +110,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
 
     return $form_state;
   }
+
   protected function formStateSecondPageUnprocessedStub() {
     $form_state = array(
       'values' => array(
@@ -150,6 +150,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
 
     return $form_state;
   }
+
   protected function formStateSecondPageProcessedStub() {
     $form_state = array(
       'values' => array(
@@ -188,6 +189,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
 
     return $form_state;
   }
+
   protected function nodeStubAddWebform(array &$settings) {
     $settings = array(
       6 => array(
@@ -226,7 +228,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
           'field_prefix' => '',
           'field_suffix' => '',
           'disabled' => 0,
-          'unique' => false,
+          'unique' => FALSE,
           'title_display' => 'before',
           'description' => '',
           'attributes' => array(),
@@ -249,7 +251,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
         'value' => '%get[p5]',
         'extra' => array(
           'width' => '',
-          'unique' => true,
+          'unique' => TRUE,
           'disabled' => 0,
           'title_display' => 'before',
           'description' => '',
@@ -277,11 +279,10 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
           'field_prefix' => '',
           'field_suffix' => '',
           'disabled' => 0,
-          'unique' => false,
+          'unique' => FALSE,
           'title_display' => 'before',
           'description' => '',
-          'attributes' => 
-          array (),
+          'attributes' => array(),
           'private' => 0,
           'line_items' => NULL,
           'conditional_component' => '',
@@ -300,7 +301,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
         'type' => 'pagebreak',
         'value' => '',
         'extra' => array(
-          'private' => false,
+          'private' => FALSE,
           'next_page_label' => '',
           'prev_page_label' => '',
           'line_items' => NULL,
@@ -370,7 +371,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
           'field_prefix' => '',
           'field_suffix' => '',
           'disabled' => 0,
-          'unique' => false,
+          'unique' => FALSE,
           'title_display' => 'before',
           'description' => '',
           'attributes' => array(),
@@ -405,7 +406,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
           'field_prefix' => '',
           'field_suffix' => '',
           'disabled' => 0,
-          'unique' => false,
+          'unique' => FALSE,
           'title_display' => 'before',
           'description' => '',
           'attributes' => array(),
@@ -432,7 +433,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
           'field_prefix' => '',
           'field_suffix' => '',
           'disabled' => 0,
-          'unique' => false,
+          'unique' => FALSE,
           'title_display' => 'before',
           'description' => '',
           'attributes' => array(),
@@ -454,7 +455,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
         'type' => 'pagebreak',
         'value' => '',
         'extra' => array(
-          'private' => false,
+          'private' => FALSE,
           'next_page_label' => '',
           'prev_page_label' => '',
           'line_items' => NULL,
@@ -479,7 +480,7 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
           'field_prefix' => '',
           'field_suffix' => '',
           'disabled' => 0,
-          'unique' => false,
+          'unique' => FALSE,
           'title_display' => 'before',
           'description' => 'Bitte folgendermaßen eintragen: 16/9/1983',
           'attributes' => array(),
@@ -495,23 +496,27 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
       ),
     );
   }
+
+  /**
+   *
+   */
   protected function nodeStub() {
     $settings = array(
-     'type' => 'webform',
-     'language'  => LANGUAGE_NONE,
-     'uid' => '1',
-     'status' => '1',
-     'promote' => '1',
-     'moderate' => '0',
-     'sticky' => '0',
-     'tnid' => '0',
-     'translate' => '0',
-     'title' => 'FormState class unit test',
-     'body' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. Suspendisse dignissim adipiscing libero. Integer leo. Sed pharetra ligula a dui. Quisque ipsum nibh, ullamcorper eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, urna lacus volutpat urna, ut fermentum neque mi egestas dolor.'))),
-     'teaser' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. Suspendisse dignissim adipiscing libero. Integer leo. Sed pharetra ligula a dui. Quisque ipsum nibh, ullamcorper eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla.'))),
-     'log' => '',
-     'format' => '1',
-     'webform' => array(
+      'type' => 'webform',
+      'language'  => LANGUAGE_NONE,
+      'uid' => '1',
+      'status' => '1',
+      'promote' => '1',
+      'moderate' => '0',
+      'sticky' => '0',
+      'tnid' => '0',
+      'translate' => '0',
+      'title' => 'FormState class unit test',
+      'body' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. Suspendisse dignissim adipiscing libero. Integer leo. Sed pharetra ligula a dui. Quisque ipsum nibh, ullamcorper eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla. Nunc est ipsum, pretium quis, dapibus sed, varius non, lectus. Proin a quam. Praesent lacinia, eros quis aliquam porttitor, urna lacus volutpat urna, ut fermentum neque mi egestas dolor.'))),
+      'teaser' => array(LANGUAGE_NONE => array(array('value' => 'Donec placerat. Nullam nibh dolor, blandit sed, fermentum id, imperdiet sit amet, neque. Nam mollis ultrices justo. Sed tempor. Sed vitae tellus. Etiam sem arcu, eleifend sit amet, gravida eget, porta at, wisi. Nam non lacus vitae ipsum viverra pretium. Phasellus massa. Fusce magna sem, gravida in, feugiat ac, molestie eget, wisi. Fusce consectetuer luctus ipsum. Vestibulum nunc. Suspendisse dignissim adipiscing libero. Integer leo. Sed pharetra ligula a dui. Quisque ipsum nibh, ullamcorper eget, pulvinar sed, posuere vitae, nulla. Sed varius nibh ut lacus. Curabitur fringilla.'))),
+      'log' => '',
+      'format' => '1',
+      'webform' => array(
         'confirmation' => 'Thanks!',
         'confirmation_format' => filter_default_format(),
         'redirect_url' => '<confirmation>',
@@ -536,24 +541,26 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
 
   /**
    * Tests of FormState class with a form_state on the first page
-   * of a multi page webform before the webform module processed it */
-
+   * of a multi page webform before the webform module processed it.
+   */
   public function testFormStateFirstPageUnprocessed_returnsValueByKey() {
     $form_state = $this->formStateFirstPageUnprocessedStub();
     $form       = $this->formStub();
     $formState  = new FormState($this->webformNode, $form, $form_state);
     $this->assertEqual('Myfirstname', $formState->valueByKey('first_name'));
   }
+
   public function testFormStateFirstPageUnprocessed_returnsValueByCid() {
     $form_state = $this->formStateFirstPageUnprocessedStub();
     $form       = $this->formStub();
     $formState  = new FormState($this->webformNode, $form, $form_state);
     $this->assertEqual('01/1234568', $formState->valueByCid(15));
   }
+
   public function testFormStateFirstPageUnprocessed_returnsValueByKeys() {
-    $form_state = $this->formStateFirstPageUnprocessedStub();
-    $form       = $this->formStub();
-    $formState  = new FormState($this->webformNode, $form, $form_state);
+    $form_state      = $this->formStateFirstPageUnprocessedStub();
+    $form            = $this->formStub();
+    $formState       = new FormState($this->webformNode, $form, $form_state);
     $value_reference = array(
       'first_name'   => 'Myfirstname',
       'email'        => 'myemail@address.at',
@@ -561,10 +568,14 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
     );
     $this->assertEqual($value_reference, $formState->valuesByKeys(array_keys($value_reference)));
   }
+
+  /**
+   *
+   */
   public function testFormStateFirstPageUnprocessed_returnsValueByType() {
-    $form_state = $this->formStateFirstPageUnprocessedStub();
-    $form       = $this->formStub();
-    $formState  = new FormState($this->webformNode, $form, $form_state);
+    $form_state      = $this->formStateFirstPageUnprocessedStub();
+    $form            = $this->formStub();
+    $formState       = new FormState($this->webformNode, $form, $form_state);
     $value_reference = array(
       'first_name'        => 'Myfirstname',
       'phone_number'      => '01/1234568',
@@ -574,4 +585,5 @@ class FormStateTest extends \Drupal\Tests\DrupalWebTestCase {
     );
     $this->assertEqual($value_reference, $formState->valuesByType('textfield'));
   }
+
 }

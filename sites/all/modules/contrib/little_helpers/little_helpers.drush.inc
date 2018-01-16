@@ -14,8 +14,10 @@ function little_helpers_drush_command() {
   return $items;
 }
 
+/**
+ *
+ */
 function drush_little_helpers_permission_matrix() {
-  $matrix = \Drupal\little_helpers\c2c\PermissionMatrix::createFromSystem();
+  $matrix = PermissionMatrix::createFromSystem();
   $matrix->printEmptyTable();
 }
-

@@ -8,6 +8,7 @@ namespace Drupal\little_helpers;
  */
 class DStatic {
   protected static $data = array();
+
   /**
    * Set a value by value. This is mainly for convenience (default value) and
    * so that calls like:
@@ -22,6 +23,7 @@ class DStatic {
   public static function setFlag($name, $value = TRUE) {
     self::$data[$name] = $value;
   }
+
   /**
    * Set a value by reference.
    *
@@ -33,6 +35,7 @@ class DStatic {
   public static function set($name, &$value) {
     self::$data[$name] = &$value;
   }
+
   /**
    * Get a stored value.
    *
@@ -42,10 +45,12 @@ class DStatic {
   public static function get($name) {
     return isset(self::$data[$name]) ? self::$data[$name] : NULL;
   }
+
   /**
    * Delete all static variables that have been accumulated in this request.
    */
   public static function reset() {
     self::$data = array();
   }
+
 }

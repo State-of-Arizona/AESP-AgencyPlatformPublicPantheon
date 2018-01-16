@@ -24,10 +24,13 @@ class PermissionMatrix {
     return self::create(user_roles(), $role_permissions);
   }
 
+  /**
+   *
+   */
   public static function createFromFile($file) {
     $roles  = array();
     $matrix = array();
-    // this redefines $roles and $matrix
+    // This redefines $roles and $matrix.
     include $file;
 
     $sys_roles = array();
@@ -97,9 +100,9 @@ class PermissionMatrix {
 
     $perm_null_line = '';
     foreach ($this->roles as $rid => $role) {
-      $rids[] = $rid;
-      $role_line      .= str_pad("'$role', ", $this->width_role[$i  ] + 4);
-      $perm_null_line .= str_pad("NULL,",     $this->width_role[$i++] + 4);
+      $rids[]          = $rid;
+      $role_line      .= str_pad("'$role', ", $this->width_role[$i] + 4);
+      $perm_null_line .= str_pad("NULL,", $this->width_role[$i++] + 4);
     }
 
     $lines = array();
@@ -124,18 +127,23 @@ class PermissionMatrix {
     echo ");\n";
   }
 
+  /**
+   *
+   */
   public function enforce() {
     foreach ($this->set as $rid => $perms) {
       foreach ($perms as $module => $p) {
         foreach ($p as $perm => $v) {
-          if (!isset($v))
+          if (!isset($v)) {
             continue;
+          }
           if ($v) {
             $this->db->merge('role_permission')
               ->key(array('rid' => $rid, 'permission' => $perm))
               ->fields(array('module' => $module))
               ->execute();
-          } else {
+          }
+          else {
             $this->db->delete('role_permission')
               ->condition('rid', $rid)
               ->condition('permission', $perm)
@@ -145,5 +153,5 @@ class PermissionMatrix {
       }
     }
   }
-}
 
+}

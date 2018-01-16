@@ -24,14 +24,16 @@ class LanguageApi {
     if (empty($path)) {
       if (module_exists('i18n_variable')) {
         $path = \i18n_variable_get('site_frontpage', $langCode, $path);
-      } else {
+      }
+      else {
         $path = \variable_get('site_frontpage', $path);
       }
     }
     return ($router_item = \menu_get_item($path)) && $router_item['access'];
   }
+
   /**
-   * Give paths to all (or a subset) of the available translations
+   * Give paths to all (or a subset) of the available translations.
    */
   public function languageLinks($languages = NULL, $path = NULL) {
     if (!$languages) {
@@ -44,8 +46,9 @@ class LanguageApi {
     $links = array();
     $switchLinks = $this->switchLinks($path);
     foreach ($languages as $code => $language) {
-      if ($code == $currentLanguage)
+      if ($code == $currentLanguage) {
         continue;
+      }
 
       if (isset($switchLinks[$code]) && isset($switchLinks[$code]['href']) && $this->checkAccess($switchLinks[$code]['href'], $code)) {
         $links[$code] = $switchLinks[$code];
@@ -53,4 +56,5 @@ class LanguageApi {
     }
     return $links;
   }
+
 }

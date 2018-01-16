@@ -5,9 +5,11 @@ namespace Drupal\little_helpers\Field;
 class Instance {
   public $id = NULL;
   public $field;
-  // @TODO: replace these with a bundle class
+  /**
+   * @TODO: replace these with a bundle class
+   */
   public $bundle;
-  
+
   public $settings = array();
   public $display = array('default' => array());
   public $widget = array();
@@ -47,11 +49,11 @@ class Instance {
   public static function fromNames($fieldname, $entity_type, $bundle, $data = array()) {
     return self::fromField(Field::byName($fieldname), new Bundle($entity_type, $bundle), $data);
   }
-  
+
   /**
    * Set field and update default values accordingly.
    *
-   * @see _field_write_instance().
+   * @see _field_write_instance()
    */
   public function setField(Field $field) {
     $this->field = $field;
@@ -66,11 +68,11 @@ class Instance {
       }
     }
   }
-  
+
   /**
    * Set formatter type and update defaults accordingly.
    *
-   * @see _field_write_instance().
+   * @see _field_write_instance()
    */
   public function setFormatter($view_mode, $formatter_name, $settings = array()) {
     $this->display[$view_mode] = $settings;
@@ -86,11 +88,11 @@ class Instance {
       $display['settings'] += \field_info_formatter_settings($display['type']);
     }
   }
-  
+
   /**
    * Set widget type and update defaults accordingly.
    *
-   * @see _field_write_instance().
+   * @see _field_write_instance()
    */
   public function setWidget($widget_type_name, $settings = array()) {
     $this->widget['type'] = $widget_type_name;
@@ -99,7 +101,7 @@ class Instance {
     $this->widget['module'] = $widget_type['module'];
     $this->widget['settings'] += \field_info_widget_settings($widget_type_name);
   }
-  
+
   /**
    * Convert this object to an array suitable
    * for the Drupal Field-API.
@@ -118,17 +120,18 @@ class Instance {
     }
     return $data;
   }
-  
+
   /**
    * Save field instance to database.
-   * 
-   * @see \field_update_instance().
-   * @see \field_create_instance().
+   *
+   * @see \field_update_instance()
+   * @see \field_create_instance()
    */
   public function save() {
     if (isset($this->id)) {
       \field_update_instance($this->export());
-    } else {
+    }
+    else {
       foreach (\field_create_instance($this->export()) as $k => $v) {
         $this->$k = $v;
       }
@@ -139,9 +142,10 @@ class Instance {
   /**
    * Delete an existing field instance.
    *
-   * @see \field_delete_instance().
+   * @see \field_delete_instance()
    */
   public function delete() {
     \field_delete_instance($this->export());
   }
+
 }

@@ -1,0 +1,70 @@
+<?php
+
+use \Drupal\little_helpers\Webform\Webform;
+use \Drupal\little_helpers\Webform\Submission;
+
+/**
+ * Implements hook_webform_submission_insert().
+ */
+function little_helpers_webform_submission_insert($node, $submission) {
+  little_helpers_webform_submission_update($node, $submission);
+}
+
+/**
+ * Implements hook_webform_submission_presave().
+ *
+ * Śet $submission->was_draft which is needed later in
+ * @see little_helpers_webform_submission_update() to only invoke the hook once.
+ */
+function little_helpers_webform_submission_presave($node, $submission) {
+  $submission->new_or_was_draft = empty($submission->sid) || empty($submission->complete);
+}
+
+/**
+ * Implements hook_webform_submission_update().
+ */
+function little_helpers_webform_submission_update($node, $submission) {
+  if (!$submission->is_draft && $submission->new_or_was_draft) {
+    $webform = new Webform($node);
+    if (!$webform->needsConfirmation()) {
+      little_helpers_webform_confirm_email_email_confirmed($webform, $submission);
+    }
+  }
+}
+
+/**
+ * Implements hook_webform_confirm_email_email_confirmed().
+ */
+function little_helpers_webform_confirm_email_email_confirmed($node_or_webform, $submission) {
+  $submission_o = new Submission($node_or_webform, $submission);
+  module_invoke_all('webform_submission_confirmed', $submission_o);
+}
+
+/**
+ * Delivery callback: JSON response.
+ */
+function little_helpers_deliver_json($result) {
+  switch ($result) {
+    case MENU_NOT_FOUND:
+      drupal_add_http_header('Status', '404 Not found');
+      return;
+
+    case MENU_ACCESS_DENIED:
+      drupal_add_http_header('Status', '403 Forbidden');
+      return;
+
+    case 405:
+      drupal_add_http_header('Status', '405 Method Not Allowed');
+      return;
+
+    case 502:
+      drupal_add_http_header('Status', '502 Bad Gateway');
+      return;
+
+    case MENU_SITE_OFFLINE:
+      drupal_add_http_header('Status', '503 Service unavailable');
+      return;
+  }
+  echo drupal_json_output($result);
+  drupal_page_footer();
+}

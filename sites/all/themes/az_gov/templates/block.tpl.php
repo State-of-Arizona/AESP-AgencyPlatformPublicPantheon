@@ -1,6 +1,6 @@
 <?php $tag = $block->subject ? 'section' : 'div'; ?>
 
-<<?php print $tag; ?> id="<?php echo $block_html_id; ?>" class="<?php echo $classes; ?>">
+<<?php print $tag; ?> id="<?php echo $block_html_id; ?>" class="<?php echo $classes; ?><?php if(!empty($block->css_class)){ print $block->css_class; }?>">
 <div class="block-inner clearfix">
   <?php print render($title_prefix); ?>
   <?php if ($block->subject): ?>

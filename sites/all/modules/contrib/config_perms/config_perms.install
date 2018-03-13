@@ -11,7 +11,7 @@
 function config_perms_install() {
   // Install defaults
   _config_perms_install_data();
-  
+
   // Rebuild menu and cache
   config_perms_cache_rebuild();
   menu_rebuild();
@@ -89,7 +89,7 @@ function config_perms_schema() {
 
 function _config_perms_install_data() {
   $perms = array(
-    //'administer administration theme' => array('admin/config/admin'),
+    'administer account settings' => array('admin/config/people/accounts'),
     'administer clean-urls' => array('admin/config/search/clean-urls'),
     'administer date-time' => array('admin/config/regional/date-time', 'admin/config/regional/date-time/*'),
     'administer error reporting' => array('admin/config/error-reporting'),
@@ -97,19 +97,15 @@ function _config_perms_install_data() {
     'administer performance' => array('admin/config/development/performance'),
     'administer site information' => array('admin/config/system/site-information'),
     'administer site maintenance' => array('admin/config/development/maintenance'),
-    'administer modules' => array('admin/modules', 'admin/modules/list/confirm', 'admin/modules/uninstall', 'admin/modules/uninstall/confirm'),
-    'administer user profile fields' => array('admin/user/profile'),
-    'administer content node settings' => array('admin/content/node-settings'),
-    'display site building menu' => array('admin/structure'),
+    'display site structure menu' => array('admin/structure'),
     'display site configuration menu' => array('admin/config'),
+    'display site reports menu' => array('admin/reports'),
   );
 
   foreach ($perms as $name => $paths) {
-    // TODO Please review the conversion of this statement to the D7 database API syntax.
-    /* db_query("INSERT INTO {config_perms} (machine_name, status, name, path) VALUES ('%s', %d, '%s', %b)", strtolower(preg_replace('/[^a-zA-Z0-9_]+/', '_', $name)), 1, $name, serialize($paths)) */
     $id = db_insert('config_perms')
   ->fields(array(
-      'machine_name' => strtolower(preg_replace('/[^a-zA-Z0-9_]+/', '_', $name)),
+      'machine_name' => config_perms_generate_machine_name($name),
       'status' => 1,
       'name' => $name,
       'path' => serialize($paths),
@@ -119,21 +115,101 @@ function _config_perms_install_data() {
 }
 
 /**
- * Update
- * Should we still have this function in 7.x?
+ * Fix permissions that were incorrectly stored with escaped HTML characters.
  */
-function config_perms_update_6200() {
-  $ret = array();
+function config_perms_update_7201() {
+  $config_perms = config_perms_perms();
+  $role_perms = user_role_permissions(user_roles());
+  $updates = array();
 
-  $schema = config_perms_schema();
-  db_create_table('config_perms', $schema['config_perms']);
-  
-  // Instal default data
-  _config_perms_install_data();
-  
-    // Rebuild menu and cache
-  config_perms_cache_rebuild();
-  menu_rebuild();
+  foreach ($config_perms as $config_perm) {
+    $derivatives = array();
+    $decoded_name = config_perms_unescape_perm_name($config_perm->name, $derivatives);
+    // Reverse the array and remove the end item, which is the new name.
+    $derivatives = array_reverse($derivatives);
+    array_shift($derivatives);
+    if ($config_perm->name !== $decoded_name) {
+      // Fix the config perms config for this permission.
+      $updates[$config_perm->name] = $decoded_name;
+      $config_perm->name = $decoded_name;
+      $config_perm = config_perms_save($config_perm);
+      // Make sure to refresh the config perms cache, otherwise the system will
+      // think the new perm we are adding doesn't exist.
+      config_perms_cache_rebuild();
+      // Fix perms best as possible.
+      // It is possible that a config perm has had multiple names with different
+      // perms so we have to take just one.
+      // Possibly the newest perm is the most correct, however the newest one
+      // is also likely to have been checnged by accident. The oldest one would
+      // be the most likely to have been correctly configured by the admin so
+      // take the oldest one and then notify the admin to check the config.
+      // Don't take the one we just changed to though.
+      foreach ($role_perms as $rid => $perms) {
+        $new_perms = array();
+        foreach ($derivatives as $derivative) {
+          // If a permission is in the database for this derivative.
+          if (isset($perms[$derivative])) {
+            // Set the new value if we haven't already.
+            if (is_null($new_perm_value)) {
+              $new_perms[$decoded_name] = $perms[$derivative];
+            }
+            // Remove the old perm.
+            $new_perms[$derivative] = FALSE;
+          }
+        }
+        // Set a default if there isn't a value for the new perm.
+        if (!isset($new_perms[$decoded_name])) {
+          $new_perms[$decoded_name] = FALSE;
+        }
+        // Save the new config.
+        user_role_change_permissions($rid, $new_perms);
+      }
+    }
+  }
 
-  return t('Update succesfull.');
+  if ($updates) {
+    foreach ($updates as $old_name => $new_name) {
+      $updates_str = '<li>' . t('%old_name is now %new_name', array('%old_name' => $old_name, '%new_name' => $new_name)) . '</li>';
+    }
+
+    return format_plural(count($updates), '1 custom permission name was updated.', '@count custom permission names were updated.') . '<br />' .
+           t('User role permissions should have been transferred to the newly named custom permissions but please check your permissions manually to be sure.') . '<br />' .
+           t('The permission names that were updated are:') . '<ul>' . $updates_str . '</ul>';
+  }
+}
+
+/**
+ * Add the administer account settings permission.
+ */
+function config_perms_update_7202() {
+  if (!array_key_exists('administer account settings', config_perms_perms())) {
+    config_perms_save(array(
+      'name' => 'administer account settings',
+      'path' => array('admin/config/people/accounts'),
+      'status' => 1,
+    ));
+  }
+}
+
+/**
+ * Recursively decode HTML in the permission name becasue we don't know how
+ * many times it has been encoded.
+ *
+ * @param string $name
+ *   The permission name.
+ * @param array $derivitives
+ *   An array of derivative name for the permission name.
+ *
+ * @return string
+ *   The new permission name.
+ */
+function config_perms_unescape_perm_name($name, &$derivatives) {
+  $derivatives[] = $name;
+  $decoded_name = htmlspecialchars_decode($name, ENT_QUOTES);
+  if ($name != $decoded_name) {
+    return config_perms_unescape_perm_name($decoded_name, $derivatives);
+  }
+  else {
+    return $name;
+  }
 }

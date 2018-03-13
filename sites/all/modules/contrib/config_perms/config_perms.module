@@ -18,31 +18,39 @@ function config_perms_perms($machine_name = NULL, $rebuild = FALSE) {
   // Load current perms
   $perms = cache_get('config_perms');
 
-  // Rebuild if not there
+  // Rebuild if the cache doesn't exist or if we should force a rebuild. If the
+  // cache exists, we'll need to point to the data property of the cache object
+  // in order to maintain the same structure.
   if (!$perms || $rebuild) {
-    config_perms_cache_rebuild();
-    $perms = cache_get('config_perms');
+    $perms = config_perms_cache_rebuild();
+  }
+  else {
+    $perms = $perms->data;
   }
 
-  return ($machine_name) ? $perms->data[$machine_name] : $perms->data;
+  return ($machine_name) ? $perms[$machine_name] : $perms;
 }
 
 /**
  * Configure permission names for urls:
  */
 function config_perms_cache_rebuild() {
+  if (module_exists('ctools')) {
+    ctools_include('export');
+    ctools_export_load_object_reset('config_perms');
+  }
   $perms = config_perms_loadperms();
   cache_set('config_perms', $perms);
+
+  return $perms;
 }
 
 /*******************************************************************************
  * Hook Functions
  ******************************************************************************/
-/*
 
- /**
- * Implementation of hook_perm
- * Administer -> User management -> Permissions
+/**
+ * Implements hook_permission().
  */
 function config_perms_permission() {
   $permissions = array();
@@ -52,7 +60,7 @@ function config_perms_permission() {
 
   foreach ($perms as $perm) {
     if ($perm->status) {
-      $permissions[check_plain($perm->name)] = array('title' => check_plain($perm->name), 'description' => '');
+      $permissions[$perm->name] = array('title' => check_plain($perm->name), 'description' => '');
     }
   }
 
@@ -61,9 +69,18 @@ function config_perms_permission() {
 
 /**
  * Implements hook_flush_caches().
+ *
+ * The cache table is already cleared by Drupal flush caches, so we don't need
+ * to return that or do it ourselves, but if CTools is enabled be sure to reset
+ * that cache on a cache clear.
  */
 function config_perms_flush_caches() {
-  cache_clear_all('config_perms', 'cache');
+  if (module_exists('ctools')) {
+    // Clear the Ctools export API cache.
+    ctools_include('export');
+    ctools_export_load_object_reset('config_perms');
+  }
+  return array();
 }
 
 /**
@@ -102,41 +119,22 @@ function config_perms_menu() {
  * Implements hook_menu_alter().
  */
 function config_perms_menu_alter(&$items) {
-  /*
-  foreach (config_perms_perms() as $perm) {
-    foreach ($perm->path as $path) {
-      if (isset($items[$path]) && $perm->status) {
-        $items[$path]['access callback'] = 'config_perms_access_callback';
-        $items[$path]['access arguments'] = array($perm);
-      }
-    }
-  }
-  */
-  
   // Run through all menu items and leter them accordingly
   foreach($items as $key => $item) {
     foreach (config_perms_perms() as $perm) {
-      foreach ($perm->path as $path) { 
+      foreach ($perm->path as $path) {
         if (drupal_match_path($key, $path) && $perm->status) {
-          $items[$key]['access callback'] = 'config_perms_access_callback';
-          $items[$key]['access arguments'] = array($perm);
+          $items[$key]['access callback'] = 'user_access';
+          $items[$key]['access arguments'] = array($perm->name);
         }
       }
     }
   }
 }
 
-/**
- * Access callback
- */
-function config_perms_access_callback($perm) {
-  return user_access(check_plain($perm->name));
-}
-
 /*******************************************************************************
  * Ctools
  ******************************************************************************/
-/*
 
  /**
  * Load all permissions
@@ -180,32 +178,8 @@ function config_perms_save($perm) {
   else {
     drupal_write_record('config_perms', $perm);
   }
-  
+
   return $perm;
-}
-
-/**
- * Peristant permissions
- */
-function config_perms_persistant() {
-  $persistant = array(
-    array(
-      'name' => 'administer themes',
-      'status' => 1,
-      'paths' => array(),
-    ),
-    array(
-      'name' => 'administer enabled themes',
-      'status' => 1,
-      'paths' => array(),
-    ),
-  );
-
-  foreach ($persistant as $p) {
-    $perms[config_perms_generate_machine_name($p['name'])] = (object) $p;
-  }
-
-  return $perms;
 }
 
 /**

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * @file
@@ -9,20 +8,19 @@
 /**
  * Administration form
  */
-function config_perms_admin_form($form, &$form_state, $type = '') {
+function config_perms_admin_form($form, &$form_state) {
   $form['perms'] = array(
     '#type' => 'fieldset',
     '#title' => t('Custom Permissions'),
     '#description' => '<p>' . t("Please note that the order in which permissions are granted are as follows:") . '</p>' .
       "<ul>" .
-        "<li>" . t("User 1 still maintains full control") .
-       // "<li>" . t("Any role with 'administer site configuration' will have access to all permissions listed above") .
-        "<li>" . t("Nothing will be available under Site building if 'display site building menu' is not checked") .
-        "<li>" . t("Nothing will be available under Site configuration if 'display site configuration menu' is not checked") .
+        "<li>" . t("User 1 still maintains full control") . "</li>\n" .
+        "<li>" . t("Remove the permission 'Administer site configuration' from roles you wish to give access to only specified custom site configuration permissions") . "</li>\n" .
+        "<li>" . t("Nothing will be available under Site building if 'display site building menu' is not checked") . "</li>\n" .
+        "<li>" . t("Nothing will be available under Site configuration if 'display site configuration menu' is not checked") . "</li>\n" .
+        "<li>" . t("Custom permissions <strong>cannot</strong> protect dynamic paths, which includes individual content, users, etc. (with system paths that receive an argument via the URL, such as node/1, node/2/edit, user/5, etc.)") . "</li>\n" .
         "<li>" . t("You can use * as wildcard for paths.") .
-        //"<li>" . t("Any role without 'administer site configuration' will be granted access to whatever permissions checked in the config_perms section of the permissions page.") .
       "</ul>",
-    //'<p>'. t("So in other words, if you want grant roles only a few of theses items, uncheck 'administer site configuration', check one or both of the display permissions, and check whatever you want them to have access to.") .'</p>',
     '#collapsible' => 1,
     '#collapsed' => 0,
   );
@@ -36,20 +34,20 @@ function config_perms_admin_form($form, &$form_state, $type = '') {
     '#prefix' => '<div id="config_perms-wrapper">',
     '#suffix' => '</div>',
   );
-  
+
   foreach ($perms as $key => $perm) {
     $form['perms']['local'][$key] = array('#tree' => TRUE);
     $form['perms']['local'][$key]['pid'] = array(
       '#type' => 'hidden',
-      '#default_value' => check_plain($perm->pid),
+      '#default_value' => isset($perm->pid) ? $perm->pid : NULL,
     );
     $form['perms']['local'][$key]['machine_name'] = array(
       '#type' => 'hidden',
-      '#default_value' => check_plain($perm->machine_name),
+      '#default_value' => $perm->machine_name,
     );
     $form['perms']['local'][$key]['status'] = array(
       '#type' => 'checkbox',
-      '#default_value' => check_plain($perm->status),
+      '#default_value' => $perm->status,
     );
     $form['perms']['local'][$key]['remove'] = array(
       '#type' => 'checkbox',
@@ -57,26 +55,31 @@ function config_perms_admin_form($form, &$form_state, $type = '') {
     );
     $form['perms']['local'][$key]['name'] = array(
       '#type' => 'textfield',
-      '#default_value' => check_plain($perm->name),
+      '#default_value' => $perm->name,
       '#size' => 30,
+      //'#required' => TRUE,
     );
     $form['perms']['local'][$key]['path'] = array(
       '#type' => 'textarea',
       '#default_value' => config_perms_parse_path($perm->path),
       '#size' => 50,
       '#rows' => 1,
+      //'#required' => TRUE,
     );
   }
 
   if (empty($form_state['num_new'])) {
-    $form_state['num_new'] = 1;
+    $form_state['num_new'] = 0;
   }
 
   for ($i = 0; $i < $form_state['num_new']; $i++) {
     $form['perms']['local'][$key + $i]['status'] = array(
       '#type' => 'checkbox',
-      '#default_value' => check_plain($perm->status),
-      //'#attributes' => $attributes,
+      '#default_value' => $perm->status,
+    );
+    $form['perms']['local'][$key + $i]['remove'] = array(
+      '#type' => 'checkbox',
+      '#default_value' => 0,
     );
     $form['perms']['local'][$key + $i]['name'] = array(
       '#type' => 'textfield',
@@ -90,7 +93,7 @@ function config_perms_admin_form($form, &$form_state, $type = '') {
       '#size' => 50,
     );
   }
-  
+
   $form['perms']['add']['status'] = array(
     '#name' => 'status',
     '#id' => 'edit-local-status',
@@ -102,7 +105,7 @@ function config_perms_admin_form($form, &$form_state, $type = '') {
       'wrapper' => 'config_perms-wrapper',
     ),
   );
-  
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
@@ -133,7 +136,7 @@ function theme_config_perms_form($variables) {
 }
 
 /**
- * Submit for add button
+ * Submit for add button.
  */
 function config_perms_admin_form_add_submit($form, &$form_state) {
   $form_state['num_new']++;
@@ -141,14 +144,14 @@ function config_perms_admin_form_add_submit($form, &$form_state) {
 }
 
 /**
- * Callback for add button
+ * Callback for add button.
  */
 function config_perms_admin_form_add_callback($form, $form_state) {
   return $form['perms']['local'];
 }
 
 /**
- * Validate handler
+ * Validate handler.
  */
 function config_perms_admin_form_validate($form, &$form_state) {
   $values = $form_state['values'];
@@ -156,8 +159,28 @@ function config_perms_admin_form_validate($form, &$form_state) {
 
   foreach ($values['local'] as $key => $perm) {
     $perm = (object)$perm;
-    
-    if(array_key_exists(config_perms_generate_machine_name($perm->name), $perms) && !isset($perm->pid)) {
+
+    if (empty($perm->name) && empty($perm->path)) {
+      unset($form_state['values']['local'][$key]);
+      continue;
+    }
+
+    if (empty($perm->name))
+      form_set_error("local][". $key ."", t("The name cannot be empty."));
+
+    if (empty($perm->path)) {
+      form_set_error("local][". $key ."", t("The path cannot be empty."));
+    }
+    elseif (!$perm->remove) {
+      foreach (config_perms_parse_path($perm->path) as $path) {
+        $item = menu_get_item($path);
+        if ($item && $item['path'] != $item['href']) {
+          form_set_error("local][". $key ."", t('The path %path is a dynamic path which cannot be protected by custom permissions. You can use a wildcard path like %wildcard to protect all paths of this type.', array('%path' => $path, '%wildcard' => preg_replace('#(^|/)%($|/)#', '${1}*${2}', $item['path']))));
+        }
+      }
+    }
+
+    if (array_key_exists(config_perms_generate_machine_name($perm->name), $perms) && !isset($perm->pid)) {
       form_set_error("local][". $key ."", t("A permission with that name already exists."));
     }
   }
@@ -182,6 +205,6 @@ function config_perms_admin_form_submit($form, &$form_state) {
   // Rebuild menu and cache
   config_perms_cache_rebuild();
   menu_rebuild();
-  
+
   drupal_set_message(t('The permissions have been saved.'));
 }

@@ -8,7 +8,7 @@
 /**
  * The current system version.
  */
-define('VERSION', '7.57');
+define('VERSION', '7.59');
 
 /**
  * Core API compatibility.
@@ -2657,6 +2657,10 @@ function _drupal_bootstrap_configuration() {
   timer_start('page');
   // Initialize the configuration, including variables from settings.php.
   drupal_settings_initialize();
+
+  // Sanitize unsafe keys from the request.
+  require_once DRUPAL_ROOT . '/includes/request-sanitizer.inc';
+  DrupalRequestSanitizer::sanitize();
 }
 
 /**
@@ -2814,6 +2818,11 @@ function _drupal_bootstrap_variables() {
     if (isset($_GET['destination']) && url_is_external($_GET['destination'])) {
       unset($_GET['destination']);
       unset($_REQUEST['destination']);
+    }
+    // Use the DrupalRequestSanitizer to ensure that the destination's query
+    // parameters are not dangerous.
+    if (isset($_GET['destination'])) {
+      DrupalRequestSanitizer::cleanDestination();
     }
     // If there's still something in $_REQUEST['destination'] that didn't come
     // from $_GET, check it too.

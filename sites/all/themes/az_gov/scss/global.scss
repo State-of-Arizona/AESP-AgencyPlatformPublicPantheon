@@ -246,7 +246,7 @@ html, body {
     }
   }
   .captcha-admin-links {
-      display: none;
+    display: none;
   }
   #block-menu-menu-secondary-nav > div > div.content > ul, #block-menu-menu-secondary-navigation > div > div.content > ul{
     display:flex;
@@ -526,19 +526,23 @@ html, body {
   }
 }
 
-#footer-branding {
+#footer-state-seal {
   width: 100%;
+  background-color: transparent;
   .footer-wrapper {
     .site-info {
-      padding: 15px;
+      padding: 15px 0;
       float: left;
       width: 70%;
     }
+
     img {
       float: left;
       padding: 15px;
       min-width: 95px;
+      margin: 6% 0;
     }
+
     .footer-field {
       padding-right: 10px;
     }

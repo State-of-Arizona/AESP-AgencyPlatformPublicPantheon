@@ -487,23 +487,25 @@ html, body {
   border-radius: 5px;
 }
 
-#footer-branding {
+#footer-state-seal {
   width: 100%;
+  background-color: transparent;
 }
-#footer-branding .footer-wrapper .site-info {
-  padding: 15px;
+#footer-state-seal .footer-wrapper .site-info {
+  padding: 15px 0;
   float: left;
   width: 70%;
 }
-#footer-branding .footer-wrapper img {
+#footer-state-seal .footer-wrapper img {
   float: left;
   padding: 15px;
   min-width: 95px;
+  margin: 6% 0;
 }
-#footer-branding .footer-wrapper .footer-field {
+#footer-state-seal .footer-wrapper .footer-field {
   padding-right: 10px;
 }
-#footer-branding .footer-wrapper .site-name {
+#footer-state-seal .footer-wrapper .site-name {
   font-size: 1.5em;
   line-height: 1em;
   color: #ffffff;
@@ -515,7 +517,7 @@ html, body {
   text-decoration: none;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
-#footer-branding .footer-wrapper .site-slogan {
+#footer-state-seal .footer-wrapper .site-slogan {
   font-size: 0.9em;
   letter-spacing: 0;
   text-transform: uppercase;

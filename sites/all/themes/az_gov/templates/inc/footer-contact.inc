@@ -1,7 +1,7 @@
 <div id="footer-first-contact" class="clearfix ">
     <div id="footer-state-seal" class="content clearfix">
         <div class="footer-wrapper">
-            <img src="/sites/all/themes/az_gov/img/stateseal.png" alt="Arizona State Seal" >
+            <img src="/sites/all/themes/az_gov/img/ArizonaOfficialSeal.png" alt="Arizona State Seal" >
 
         </div>
     </div>

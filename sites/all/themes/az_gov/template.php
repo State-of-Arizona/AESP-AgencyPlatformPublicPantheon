@@ -20,6 +20,7 @@ function az_gov_preprocess_page(&$vars) {
     //footer contact section variables
     $vars['footer_settings'] = array(
         //'show branding' => theme_get_setting('display_footer_branding'),
+        'black logo' => theme_get_setting('black_footer_logo'),
         'show contact' => theme_get_setting('display_footer_contact'),
         'title' => theme_get_setting('footer_title'),
         'title link' => theme_get_setting('footer_title_link'),

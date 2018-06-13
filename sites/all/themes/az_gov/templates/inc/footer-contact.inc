@@ -1,8 +1,11 @@
 <div id="footer-first-contact" class="clearfix ">
     <div id="footer-state-seal" class="content clearfix">
         <div class="footer-wrapper">
-            <img src="/sites/all/themes/az_gov/img/ArizonaOfficialSeal.png" alt="Arizona State Seal" >
-
+            <?php if ($footer_settings['black logo']) : ?>
+                <img src="/<?php print drupal_get_path('theme', 'az_gov'); ?>/img/ArizonaOfficialSeal-Black.png" alt="<?php print t('Arizona State Seal') ?>" id="state-seal" />
+            <?php else : ?>
+                <img src="/<?php print drupal_get_path('theme', 'az_gov'); ?>/img/ArizonaOfficialSeal.png" alt="<?php print t('Arizona State Seal') ?>" id="state-seal" />
+            <?php endif; ?>
         </div>
     </div>
 

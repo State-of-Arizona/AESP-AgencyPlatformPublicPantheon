@@ -35,16 +35,15 @@ function az_gov_form_system_theme_settings_alter(&$form, &$form_state) {
     '#title' => 'Footer Settings',
     '#group' => 'global',
   );
-  //Toggle display of the branding block in the footer
-  $form['footer_settings']['display_footer_branding'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display the branding block in the footer'),
-    '#default_value' => theme_get_setting('display_footer_branding'),
-    '#tree' => FALSE,
-    '#description' => t('Check here if you want to display the branding  block in the footer.')
+
+  //Toggle between black and white logos in the footer
+  $form['footer_settings']['black_footer_logo'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display a black state seal logo in the footer.'),
+      '#default_value' => theme_get_setting('black_footer_logo'),
+      '#tree' => FALSE,
+      '#description' => t('Check here if you want to use a black logo instead of white.')
   );
-
-
   //Capture the information for the Contact Us section in the footer
   $form['footer_settings']['display_footer_contact'] = array(
     '#type' => 'checkbox',

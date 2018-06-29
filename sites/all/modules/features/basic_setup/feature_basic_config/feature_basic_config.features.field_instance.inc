@@ -29,12 +29,6 @@ function feature_basic_config_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 1,
       ),
-      'wysiwyg' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
     ),
     'entity_type' => 'file',
     'field_name' => 'field_alt_text',
@@ -71,12 +65,6 @@ function feature_basic_config_field_default_field_instances() {
         'weight' => 3,
       ),
       'preview' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-      'wysiwyg' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -134,12 +122,6 @@ function feature_basic_config_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
-      'wysiwyg' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
     ),
     'entity_type' => 'file',
     'field_name' => 'field_file_image_alt_text',
@@ -192,12 +174,6 @@ function feature_basic_config_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
-      'wysiwyg' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
     ),
     'entity_type' => 'file',
     'field_name' => 'field_file_image_title_text',
@@ -206,7 +182,6 @@ function feature_basic_config_field_default_field_instances() {
     'settings' => array(
       'text_processing' => 0,
       'user_register_form' => FALSE,
-      'wysiwyg_override' => 1,
     ),
     'widget' => array(
       'active' => 1,

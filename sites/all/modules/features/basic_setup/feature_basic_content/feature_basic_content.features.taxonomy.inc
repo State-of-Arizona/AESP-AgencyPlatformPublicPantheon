@@ -9,9 +9,9 @@
  */
 function feature_basic_content_taxonomy_default_vocabularies() {
   return array(
-    'related_content' => array(
-      'name' => 'Related Content',
-      'machine_name' => 'related_content',
+    'blog_terms' => array(
+      'name' => 'Blog Terms',
+      'machine_name' => 'blog_terms',
       'description' => '',
       'hierarchy' => 0,
       'module' => 'taxonomy',

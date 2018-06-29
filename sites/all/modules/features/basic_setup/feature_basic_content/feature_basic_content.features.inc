@@ -44,6 +44,7 @@ function feature_basic_content_image_default_styles() {
         'data' => array(
           'width' => 1240,
           'height' => 460,
+          '#imageinfo_cache_effect_callback' => 'image_scale_and_crop_effect',
         ),
         'weight' => 1,
       ),

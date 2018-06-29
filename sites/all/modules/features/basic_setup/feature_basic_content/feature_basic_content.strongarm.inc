@@ -160,75 +160,6 @@ function feature_basic_content_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'exclude_node_title_content_type_modes_basic_block';
-  $strongarm->value = array(
-    'full' => 'full',
-    'teaser' => 0,
-    'rss' => 0,
-    'search_index' => 0,
-    'search_result' => 0,
-    'diff_standard' => 0,
-    'token' => 0,
-    'nodeform' => 0,
-  );
-  $export['exclude_node_title_content_type_modes_basic_block'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'exclude_node_title_content_type_modes_basic_page';
-  $strongarm->value = array(
-    'full' => 0,
-    'teaser' => 0,
-    'rss' => 0,
-    'search_index' => 0,
-    'search_result' => 0,
-    'diff_standard' => 0,
-    'token' => 0,
-    'nodeform' => 0,
-  );
-  $export['exclude_node_title_content_type_modes_basic_page'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'exclude_node_title_content_type_modes_basic_slideshow';
-  $strongarm->value = array(
-    'full' => 'full',
-    'teaser' => 0,
-    'rss' => 0,
-    'search_index' => 0,
-    'search_result' => 0,
-    'diff_standard' => 0,
-    'token' => 0,
-    'nodeform' => 0,
-  );
-  $export['exclude_node_title_content_type_modes_basic_slideshow'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'exclude_node_title_content_type_value_basic_block';
-  $strongarm->value = 'user';
-  $export['exclude_node_title_content_type_value_basic_block'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'exclude_node_title_content_type_value_basic_page';
-  $strongarm->value = 'none';
-  $export['exclude_node_title_content_type_value_basic_page'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'exclude_node_title_content_type_value_basic_slideshow';
-  $strongarm->value = 'all';
-  $export['exclude_node_title_content_type_value_basic_slideshow'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'field_bundle_settings_node__basic_block';
   $strongarm->value = array(
     'view_modes' => array(
@@ -302,7 +233,13 @@ function feature_basic_content_strongarm() {
           'weight' => '1',
         ),
         'path' => array(
+          'weight' => '1',
+        ),
+        'redirect' => array(
           'weight' => '3',
+        ),
+        'xmlsitemap' => array(
+          'weight' => '2',
         ),
       ),
       'display' => array(),
@@ -515,6 +452,16 @@ function feature_basic_content_strongarm() {
   $strongarm->name = 'pathauto_node_basic_slideshow_pattern';
   $strongarm->value = 'slideshow/[node:title]';
   $export['pathauto_node_basic_slideshow_pattern'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'xmlsitemap_settings_taxonomy_term_blog_terms';
+  $strongarm->value = array(
+    'status' => '1',
+    'priority' => '0.5',
+  );
+  $export['xmlsitemap_settings_taxonomy_term_blog_terms'] = $strongarm;
 
   return $export;
 }

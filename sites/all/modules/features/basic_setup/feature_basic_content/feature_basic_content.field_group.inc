@@ -8,7 +8,7 @@
  * Implements hook_field_group_info().
  */
 function feature_basic_content_field_group_info() {
-  $export = array();
+  $field_groups = array();
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -36,7 +36,7 @@ function feature_basic_content_field_group_info() {
       ),
     ),
   );
-  $export['group_basic_block_assignment|node|basic_block|form'] = $field_group;
+  $field_groups['group_basic_block_assignment|node|basic_block|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -53,6 +53,7 @@ function feature_basic_content_field_group_info() {
     'children' => array(
       0 => 'body',
       1 => 'title',
+      2 => 'field_screen_reader_only_title',
     ),
     'format_type' => 'htab',
     'format_settings' => array(
@@ -65,7 +66,7 @@ function feature_basic_content_field_group_info() {
       ),
     ),
   );
-  $export['group_tabs_basic|node|basic_page|form'] = $field_group;
+  $field_groups['group_tabs_basic|node|basic_page|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -93,7 +94,7 @@ function feature_basic_content_field_group_info() {
       ),
     ),
   );
-  $export['group_tabs_quicktabs|node|basic_page|form'] = $field_group;
+  $field_groups['group_tabs_quicktabs|node|basic_page|form'] = $field_group;
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -119,7 +120,14 @@ function feature_basic_content_field_group_info() {
       ),
     ),
   );
-  $export['group_tabs|node|basic_page|form'] = $field_group;
+  $field_groups['group_tabs|node|basic_page|form'] = $field_group;
 
-  return $export;
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('"Quicktabs"');
+  t('Basic Page');
+  t('Block Assignment');
+  t('Tabs Group');
+
+  return $field_groups;
 }

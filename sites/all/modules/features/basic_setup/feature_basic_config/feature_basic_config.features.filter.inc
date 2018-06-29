@@ -45,6 +45,11 @@ function feature_basic_config_filter_default_formats() {
         'status' => 1,
         'settings' => array(),
       ),
+      'filter_tokens' => array(
+        'weight' => 0,
+        'status' => 1,
+        'settings' => array(),
+      ),
     ),
   );
 

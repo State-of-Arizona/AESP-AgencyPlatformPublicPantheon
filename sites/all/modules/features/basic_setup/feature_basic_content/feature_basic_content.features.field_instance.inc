@@ -11,7 +11,7 @@ function feature_basic_content_field_default_field_instances() {
   $field_instances = array();
 
   // Exported field_instance:
-  // 'field_collection_item-field_basic_page_tabs-field_basic_page_tab_body'
+  // 'field_collection_item-field_basic_page_tabs-field_basic_page_tab_body'.
   $field_instances['field_collection_item-field_basic_page_tabs-field_basic_page_tab_body'] = array(
     'bundle' => 'field_basic_page_tabs',
     'default_value' => NULL,
@@ -46,7 +46,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'field_collection_item-field_basic_page_tabs-field_basic_page_tab_label'
+  // 'field_collection_item-field_basic_page_tabs-field_basic_page_tab_label'.
   $field_instances['field_collection_item-field_basic_page_tabs-field_basic_page_tab_label'] = array(
     'bundle' => 'field_basic_page_tabs',
     'default_value' => NULL,
@@ -81,7 +81,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'field_collection_item-field_basic_slideshow_images-field_basic_slideshow_caption'
+  // 'field_collection_item-field_basic_slideshow_images-field_basic_slideshow_caption'.
   $field_instances['field_collection_item-field_basic_slideshow_images-field_basic_slideshow_caption'] = array(
     'bundle' => 'field_basic_slideshow_images',
     'default_value' => NULL,
@@ -116,7 +116,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'field_collection_item-field_basic_slideshow_images-field_slideshow_image'
+  // 'field_collection_item-field_basic_slideshow_images-field_slideshow_image'.
   $field_instances['field_collection_item-field_basic_slideshow_images-field_slideshow_image'] = array(
     'bundle' => 'field_basic_slideshow_images',
     'deleted' => 0,
@@ -180,7 +180,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'field_collection_item-field_basic_slideshow_images-field_slideshow_image_link'
+  // 'field_collection_item-field_basic_slideshow_images-field_slideshow_image_link'.
   $field_instances['field_collection_item-field_basic_slideshow_images-field_slideshow_image_link'] = array(
     'bundle' => 'field_basic_slideshow_images',
     'default_value' => NULL,
@@ -230,7 +230,7 @@ function feature_basic_content_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-basic_block-body'
+  // Exported field_instance: 'node-basic_block-body'.
   $field_instances['node-basic_block-body'] = array(
     'bundle' => 'basic_block',
     'default_value' => NULL,
@@ -275,7 +275,7 @@ function feature_basic_content_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-basic_block-field_available_views'
+  // Exported field_instance: 'node-basic_block-field_available_views'.
   $field_instances['node-basic_block-field_available_views'] = array(
     'bundle' => 'basic_block',
     'default_value' => array(
@@ -316,7 +316,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'node-basic_block-field_basic_block_block_sections'
+  // 'node-basic_block-field_basic_block_block_sections'.
   $field_instances['node-basic_block-field_basic_block_block_sections'] = array(
     'bundle' => 'basic_block',
     'default_value' => array(
@@ -352,7 +352,7 @@ function feature_basic_content_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-basic_page-body'
+  // Exported field_instance: 'node-basic_page-body'.
   $field_instances['node-basic_page-body'] = array(
     'bundle' => 'basic_page',
     'default_value' => NULL,
@@ -392,11 +392,57 @@ function feature_basic_content_field_default_field_instances() {
         'summary_rows' => 5,
       ),
       'type' => 'text_textarea_with_summary',
-      'weight' => 2,
+      'weight' => 3,
     ),
   );
 
-  // Exported field_instance: 'node-basic_page-field_basic_page_tabs'
+  // Exported field_instance: 'node-basic_page-field_available_views'.
+  $field_instances['node-basic_page-field_available_views'] = array(
+    'bundle' => 'basic_page',
+    'default_value' => array(
+      0 => array(
+        'view_select' => 'none',
+        'args' => array(
+          'arg_1' => '',
+          'arg_2' => '',
+          'arg_3' => '',
+        ),
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 3,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_available_views',
+    'label' => 'Available Views',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'insert_view_gen',
+      'settings' => array(),
+      'type' => 'insert_view_gen_widget',
+      'weight' => 5,
+    ),
+    'workbench_access_field' => 0,
+  );
+
+  // Exported field_instance: 'node-basic_page-field_basic_page_tabs'.
   $field_instances['node-basic_page-field_basic_page_tabs'] = array(
     'bundle' => 'basic_page',
     'default_value' => NULL,
@@ -439,8 +485,91 @@ function feature_basic_content_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-basic_page-field_blog_terms'.
+  $field_instances['node-basic_page-field_blog_terms'] = array(
+    'bundle' => 'basic_page',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 2,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_blog_terms',
+    'label' => 'Related Terms',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'taxonomy',
+      'settings' => array(
+        'autocomplete_path' => 'taxonomy/autocomplete',
+        'size' => 60,
+      ),
+      'type' => 'taxonomy_autocomplete',
+      'weight' => 6,
+    ),
+    'workbench_access_field' => 0,
+  );
+
+  // Exported field_instance: 'node-basic_page-field_screen_reader_only_title'.
+  $field_instances['node-basic_page-field_screen_reader_only_title'] = array(
+    'bundle' => 'basic_page',
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => 'Select this if you do not want to display the title on the page.  This will make it available for screen readers.',
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 4,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_screen_reader_only_title',
+    'label' => 'Screen Reader Only Title',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 1,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 2,
+    ),
+    'workbench_access_field' => 0,
+  );
+
   // Exported field_instance:
-  // 'node-basic_slideshow-field_basic_slideshow_assignment'
+  // 'node-basic_slideshow-field_basic_slideshow_assignment'.
   $field_instances['node-basic_slideshow-field_basic_slideshow_assignment'] = array(
     'bundle' => 'basic_slideshow',
     'default_value' => array(
@@ -483,7 +612,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'node-basic_slideshow-field_basic_slideshow_effect'
+  // 'node-basic_slideshow-field_basic_slideshow_effect'.
   $field_instances['node-basic_slideshow-field_basic_slideshow_effect'] = array(
     'bundle' => 'basic_slideshow',
     'default_value' => array(
@@ -520,7 +649,7 @@ function feature_basic_content_field_default_field_instances() {
   );
 
   // Exported field_instance:
-  // 'node-basic_slideshow-field_basic_slideshow_images'
+  // 'node-basic_slideshow-field_basic_slideshow_images'.
   $field_instances['node-basic_slideshow-field_basic_slideshow_images'] = array(
     'bundle' => 'basic_slideshow',
     'default_value' => NULL,
@@ -558,9 +687,9 @@ function feature_basic_content_field_default_field_instances() {
           'slideshow_pager_image_style' => '',
           'slideshow_pager_position' => 'after',
           'slideshow_pause' => 1,
-          'slideshow_speed' => 1000,
+          'slideshow_speed' => 2000,
           'slideshow_start_on_hover' => 0,
-          'slideshow_timeout' => 5000,
+          'slideshow_timeout' => 10000,
         ),
         'type' => 'slideshow',
         'weight' => 0,
@@ -588,7 +717,8 @@ function feature_basic_content_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-basic_slideshow-field_basic_slideshow_style'
+  // Exported field_instance:
+  // 'node-basic_slideshow-field_basic_slideshow_style'.
   $field_instances['node-basic_slideshow-field_basic_slideshow_style'] = array(
     'bundle' => 'basic_slideshow',
     'default_value' => array(
@@ -635,7 +765,10 @@ function feature_basic_content_field_default_field_instances() {
   t('Image');
   t('Image Caption');
   t('Image\'s Link');
+  t('Related Terms');
+  t('Screen Reader Only Title');
   t('Select the menu item where this block will live. If the front page is desired, use the checkbox below.');
+  t('Select this if you do not want to display the title on the page.  This will make it available for screen readers.');
   t('Slideshow Assignment');
   t('Slideshow Images');
   t('Style');

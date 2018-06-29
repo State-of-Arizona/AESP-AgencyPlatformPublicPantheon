@@ -1,0 +1,150 @@
+diff --git a/css/webform.css b/css/webform.css
+index 956209f..6519506 100644
+--- a/css/webform.css
++++ b/css/webform.css
+@@ -34,6 +34,12 @@ html.js input.webform-calendar {
+ .webform-container-inline.webform-component-textarea .form-textarea-wrapper {
+   display: inline-block;
+ }
++fieldset.fieldset-invisible {
++  margin: 0;
++  padding: 0;
++  border: none;
++  background-color: inherit;
++}
+ .webform-component-textarea .grippie {
+   display: block;
+ }
+diff --git a/includes/webform.admin.inc b/includes/webform.admin.inc
+index 3d326b3..799b379 100644
+--- a/includes/webform.admin.inc
++++ b/includes/webform.admin.inc
+@@ -255,6 +255,13 @@ function webform_admin_settings() {
+     '#description' => t('When mapping emails addresses to a select component, limit the choice to components with less than the amount of options indicated. This is to avoid flooding the email settings form.'),
+   );
+ 
++  $form['advanced']['webform_fieldset_wrap'] = array(
++    '#type' => 'checkbox',
++    '#title' => t('Use fieldsets for grouped components'),
++    '#default_value' => webform_variable_get('webform_fieldset_wrap'),
++    '#description' => t('Components containing multiple fields, such as checkboxes and radio buttons, will be wrapped in fieldsets. This improves the accessibility of webforms and helps them conform to web standards, but may require updates to the CSS of the active theme.'),
++  );
++
+   $form = system_settings_form($form);
+   $form['#theme'] = 'webform_admin_settings';
+   array_unshift($form['#submit'], 'webform_admin_settings_submit');
+diff --git a/webform.install b/webform.install
+index a138e0b..409cd9b 100644
+--- a/webform.install
++++ b/webform.install
+@@ -796,6 +796,7 @@ function webform_uninstall() {
+   variable_del('webform_default_format');
+   variable_del('webform_format_override');
+   variable_del('webform_email_select_max');
++  variable_del('webform_fieldset_wrap');
+   variable_del('webform_node_types_primary');
+   variable_del('webform_date_type');
+   variable_del('webform_export_format');
+diff --git a/webform.module b/webform.module
+index 9747c06..08efd67 100644
+--- a/webform.module
++++ b/webform.module
+@@ -3738,6 +3738,7 @@ function theme_webform_element($variables) {
+   $output = '<div ' . drupal_attributes($element['#wrapper_attributes']) . '>' . "\n";
+   $prefix = isset($element['#field_prefix']) ? '<span class="field-prefix">' . webform_filter_xss($element['#field_prefix']) . '</span> ' : '';
+   $suffix = isset($element['#field_suffix']) ? ' <span class="field-suffix">' . webform_filter_xss($element['#field_suffix']) . '</span>' : '';
++  $children = ' ' . $prefix . $element['#children'] . $suffix;
+ 
+   // Generate description for above or below the field.
+   $above = !empty($element['#webform_component']['extra']['description_above']);
+@@ -3752,30 +3753,72 @@ function theme_webform_element($variables) {
+     $variables['element']['#id'] = NULL;
+   }
+ 
++  // Determine whether or not this element has form control children. If so, wrap them in a fieldset and use legend instead of label
++  $has_element_children = false;
++  $webform_fieldset_wrap = variable_get('webform_fieldset_wrap', false);
++
++  if (!empty($webform_fieldset_wrap)) {
++    foreach (array_keys($element) as $key) {
++      if (substr($key, 0, 1) !== '#') {
++        $has_element_children = true;
++        break;
++      }
++    }
++  }
++
++  if (!empty($has_element_children)) {
++    $output .= '<fieldset class="fieldset-invisible">';
++  }
++
+   switch ($element['#title_display']) {
+     case 'inline':
+-      $output .= $description[$above];
++    case 'before':
++    case 'invisible':
++    case 'after':
++      $output .= ' ' . $description[$above];
+       $description[$above] = '';
+-      // FALL THRU.
++
++      if ($has_element_children) {
++        $title = '<legend>' . $element['#title'];
++
++        if ($element['#required']) {
++          $title .= '  <span class="form-required" title="This field is required." aria-hidden="true">*</span>';
++        }
++
++        $title .= '</legend>';
++      }
++      else {
++        $title = ' ' . theme('form_element_label', $variables);
++      }
++      break;
++  }
++
++  switch ($element['#title_display']) {
++    case 'inline';
+     case 'before':
+     case 'invisible':
+-      $output .= ' ' . theme('form_element_label', $variables);
+-      $output .= ' ' . $description[$above] . $prefix . $element['#children'] . $suffix . "\n";
++      $output .= $title . $children;
+       break;
+ 
+     case 'after':
+-      $output .= ' ' . $description[$above] . $prefix . $element['#children'] . $suffix;
+-      $output .= ' ' . theme('form_element_label', $variables) . "\n";
++      $output .= $children . $title;
+       break;
+ 
+     case 'none':
+     case 'attribute':
+       // Output no label and no required marker, only the children.
+-      $output .= ' ' . $description[$above] . $prefix . $element['#children'] . $suffix . "\n";
++      $output .= $children;
+       break;
+   }
+ 
++  $output .= "\n";
++
+   $output .= $description[!$above];
++
++  if ($has_element_children) {
++    $output .= '</fieldset>';
++  }
++
+   $output .= "</div>\n";
+ 
+   return $output;
+@@ -4402,6 +4445,10 @@ function webform_variable_get($variable) {
+     case 'webform_disabled_components':
+       $result = variable_get('webform_disabled_components', array());
+       break;
++
++    case 'webform_fieldset_wrap':
++      $result = variable_get('webform_fieldset_wrap', FALSE);
++      break;
+   }
+   return $result;
+ }

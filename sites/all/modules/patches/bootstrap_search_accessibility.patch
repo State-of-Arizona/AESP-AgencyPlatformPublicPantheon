@@ -1,0 +1,23 @@
+--- sites/all/themes/bootstrap/includes/common.inc	(date 1528901184773)
++++ sites/all/themes/bootstrap/includes/common.inc	(date 1528901184773)
+@@ -951,7 +951,7 @@
+       $attributes = array(
+         'class' => array('icon', 'glyphicon', 'glyphicon-' . $name),
+         'aria-hidden' => 'true',
+-        'aria-label' => $name,
++        'aria-label' => t('Click to ' .$name),
+       );
+       $output = '<span' . drupal_attributes($attributes) . '></span>';
+     }
+
+--- sites/all/themes/bootstrap/templates/bootstrap/bootstrap-search-form-wrapper.func.php	(date 1528904271722)
++++ sites/all/themes/bootstrap/templates/bootstrap/bootstrap-search-form-wrapper.func.php	(date 1528904271722)
+@@ -13,7 +13,7 @@
+   $output = '<div class="input-group">';
+   $output .= $variables['element']['#children'];
+   $output .= '<span class="input-group-btn">';
+-  $output .= '<button type="submit" class="btn btn-primary screen-reader-only" aria-label="Search">' . _bootstrap_icon('search', t('Search')) . '</button>';
++  $output .= '<button type="submit" class="btn btn-primary" aria-label="Search">' . _bootstrap_icon('search', t('Search')) . '</button>';
+   $output .= '</span>';
+   $output .= '</div>';
+   return $output;

@@ -1,0 +1,30 @@
+Index: sites/all/modules/contrib/webform/webform.module
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- sites/all/modules/contrib/webform/webform.module	(date 1528377021971)
++++ sites/all/modules/contrib/webform/webform.module	(date 1528377021971)
+@@ -2265,7 +2265,7 @@
+         '#node' => $node,
+         '#sid' => $_SESSION['webform_confirmation'][$nid]['sid'],
+       );
+-    } 
++    }
+     elseif (strlen(trim(strip_tags($node->webform['confirmation'])))) {
+       // Display confirmation link drupal status messages, but in the block.
+       $message = webform_replace_tokens($node->webform['confirmation'],
+@@ -3623,6 +3623,13 @@
+   if ($element['#title_display'] == 'internal') {
+     $element['#title_display'] = 'none';
+   }
++
++  // If #children does not contain an element with a matching @id, do not
++  // include @for in the label.
++  if (strpos($element['#children'], ' id="' . $element['#id'] . '"') === FALSE) {
++    $element['#id'] = NULL;
++  }
++
+ }
+ 
+ /**

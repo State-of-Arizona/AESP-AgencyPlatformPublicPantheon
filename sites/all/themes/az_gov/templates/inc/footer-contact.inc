@@ -1,4 +1,4 @@
-<div id="footer-first-contact" class="clearfix ">
+<div id="footer-first-contact" class="clearfix " role="contentinfo" aria-labelledby="footer-contact">
     <div id="footer-state-seal" class="content clearfix">
         <div class="footer-wrapper">
             <?php if ($footer_settings['black logo']) : ?>

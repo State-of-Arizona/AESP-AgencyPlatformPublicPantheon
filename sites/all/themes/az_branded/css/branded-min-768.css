@@ -1,50 +1,39 @@
-/* line 2, ../scss/branded-min-768.scss */
 .region-menu li.menu-li-home > a {
   height: 38px;
 }
 
-/* line 7, ../scss/branded-min-768.scss */
 #preface-group .mbp-defaults-row {
   margin-bottom: 10px;
 }
 
-/* line 12, ../scss/branded-min-768.scss */
 #content.col-sm-5 > div {
   margin: 0 5px;
 }
-/* line 15, ../scss/branded-min-768.scss */
 #content.col-sm-9 > div {
   margin: 0 0 0 5px;
 }
-/* line 18, ../scss/branded-min-768.scss */
 #content.col-sm-8 > div {
   margin: 0 5px 0 0;
 }
 
-/* line 23, ../scss/branded-min-768.scss */
 #sidebar-first {
   border-right: none;
 }
-/* line 25, ../scss/branded-min-768.scss */
 #sidebar-first > div {
   margin: 0 5px 0 0;
 }
 
-/* line 30, ../scss/branded-min-768.scss */
 #sidebar-second {
   border-left: none;
 }
-/* line 32, ../scss/branded-min-768.scss */
 #sidebar-second > div {
   margin: 0 0 0 5px;
 }
 
-/* line 37, ../scss/branded-min-768.scss */
 #footer-first-contact {
   display: flex;
 }
 
-/* line 41, ../scss/branded-min-768.scss */
 #footer-branding {
   margin: 10px 8px;
 }

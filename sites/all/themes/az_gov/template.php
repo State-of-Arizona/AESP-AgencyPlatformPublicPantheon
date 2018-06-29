@@ -11,12 +11,36 @@ function az_gov_preprocess_node(&$vars) {
         }
         $vars['classes_array'][] = $style;
     }
+
+
 }
 
 /**
  * Establishes variables to be used in page template
  */
 function az_gov_preprocess_page(&$vars) {
+  $block = module_invoke('features_sliver', 'block_view', 'block_delta');
+  print render($block['content']);
+
+
+    if (isset($vars['node'])) {
+
+      $node = node_load($vars['node']->nid);
+      $screen_reader_title = isset($node->field_screen_reader_only_title[LANGUAGE_NONE][0]['value']) ? $node->field_screen_reader_only_title[LANGUAGE_NONE][0]['value'] : null;
+
+      if ($screen_reader_title == 1 or $node->title == "Home Page Slideshow") {
+        $vars['title_attributes_array']['class'][] = 'screen-reader-only';
+        $vars['title_attributes_array']['aria-label'][] = drupal_get_title();
+      } else {
+        $vars['title_attributes_array']['aria-label'][] = drupal_get_title();
+      }
+    } elseif (empty(drupal_get_title()) && isset($vars['page']['#views_contextual_links_info'])) {
+        $vars['title_attributes_array']['class'][] = 'screen-reader-only-view';
+        $vars['title_attributes_array']['aria-label'][] = $vars['page']['#views_contextual_links_info']['views_ui']['view']->human_name;
+      } else {
+        $vars['title_attributes_array']['aria-label'][] = drupal_get_title();
+    }
+
     //footer contact section variables
     $vars['footer_settings'] = array(
         //'show branding' => theme_get_setting('display_footer_branding'),
@@ -112,6 +136,10 @@ function az_gov_preprocess_page(&$vars) {
             $vars['postscript'] = '';
             $vars['postscript_num'] = 'single-postscript';
     }
+
+
+
+
 }
 
 /**
@@ -172,6 +200,7 @@ function az_gov_preprocess_html(&$vars) {
             drupal_add_css($bg_repeat, 'inline');
         }
     }
+
 }
 
 /**
@@ -190,6 +219,7 @@ function az_gov_preprocess_views_view(&$vars) {
     //applies a class to the view indicating how many results.
     $total_results = 'total-results-' . count($vars['view']->result);
     $vars['classes_array'][] = $total_results;
+
 }
 
 /**
@@ -199,8 +229,10 @@ function az_gov_menu_link($vars) {
     //gs
     $menu_class = str_replace(' ', '-', strtolower($vars['element']['#original_link']['link_title']));
     $vars['element']['#attributes']['class'][] = 'menu-li-' . $menu_class;
+    $vars['element']['#attributes']['aria-label'] = $vars['element']['#original_link']['link_title'];
     if (isset($variables['element']['#localized_options'])) {
         $vars['element']['#localized_options']['attributes']['class'][] = 'menu-' . $menu_class;
+      $vars['element']['#localized_options']['aria-label'] = $vars['element']['#original_link']['link_title'];
     }
     return theme_menu_link($vars);
 }

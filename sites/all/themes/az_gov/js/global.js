@@ -58,8 +58,9 @@
             var sliver = $('.sliver-container');
             if (sliver.length > 0) {
                 $('#page').prepend(sliver[0].outerHTML);
-                sliver.remove();
+                  sliver.remove();
             }
+               $('.sliver-container').attr("role","banner");
 
             //adds contextual links actions to node pages
             $('.logged-in.page-node #content div.tabs').once(function () {
@@ -117,10 +118,10 @@
             //glyphicons and click event for right sidebar menu block
             $('.menu-block-wrapper ul.menu li.expanded').once(function () {
                 if ($(this).hasClass('active-trail')) {
-                    $(this).prepend('<span class="glyphicon glyphicon-chevron-down"/>');
+                    $(this).prepend('<a class="glyphicon glyphicon-chevron-down" aria-label="expand menu"></a>');
                 } else {
                     $(this).find('ul').hide();
-                    $(this).prepend('<span class="glyphicon glyphicon-chevron-right"/>');
+                    $(this).prepend('<a href="#" class="glyphicon glyphicon-chevron-right" aria-label="collapse menu"></a>');
                 }
 
                 $(this).find('.glyphicon').click(function () {
@@ -132,10 +133,10 @@
 
             //adds the mobile button for main menu
             $('#block-system-main-menu ul.menu li.expanded').once(function () {
-                $(this).prepend('<span class="glyphicon glyphicon-plus-sign" />');
+                $(this).prepend('<a href="#" class="glyphicon glyphicon-plus-sign" aria-label="expand menu"></a>');
                 $(this).find('.glyphicon').click(function () {
                     $(this).toggleClass('glyphicon-plus-sign');
-                    $(this).toggleClass('glyphicon-minus-sign');
+                    $(this).toggleClass('glyphicon-minus-sign').attr('aria-label','collapse menu');
                     $(this).siblings('ul').slideToggle('slow');
                 });
             });
@@ -150,7 +151,7 @@
             $(document).ready(function () {
                 $('.region-menu').hide();
             });
-
+            
             //if child menu items are too far to the right in the window, moves them to the left
             var resized = function () {
                 $('#zone-branding .region-menu li > ul').each(function () {
@@ -204,6 +205,16 @@
                     set.find('.fieldset-wrapper').slideToggle('slow');
                 })
             });
+          //removes undefined from links for accessibility
+
+          $("a[href^='#undefined']")
+            .each(function()
+            {
+              this.href = this.href.replace(/^#undefined/,
+                "#");
+            });
+
+
         }
     }
 })(jQuery);

@@ -31,7 +31,7 @@
   margin: 3px;
   background: #e8e8e8;
 }
-#zone-branding .region-menu .content > ul.menu > li:hover > ul, #zone-branding .region-menu .content > ul.menu > li li:hover > ul {
+#zone-branding .region-menu .content > ul.menu > li:hover > ul, #zone-branding .region-menu .content > ul.menu > li.focus-within > ul {
   visibility: visible;
   opacity: 1;
   transition-delay: 0s;

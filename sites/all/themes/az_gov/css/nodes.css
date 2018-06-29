@@ -21,6 +21,9 @@
 /*
 * Style for slideshow content.
 */
+#page .node-basic-slideshow.basic-slideshow-style-1 a, #colorbox .node-basic-slideshow.basic-slideshow-style-1 a {
+  color: #E64814;
+}
 #page .node-basic-slideshow.basic-slideshow-style-1 .field-slideshow-controls, #colorbox .node-basic-slideshow.basic-slideshow-style-1 .field-slideshow-controls {
   display: none;
 }
@@ -32,7 +35,7 @@
   width: 100% !important;
 }
 #page .node-basic-slideshow.basic-slideshow-style-1 .field-name-field-basic-slideshow-images, #colorbox .node-basic-slideshow.basic-slideshow-style-1 .field-name-field-basic-slideshow-images {
-  background: #333;
+  background: #171717;
 }
 #page .node-basic-slideshow.basic-slideshow-style-1 .field-slideshow-image, #colorbox .node-basic-slideshow.basic-slideshow-style-1 .field-slideshow-image {
   float: right;
@@ -273,35 +276,36 @@
   width: 40%;
   float: left;
   margin: 0;
-  background: #494949;
+  background: #1E1D1D;
 }
 .view-home-page-feature-rotator .home-rotator-text-block .home-top-intro {
   margin: 0 15px;
   height: 200px;
   max-height: 200px;
 }
-.view-home-page-feature-rotator .home-rotator-text-block #home-top-read-more {
+.view-home-page-feature-rotator .home-rotator-text-block .home-top-read-more {
   margin: 15px;
   border-bottom: 1px solid #666;
   width: 80%;
   text-align: left;
   padding-bottom: 10px;
 }
-.view-home-page-feature-rotator .home-rotator-text-block #home-top-read-more a {
+.view-home-page-feature-rotator .home-rotator-text-block .home-top-read-more a {
   margin-left: 30px;
+  color: #e05a00;
 }
-.view-home-page-feature-rotator #home-top-numbers ul {
+.view-home-page-feature-rotator .home-top-numbers ul {
   padding: 0 0 0 40px;
   float: left;
 }
-.view-home-page-feature-rotator #home-top-numbers a {
+.view-home-page-feature-rotator .home-top-numbers a {
   text-indent: -9999px;
   background: #f1d6b8;
   height: 15px;
   width: 15px;
   border-radius: 10px;
 }
-.view-home-page-feature-rotator #home-top-numbers a.activeSlide {
+.view-home-page-feature-rotator .home-top-numbers a.activeSlide {
   background: #ed5c2d;
 }
 

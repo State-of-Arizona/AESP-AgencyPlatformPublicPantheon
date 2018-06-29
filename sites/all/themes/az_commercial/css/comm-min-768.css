@@ -58,3 +58,7 @@
 #zone-branding .region-menu .content > ul.menu > li > a:hover {
   background: transparent;
 }
+#zone-branding .region-menu .content > ul.menu > li > a a.glyphicon {
+  text-shadow: none;
+  font-family: "Times New Roman", Georgia, Times, serif;
+}

@@ -1,25 +1,20 @@
-/* line 1, ../scss/wysiwyg.scss */
 html {
   font: 13px/1.4em Verdana, Helvetica, Arial, sans-serif;
 }
 
-/* line 5, ../scss/wysiwyg.scss */
 img, iframe, table, p, input {
   max-width: 100%;
 }
 
-/* line 9, ../scss/wysiwyg.scss */
 p {
   line-height: 20px;
   margin-bottom: 10px;
 }
 
-/* line 14, ../scss/wysiwyg.scss */
 legend {
   font-size: 1.2em;
 }
 
-/* line 18, ../scss/wysiwyg.scss */
 h1, h2, h3, h4, h5 {
   color: #600;
   font-family: Arial, Helvetica, sans-serif;
@@ -29,7 +24,6 @@ h1, h2, h3, h4, h5 {
   letter-spacing: 0;
 }
 
-/* line 27, ../scss/wysiwyg.scss */
 h1 {
   font-weight: bold;
   color: #333;
@@ -37,7 +31,6 @@ h1 {
   text-transform: none;
 }
 
-/* line 34, ../scss/wysiwyg.scss */
 h2 {
   padding: 15px 0 7px;
   margin-bottom: 10px;
@@ -46,12 +39,10 @@ h2 {
   text-transform: uppercase;
 }
 
-/* line 42, ../scss/wysiwyg.scss */
 h3, h4, h5, h6 {
   font-size: 1.0em;
 }
 
-/* line 46, ../scss/wysiwyg.scss */
 .file {
   display: inline-block;
   width: auto;
@@ -65,17 +56,14 @@ h3, h4, h5, h6 {
   font-weight: normal;
 }
 
-/* line 59, ../scss/wysiwyg.scss */
 table {
   border: 1px solid #ccc;
   margin-top: 10px;
   margin-bottom: 10px;
 }
-/* line 63, ../scss/wysiwyg.scss */
 table tbody {
   border: medium none;
 }
-/* line 66, ../scss/wysiwyg.scss */
 table th {
   background: none repeat scroll 0% 0% #f7f7f7;
   border-bottom: 1px solid #ccc;
@@ -85,34 +73,27 @@ table th {
   padding: 4px 8px;
   vertical-align: middle;
 }
-/* line 75, ../scss/wysiwyg.scss */
 table tr {
   border-bottom: 1px solid #ccc;
 }
-/* line 78, ../scss/wysiwyg.scss */
 table tr.odd {
   background: #eee;
 }
-/* line 81, ../scss/wysiwyg.scss */
 table tr.even {
   background: #fff;
 }
-/* line 84, ../scss/wysiwyg.scss */
 table tr.even:hover td, table tr.odd:hover td {
   background: #fffeee;
 }
-/* line 87, ../scss/wysiwyg.scss */
 table td {
   padding: 4px 8px;
   vertical-align: middle;
 }
 
-/* line 93, ../scss/wysiwyg.scss */
 p.file, div.file, span.file, a.file {
   background-color: #d9cfc6;
 }
 
-/* line 97, ../scss/wysiwyg.scss */
 blockquote {
   font-family: Georgia, serif;
   padding: 25px 30px 15px;
@@ -122,7 +103,6 @@ blockquote {
   font-style: italic;
   font-size: 1em;
 }
-/* line 105, ../scss/wysiwyg.scss */
 blockquote p {
   font-size: 1em;
 }

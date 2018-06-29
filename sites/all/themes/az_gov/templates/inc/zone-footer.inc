@@ -1,4 +1,4 @@
-<div id="zone-footer" class="zone">
+<div id="zone-footer" class="zone" role="contentinfo" aria-labelledby="footer-first">
     <?php if ($page['footer_first']): ?>
         <div id="footer-first">
             <?php print render($page['footer_first']); ?>

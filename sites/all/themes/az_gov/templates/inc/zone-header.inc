@@ -1,5 +1,5 @@
 <?php if ($page['header_first'] || $page['header_second'] || $page['help']): ?>
-  <div id="zone-header" class="zone">
+  <div id="zone-header" class="zone" role="navigation" aria-labelledby="zone-header">
     <?php if ($page['header_first']) : ?>
       <?php print render($page['header_first']); ?>
     <?php endif; ?>

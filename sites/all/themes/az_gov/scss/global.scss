@@ -180,11 +180,17 @@ html, body {
     border-style: solid;
     border-color: #ddd #bbb #999;
     font-size: 1.2em;
+     > .active {
+       > span {
+         background-color: #007cc0;
+       }
+     }
 
     > li > a, li > span {
       padding: 0 7px;
       border-left: 1px solid #bbb;
       border-color: #ddd #bbb #999;
+
     }
     li.active a {
       background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #1a1a1a), color-stop(1, #5a5a5a));
@@ -192,6 +198,13 @@ html, body {
     }
     li.next {
       float: right;
+    }
+
+    .disabled > span{
+      color: #333;
+      cursor: not-allowed;
+      background-color: #fff;
+      border-color: #ddd;
     }
   }
 
@@ -251,7 +264,7 @@ html, body {
   #block-menu-menu-secondary-nav > div > div.content > ul, #block-menu-menu-secondary-navigation > div > div.content > ul{
     display:flex;
     float:right;
-    li:hover{
+    li:hover, li:focus-within, li.focus-within{
       a{
         color: #000;
         background: #fff;
@@ -295,7 +308,7 @@ html, body {
           color: #000;
         }
       }
-      > li:hover {
+      > li:hover, > li.focus-within {
         > a, > .glyphicon {
           color: #000;
           background: #fff;
@@ -310,6 +323,10 @@ html, body {
         font-size: 25px;
         z-index: 20;
         cursor: pointer;
+      }
+      a.glyphicon {
+        top: 0px;
+        bottom: 0px;
       }
       ul {
         display: none;
@@ -417,7 +434,7 @@ html, body {
       -moz-border-left-colors: none;
       border-image: none;
     }
-    li:hover {
+    li:hover, li:focus-within, li.focus-within {
       background-color: #eee;
     }
     @media (max-width: 500px) {
@@ -441,6 +458,11 @@ html, body {
     width: 28px;
     height: 20px;
     text-align: center;
+  }
+  a.glyphicon {
+    top:0px;
+    left:-20px;
+    text-decoration-line: none;
   }
   ul.menu {
     border: 1px solid #ccc;
@@ -471,6 +493,12 @@ html, body {
         border-bottom-left-radius: 10px;
         border-bottom-right-radius: 10px;
         padding: 10px 15px 10px 30px;
+      }
+    }
+
+    > li:hover, > li.focus-within {
+     > a.glyphicon {
+         background-color: transparent;
       }
     }
   }
@@ -515,7 +543,7 @@ html, body {
         padding-bottom: 0;
         text-transform: uppercase;
       }
-      li:hover > a {
+      li:hover > a, li:focus-within > a, .focus-within > a {
         color: #000;
       }
       a {
@@ -666,6 +694,9 @@ html, body {
     > li + li:before {
       content: " » ";
     }
+    a {
+      color: #FF4C05;
+    }
     a.active {
       color: #ccc;
     }
@@ -783,6 +814,10 @@ body.front #page-title, body.front #block-system-main {
   .progress-disabled {
     float: left;
   }
+  .form-type-select .form-group {
+    margin-top: .75em;
+  }
+
 }
 
 [class*='date-display'] {
@@ -901,3 +936,68 @@ body.front #page-title, body.front #block-system-main {
 .no-sidebars #content {
   width: 100%;
 }
+
+.screen-reader-only {
+  position: absolute;
+  height: 1px;
+  width: 1px;
+  clip: rect(1px 1px 1px 1px); // IE 6 and 7
+  clip: rect(1px,1px,1px,1px);
+  clip-path: polygon(0px 0px, 0px 0px, 0px 0px);
+  -webkit-clip-path: polygon(0px 0px, 0px 0px, 0px 0px);
+  overflow: hidden !important;
+  padding: 0px !important;
+  right: -10000px;
+  top: auto;
+}
+
+.screen-reader-only-view {
+  position: relative;
+  height: 1px;
+  width: 1px;
+  clip: rect(1px 1px 1px 1px); // IE 6 and 7
+  clip: rect(1px,1px,1px,1px);
+  clip-path: polygon(0px 0px, 0px 0px, 0px 0px);
+  -webkit-clip-path: polygon(0px 0px, 0px 0px, 0px 0px);
+  overflow: hidden !important;
+
+}
+#breadcrumb, #zone-header .region {
+  background-color: #262626;
+}
+
+#zone-header .region {
+  color: #ffffff;
+}
+
+.select2-selection__placeholder {
+  color: #767676 !important;
+}
+
+table {
+  caption {
+    color: #676760;
+  }
+}
+
+.control-group .help-inline, .help-block {
+  color: #676760;
+}
+
+
+
+.views-submit-button{
+  .form-submit {
+    background-color: #00829b !important;
+  }
+}
+
+.node-webform{
+  .form-actions{
+    .btn-primary {
+      background-color: #00829b !important;
+    }
+  }
+}
+
+

@@ -42,6 +42,7 @@ stylesheets[all][] = css/nodes.css
 
 
 scripts[] = js/global.js
+scripts[] = js/accessibility.js
 
 settings[bootstrap_breadcrumb_home] = 1
 settings[bootstrap_region_well-branding] = ''

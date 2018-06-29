@@ -21,12 +21,12 @@ body {
 }
 
 #breadcrumb {
-  background-color: rgba(251, 251, 251, 0.6);
+  background-color: #747476;
   ul.breadcrumb a {
     color: #000;
   }
   ul.breadcrumb a.active {
-    color: #2b2b2b;
+    color: #fbfbfb;
   }
   .breadcrumb > li + li:before {
     color: #000;
@@ -120,5 +120,11 @@ body {
     width: 60px;
     content: "";
     margin: -10px 10px 0 0;
+  }
+}
+
+table {
+  caption {
+    color: #676764;
   }
 }

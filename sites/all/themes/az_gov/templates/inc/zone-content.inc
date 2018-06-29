@@ -1,4 +1,4 @@
-<div id="zone-content" class="zone">
+<div id="zone-content" class="zone" role="main">
   <a name="main-content"></a>
 
 
@@ -39,9 +39,7 @@
     <div id="content" class="<?php echo $content_class; ?> main-region contextual-links-region ">
       <div id="region-content" class="content">
 
-        <h1 id="page-title">
-          <?php print $title; ?>
-        </h1>
+        <h1 id="page-title" <?php print $title_attributes; ?> ><?php print $title; ?></h1>
 
         <?php print render($title_suffix); ?>
 

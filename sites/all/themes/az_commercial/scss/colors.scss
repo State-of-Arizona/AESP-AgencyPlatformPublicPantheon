@@ -1,8 +1,9 @@
 body {
-  background-color: #d2c0ac;
+  background-color: #a99071;
   color: #333333;
   a, #sidebar-second .glyphicon {
-    color: #ed5c2d;
+    color: #b73a10;
+    text-decoration-line: underline;
   }
   a:visited {
     color: #ad4321;
@@ -23,7 +24,7 @@ body {
 
 #zone-branding {
   @media (max-width: 768px) {
-    background-color: #5c8984;
+    background-color: #547d79;
   }
   .region-menu {
     .content > ul.menu > li > a {
@@ -39,18 +40,18 @@ body {
 }
 
 #zone-footer {
-  background-color: #5e8a85;
+  background-color: #547d78;
   p, div, span {
     color: #ffffff;
   }
   a {
-    color: #eeeeee;
+    color: #fdfdfd;
   }
   #region-footer-second {
     background-color: #8b8175;
   }
   #footer-contact a {
-    color: #ed5c2d;
+    color: #b73a10;
   }
 }
 
@@ -69,21 +70,21 @@ body {
 }
 
 #preface-group .menu-block-placement-doesnt-exist {
-  background-color: #c5d8db;
+  background-color: #d9e5e8;
 }
 
 #preface-group .mbp-defaults-row > div {
-  background-color: #c5d8db;
+  background-color: #d9e5e8;
 }
 
 p.file, div.file, span.file, a.file, div.more-link, a.more-link, .read-more a, a.views-more-link {
-  background-color: #d9cfc6 !important;
+  background-color: #e8e2de;
 }
 
 .node-basic-slideshow {
   .field-slideshow-pager {
     a {
-      background-color: #c5d8db;
+      background-color: #d9e5e8;
     }
     a.activeSlide {
       background-color: #6d9591;

@@ -950,7 +950,8 @@ function _bootstrap_icon($name, $default = NULL) {
       // Mimic the Icon API markup.
       $attributes = array(
         'class' => array('icon', 'glyphicon', 'glyphicon-' . $name),
-        'aria-hidden' => 'true',
+        'aria-hidden' => 'false',
+        'aria-label' => t('Click to ' .$name),
       );
       $output = '<span' . drupal_attributes($attributes) . '></span>';
     }

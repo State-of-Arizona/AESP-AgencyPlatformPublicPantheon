@@ -26,8 +26,6 @@ function openpublic_home_page_feature_user_default_permissions() {
   $permissions['delete any home_page_feature content'] = array(
     'name' => 'delete any home_page_feature content',
     'roles' => array(
-      'Editor' => 'Editor',
-      'Power User' => 'Power User',
       'administrator' => 'administrator',
     ),
     'module' => 'node',
@@ -37,7 +35,6 @@ function openpublic_home_page_feature_user_default_permissions() {
   $permissions['delete own home_page_feature content'] = array(
     'name' => 'delete own home_page_feature content',
     'roles' => array(
-      'Editor' => 'Editor',
       'Power User' => 'Power User',
       'administrator' => 'administrator',
     ),

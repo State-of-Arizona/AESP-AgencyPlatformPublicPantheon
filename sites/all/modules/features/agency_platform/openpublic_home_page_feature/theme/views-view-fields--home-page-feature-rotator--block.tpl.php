@@ -14,10 +14,10 @@
       <h2><?php print l($title, $fields['entity_id_3']->content); ?></h2>
       <?php print $summary; ?>
     </div><!--/home top intro-->
-    <div id="home-top-read-more">
+    <div id="home-top-read-more-<?php print $title ?>" class = "home-top-read-more">
       <?php print l(t('Read More').' &raquo;', $read_more,  array('html' => true)); ?>
     </div><!--/home top read more-->
-    <div id="home-top-numbers" class="clearfix">
+    <div id="home-top-numbers-<?php print $title ?>" class="clearfix home-top-numbers">
       <ul>
         <?php print $rotator_nav; ?>       
       </ul>            

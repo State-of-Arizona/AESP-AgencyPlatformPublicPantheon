@@ -34,21 +34,14 @@ function openpublic_home_page_feature_image_default_styles() {
 
   // Exported image style: home_page_feature.
   $styles['home_page_feature'] = array(
-    'name' => 'home_page_feature',
     'label' => 'home_page_feature',
     'effects' => array(
       9 => array(
-        'label' => 'Scale and crop',
-        'help' => 'Scale and crop will maintain the aspect-ratio of the original image, then crop the larger dimension. This is most useful for creating perfectly square thumbnails without stretching the image.',
-        'effect callback' => 'image_scale_and_crop_effect',
-        'dimensions callback' => 'image_resize_dimensions',
-        'form callback' => 'image_resize_form',
-        'summary theme' => 'image_resize_summary',
-        'module' => 'image',
         'name' => 'image_scale_and_crop',
         'data' => array(
           'width' => 620,
           'height' => 280,
+          '#imageinfo_cache_effect_callback' => 'image_scale_and_crop_effect',
         ),
         'weight' => 1,
       ),
@@ -72,5 +65,6 @@ function openpublic_home_page_feature_node_info() {
       'help' => '',
     ),
   );
+  drupal_alter('node_info', $items);
   return $items;
 }

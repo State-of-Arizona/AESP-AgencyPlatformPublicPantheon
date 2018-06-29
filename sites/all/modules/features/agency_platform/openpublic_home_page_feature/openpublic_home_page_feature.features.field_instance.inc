@@ -10,7 +10,7 @@
 function openpublic_home_page_feature_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-home_page_feature-body'
+  // Exported field_instance: 'node-home_page_feature-body'.
   $field_instances['node-home_page_feature-body'] = array(
     'bundle' => 'home_page_feature',
     'default_value' => NULL,
@@ -80,7 +80,48 @@ function openpublic_home_page_feature_field_default_field_instances() {
     'widget_type' => 'text_textarea_with_summary',
   );
 
-  // Exported field_instance: 'node-home_page_feature-field_feature_image'
+  // Exported field_instance: 'node-home_page_feature-field_blog_terms'.
+  $field_instances['node-home_page_feature-field_blog_terms'] = array(
+    'bundle' => 'home_page_feature',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'taxonomy',
+        'settings' => array(),
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 5,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_blog_terms',
+    'label' => 'Related Terms',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'taxonomy',
+      'settings' => array(
+        'autocomplete_path' => 'taxonomy/autocomplete',
+        'size' => 60,
+      ),
+      'type' => 'taxonomy_autocomplete',
+      'weight' => 11,
+    ),
+    'workbench_access_field' => 0,
+  );
+
+  // Exported field_instance: 'node-home_page_feature-field_feature_image'.
   $field_instances['node-home_page_feature-field_feature_image'] = array(
     'bundle' => 'home_page_feature',
     'default_value' => NULL,
@@ -91,7 +132,7 @@ function openpublic_home_page_feature_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 1,
+        'weight' => 2,
       ),
       'full' => array(
         'label' => 'above',
@@ -151,7 +192,46 @@ function openpublic_home_page_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-home_page_feature-field_thumbnail_image'
+  // Exported field_instance: 'node-home_page_feature-field_site_section'.
+  $field_instances['node-home_page_feature-field_site_section'] = array(
+    'bundle' => 'home_page_feature',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 1,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_site_section',
+    'label' => 'Site Section',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'use_select2' => FALSE,
+      ),
+      'type' => 'options_select',
+      'weight' => 9,
+    ),
+    'workbench_access_field' => 1,
+  );
+
+  // Exported field_instance: 'node-home_page_feature-field_thumbnail_image'.
   $field_instances['node-home_page_feature-field_thumbnail_image'] = array(
     'bundle' => 'home_page_feature',
     'default_value' => NULL,
@@ -162,7 +242,7 @@ function openpublic_home_page_feature_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 4,
+        'weight' => 3,
       ),
       'full' => array(
         'label' => 'above',
@@ -222,7 +302,7 @@ function openpublic_home_page_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-home_page_feature-field_url'
+  // Exported field_instance: 'node-home_page_feature-field_url'.
   $field_instances['node-home_page_feature-field_url'] = array(
     'bundle' => 'home_page_feature',
     'default_value' => NULL,
@@ -233,7 +313,7 @@ function openpublic_home_page_feature_field_default_field_instances() {
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
-        'weight' => 5,
+        'weight' => 4,
       ),
       'full' => array(
         'label' => 'above',
@@ -290,6 +370,8 @@ function openpublic_home_page_feature_field_default_field_instances() {
   t('Feature Image');
   t('Not currently used.');
   t('Quick Summary');
+  t('Related Terms');
+  t('Site Section');
   t('The full version of the content associated with this item. ');
   t('This image will be used in the homepage rotator.  Uploaded images should be 540 x 295px.  Images that are a different size will be scaled and cropped to 540 x 295px.');
   t('Thumbnail Image');

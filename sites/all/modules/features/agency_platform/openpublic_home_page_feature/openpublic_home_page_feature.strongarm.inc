@@ -95,6 +95,15 @@ function openpublic_home_page_feature_strongarm() {
         'path' => array(
           'weight' => '5',
         ),
+        'redirect' => array(
+          'weight' => '7',
+        ),
+        'workbench_access' => array(
+          'weight' => '9',
+        ),
+        'xmlsitemap' => array(
+          'weight' => '6',
+        ),
       ),
       'display' => array(),
     ),
@@ -120,6 +129,16 @@ function openpublic_home_page_feature_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'node_options_home_page_feature';
+  $strongarm->value = array(
+    0 => 'moderation',
+    1 => 'revision',
+  );
+  $export['node_options_home_page_feature'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'node_preview_home_page_feature';
   $strongarm->value = '0';
   $export['node_preview_home_page_feature'] = $strongarm;
@@ -137,6 +156,26 @@ function openpublic_home_page_feature_strongarm() {
   $strongarm->name = 'show_diff_inline_home_page_feature';
   $strongarm->value = 1;
   $export['show_diff_inline_home_page_feature'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'xmlsitemap_settings_node_home_page_feature';
+  $strongarm->value = array(
+    'status' => '1',
+    'priority' => '0.5',
+  );
+  $export['xmlsitemap_settings_node_home_page_feature'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'xmlsitemap_settings_taxonomy_term_site_sections';
+  $strongarm->value = array(
+    'status' => '0',
+    'priority' => '0.5',
+  );
+  $export['xmlsitemap_settings_taxonomy_term_site_sections'] = $strongarm;
 
   return $export;
 }

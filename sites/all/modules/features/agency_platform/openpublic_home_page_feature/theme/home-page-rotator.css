@@ -1,4 +1,4 @@
-/***** Homepage Rotator 
+/***** Homepage Rotator
 *****/
 
 .view-home-page-feature-rotator {
@@ -41,33 +41,33 @@
   line-height: 1.3em;
   height: 150px;
   }
-  
-#home-top-read-more {
+
+.home-top-read-more {
   width: 112px;
   text-align: center;
   margin: 15px 0 15px 140px;
 }
-  
-#home-top-numbers {
+
+.home-top-numbers {
   font-family: Arial, sans-serif;
   font-size: 1.167em;
   text-align: center;
 }
 
-#home-top-numbers ul {
+.home-top-numbers ul {
 	margin: 0 auto;
 	padding: 0;
 	display: table;
 }
 
-#home-top-numbers li {
+.home-top-numbers li {
   list-style-type: none;
   text-align: center;
   display: inline;
 	margin:0;
 }
 
-#home-top-numbers li a {
+.home-top-numbers li a {
 	display: inline;
 	float: left;
 	margin: 0 3px;

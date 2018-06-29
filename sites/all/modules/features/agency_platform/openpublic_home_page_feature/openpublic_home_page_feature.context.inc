@@ -22,26 +22,9 @@ function openpublic_home_page_feature_context_default_contexts() {
         '<front>' => '<front>',
       ),
     ),
-    'theme' => array(
-      'values' => array(
-        'agency_1' => 'agency_1',
-        'agency_2' => 'agency_2',
-      ),
-    ),
   );
-  $context->reactions = array(
-    'block' => array(
-      'blocks' => array(
-        'views-f357e00a950996a5a5f114f3de9b7a5f' => array(
-          'module' => 'views',
-          'delta' => 'f357e00a950996a5a5f114f3de9b7a5f',
-          'region' => 'header_first',
-          'weight' => '-10',
-        ),
-      ),
-    ),
-  );
-  $context->condition_mode = 1;
+  $context->reactions = array();
+  $context->condition_mode = 0;
 
   // Translatables
   // Included for use with string extractors like potx.

@@ -13,6 +13,7 @@ dependencies[] = ckeditor_link
 dependencies[] = context
 dependencies[] = ctools
 dependencies[] = delta_blocks
+dependencies[] = empty_front_page
 dependencies[] = encrypt
 dependencies[] = features
 dependencies[] = file_entity

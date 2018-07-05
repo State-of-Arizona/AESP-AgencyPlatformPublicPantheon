@@ -485,46 +485,6 @@ function feature_basic_content_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-basic_page-field_blog_terms'.
-  $field_instances['node-basic_page-field_blog_terms'] = array(
-    'bundle' => 'basic_page',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 2,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_blog_terms',
-    'label' => 'Related Terms',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 0,
-      'module' => 'taxonomy',
-      'settings' => array(
-        'autocomplete_path' => 'taxonomy/autocomplete',
-        'size' => 60,
-      ),
-      'type' => 'taxonomy_autocomplete',
-      'weight' => 6,
-    ),
-    'workbench_access_field' => 0,
-  );
-
   // Exported field_instance: 'node-basic_page-field_screen_reader_only_title'.
   $field_instances['node-basic_page-field_screen_reader_only_title'] = array(
     'bundle' => 'basic_page',
@@ -765,7 +725,6 @@ function feature_basic_content_field_default_field_instances() {
   t('Image');
   t('Image Caption');
   t('Image\'s Link');
-  t('Related Terms');
   t('Screen Reader Only Title');
   t('Select the menu item where this block will live. If the front page is desired, use the checkbox below.');
   t('Select this if you do not want to display the title on the page.  This will make it available for screen readers.');

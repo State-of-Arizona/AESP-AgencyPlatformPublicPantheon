@@ -275,32 +275,6 @@ function feature_basic_content_field_default_field_bases() {
     'type' => 'list_text',
   );
 
-  // Exported field_base: 'field_blog_terms'.
-  $field_bases['field_blog_terms'] = array(
-    'active' => 1,
-    'cardinality' => -1,
-    'deleted' => 0,
-    'entity_types' => array(),
-    'field_name' => 'field_blog_terms',
-    'indexes' => array(
-      'tid' => array(
-        0 => 'tid',
-      ),
-    ),
-    'locked' => 0,
-    'module' => 'taxonomy',
-    'settings' => array(
-      'allowed_values' => array(
-        0 => array(
-          'vocabulary' => 'blog_terms',
-          'parent' => 0,
-        ),
-      ),
-    ),
-    'translatable' => 0,
-    'type' => 'taxonomy_term_reference',
-  );
-
   // Exported field_base: 'field_screen_reader_only_title'.
   $field_bases['field_screen_reader_only_title'] = array(
     'active' => 1,

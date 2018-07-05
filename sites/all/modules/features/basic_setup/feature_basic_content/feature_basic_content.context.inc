@@ -23,12 +23,19 @@ function feature_basic_content_context_default_contexts() {
       ),
     ),
   );
+  $id = 8;
+  foreach(variable_get('mbp_defaults') as $field){
+      if($field == 'field_basic_slideshow_assignment'){
+          $field = field_info_field($field);
+          $id = $field['id'];
+      }
+  }
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'mbp_defaults-mbp-142' => array(
+        'mbp_defaults-mbp-' . $id => array(
           'module' => 'mbp_defaults',
-          'delta' => 'mbp-142',
+          'delta' => 'mbp-' . $id,
           'region' => 'header_second',
           'weight' => '-10',
         ),

@@ -184,7 +184,7 @@
 
                 //adjusts the padding on the content zone since the footer is an absolute position
                 //this helps with a dynamic footer height so that the footer can remain at the bottom even on short pages
-                $('#zone-content').css('padding-bottom', $('#zone-footer').height() + 20);
+                //$('#zone-content').css('padding-bottom', $('#zone-footer').height() + 20);
             };
 
             resized();

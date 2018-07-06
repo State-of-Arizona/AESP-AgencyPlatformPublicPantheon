@@ -346,7 +346,8 @@ html, body {
 #zone-content {
   display: block;
   width: 100%;
-  padding-bottom: 640px;
+  padding-bottom:260px;
+
 
   h2 {
     text-transform: uppercase;
@@ -522,6 +523,7 @@ html, body {
   bottom: 0;
   width: 100%;
   display: block;
+  height:240px;
   .region {
     padding: 0;
   }
@@ -692,7 +694,7 @@ html, body {
 
     }
     > li + li:before {
-      content: " » ";
+      content: "\00BB";
     }
     a {
       color: #FF4C05;

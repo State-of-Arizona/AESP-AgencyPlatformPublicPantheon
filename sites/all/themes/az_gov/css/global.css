@@ -401,8 +401,8 @@ html, body {
   -moz-border-left-colors: none;
   border-image: none;
 }
-#content .menu-block-wrapper li:hover, #content .menu-block-wrapper li:focus-within, #content .menu-block-wrapper li.focus-within {
-  background-color: #eee;
+#content .menu-block-wrapper li:hover > a, #content .menu-block-wrapper li:focus-within > a, #content .menu-block-wrapper .focus-within > a, #content .menu-block-wrapper li:focus > a {
+  color: #000;
 }
 @media (max-width: 500px) {
   #content .menu-block-wrapper ul.menu {

@@ -435,8 +435,8 @@ html, body {
       -moz-border-left-colors: none;
       border-image: none;
     }
-    li:hover, li:focus-within, li.focus-within {
-      background-color: #eee;
+    li:hover > a, li:focus-within > a, .focus-within > a, li:focus > a {
+      color: #000;
     }
     @media (max-width: 500px) {
       ul.menu {

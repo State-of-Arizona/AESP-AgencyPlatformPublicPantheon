@@ -39,6 +39,11 @@
 #zone-branding .region-menu .content > ul.menu > li {
   float: left;
 }
+#zone-branding .region-menu .content > ul.menu > li li:hover > ul, #zone-branding .region-menu .content > ul.menu > li li.focus-within > ul {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
 #zone-branding .region-menu li.menu-li-home > a {
   font-size: 0 !important;
 }

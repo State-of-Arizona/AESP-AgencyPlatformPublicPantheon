@@ -45,6 +45,13 @@
       > li {
         float: left;
       }
+      > li li {
+        &:hover > ul, &.focus-within > ul {
+          visibility: visible;
+          opacity: 1;
+          transition-delay: 0s;
+        }
+      }
     }
 
     li.menu-li-home > a {

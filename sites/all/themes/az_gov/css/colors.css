@@ -19,7 +19,7 @@ body a:visited {
 #zone-branding {
   background-color: #547d79;
 }
-#zone-branding .region-menu ul.menu ul a:hover {
+#zone-branding .region-menu ul.menu ul a:hover, #zone-branding .region-menu ul.menu ul a:focus, #zone-branding .region-menu ul.focus-within > ul a:hover, #zone-branding .region-menu ul.focus-within > ul a:focus {
   background-color: #5c8984 !important;
   color: #ffffff !important;
 }

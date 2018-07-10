@@ -18,8 +18,8 @@ body {
 
 #zone-branding {
   background-color: #547d79;
-  .region-menu ul.menu ul {
-    a:hover {
+  .region-menu ul.menu ul, .region-menu ul.focus-within > ul {
+    a:hover, a:focus  {
       background-color: #5c8984 !important;
       color: #ffffff !important;
     }

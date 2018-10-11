@@ -398,7 +398,14 @@ function webform_auto_email_reminder_submissions($nid) {
       $user_email = $submission->data[$email_cid][0];
       $expired_date = $submission->data[$expired_date_cid][0]; 
       $user_email = get_user_submission_email($nid, $sid);
-      rules_invoke_event('renewal_reminder_event', $user, $user_email, $expired_date); 
+			//only invoke rule if in live environment
+			if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
+				if($_SERVER['PANTHEON_ENVIRONMENT'] === 'live') {
+      		rules_invoke_event('renewal_reminder_event', $user, $user_email, $expired_date); 
+				}
+			} else if(stripos($_SERVER['SERVER_PROTOCOL'],'https') !== false && stripos($_SERVER['HTTP_HOST'],'.gov') !== false) {
+				rules_invoke_event('renewal_reminder_event', $user, $user_email, $expired_date);
+			}
       //Need to keep this sid in database after email sent, that way it won't send out another one
       $values = array();
       $values['nid'] = $nid;
@@ -415,13 +422,17 @@ function webform_auto_email_reminder_get_old_sids($nid, $settings) {
   //Only get the sid that contain the date that about to get renewal
   //count value might need to convert to int first 
   $num_days = date('Y-m-d H:i:s', time() + (intval($settings['count']) * 86400));
-  $result = db_select('webform_submitted_data', 's')
+	$query = db_select('webform_submitted_data', 's');
+	$query->join('webform_submissions', 'u', 's.sid = u.sid AND u.nid = :nid', array(':nid' => $nid));
+  $result = $query
     ->fields('s', array('sid'))
     ->condition('s.nid', $nid)
     ->condition('s.cid', $cid) 
     ->condition('s.data', $num_days, '<')
+    ->condition('u.is_draft', '1', '!=')
     ->execute();
   foreach ($result as $record) {
+  	
     $sids[] = $record->sid;
   }
   watchdog('webform auto email reminder', var_export($sids, TRUE), array(), WATCHDOG_DEBUG);

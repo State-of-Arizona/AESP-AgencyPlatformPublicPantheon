@@ -1,4 +1,4 @@
-<div id="zone-branding" class="zone" role="navigation" aria-labelledby="zone-branding">
+<div id="zone-branding" class="zone">
     <div id="region-branding" class="clearfix">
       <?php if ($logo || $site_name || $site_slogan): ?>
         <div class="site-details clearfix">
@@ -31,8 +31,8 @@
         <?php print render($page['branding']); ?>
       <?php endif; ?>
     </div>
-    <a href="#" id="mobile-menu">
-    </a>
+    <div id="mobile-menu">
+    </div>
     <?php if ($page['menu']) : ?>
       <?php print render($page['menu']); ?>
     <?php endif; ?>

@@ -22,7 +22,7 @@
 }
 #page h2 {
   border-bottom: 4px solid #dcd2c3;
-  padding: 0 0 5px;
+  padding: 00 5px;
   text-transform: uppercase;
   margin-bottom: 10px;
   text-align: center;
@@ -42,9 +42,6 @@
   text-shadow: 1px 1px 0px #fff, -1px 1px 0px #fff, 1px -1px 0px #fff, -1px -1px 0px #fff;
   letter-spacing: 2px;
 }
-#page .region-menu .content > ul.menu > li > a.glyphicon {
-  text-shadow: none;
-}
 #page .views-more-link {
   display: inline-block;
   width: auto;
@@ -57,9 +54,6 @@
 }
 #page .region-menu ul.menu a {
   font-family: "Oswald", sans-serif;
-}
-#page .region-menu ul.menu a.glyphicon {
-  font-family: "Glyphicons Halflings";
 }
 
 #zone-footer .region {

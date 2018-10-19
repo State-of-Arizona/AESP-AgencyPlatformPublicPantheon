@@ -25,9 +25,6 @@
 */
 #page, #colorbox {
   .node-basic-slideshow.basic-slideshow-style-1 {
-    a {
-      color: #E64814;
-    }
     .field-slideshow-controls {
       display: none;
     }
@@ -40,7 +37,7 @@
       width: 100% !important;
     }
     .field-name-field-basic-slideshow-images {
-      background: #171717;
+      background: #333;
     }
     .field-slideshow-image {
       float: right;
@@ -317,13 +314,13 @@
     width: 40%;
     float: left;
     margin: 0;
-    background: #1E1D1D;
+    background: #494949;
     .home-top-intro {
       margin: 0 15px;
       height: 200px;
       max-height: 200px;
     }
-    .home-top-read-more {
+    #home-top-read-more {
       margin: 15px;
       border-bottom: 1px solid #666;
       width: 80%;
@@ -331,11 +328,10 @@
       padding-bottom: 10px;
       a {
         margin-left: 30px;
-        color: #e05a00;
       }
     }
   }
-  .home-top-numbers {
+  #home-top-numbers {
     ul {
       padding: 0 0 0 40px;
       float: left;
@@ -374,5 +370,4 @@
       float: none;
     }
   }
-
 }

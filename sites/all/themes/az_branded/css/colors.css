@@ -1,64 +1,93 @@
+/* line 1, ../scss/colors.scss */
 body {
   background-color: #d2c0ac;
   color: #333333;
 }
+/* line 4, ../scss/colors.scss */
 body a, body #sidebar-second .glyphicon {
-  color: #b73a10;
+  color: #ed5c2d;
 }
-body a {
-  text-decoration-line: underline;
-}
+/* line 7, ../scss/colors.scss */
 body a:visited {
   color: #ad4321;
 }
 
-.view .view-filters .btn-info {
-  background-color: #00829b;
+/* line 16, ../scss/colors.scss */
+#content-wrapper aside .region,
+#content > div,
+#footer-branding,
+#footer-contact,
+#postscript-group {
+  background-color: #eae5d7;
 }
 
-#content-wrapper, #footer-contact, #postscript-group {
-  background-color: #eae5d9;
-}
-
+/* line 20, ../scss/colors.scss */
 #zone-branding {
-  background-color: #547d79;
+  background-color: #5c8984;
 }
+/* line 23, ../scss/colors.scss */
 #zone-branding .region-menu ul.menu ul a:hover {
   background-color: #5c8984 !important;
   color: #ffffff !important;
 }
 
+/* line 30, ../scss/colors.scss */
 #zone-footer {
-  background-color: #547d78;
+  background-color: #5e8a85;
 }
+/* line 32, ../scss/colors.scss */
 #zone-footer p, #zone-footer div, #zone-footer span {
   color: #ffffff;
 }
+/* line 35, ../scss/colors.scss */
 #zone-footer a {
-  color: #fdfdfd;
+  color: #eeeeee;
 }
+/* line 38, ../scss/colors.scss */
 #zone-footer #region-footer-second {
   background-color: #8b8175;
 }
+/* line 41, ../scss/colors.scss */
 #zone-footer #footer-contact a {
-  color: #b73a10;
+  color: #ed5c2d;
 }
 
-#preface-group {
-  background-color: #d9e5e8;
+/* line 46, ../scss/colors.scss */
+#breadcrumb, #zone-header .region {
+  background-color: #494949;
 }
-#preface-group h2.title, #preface-group .block-title {
-  background-color: #547d80;
+
+/* line 50, ../scss/colors.scss */
+#zone-header .region {
   color: #ffffff;
 }
 
-p.file, div.file, span.file, a.file, div.more-link, a.more-link {
-  background-color: #e8e2de;
+/* line 55, ../scss/colors.scss */
+#preface-group h2.title, #preface-group .block-title {
+  background-color: #6d9591;
+  color: #ffffff;
 }
 
+/* line 61, ../scss/colors.scss */
+#preface-group .menu-block-placement-doesnt-exist {
+  background-color: #c5d8db;
+}
+
+/* line 65, ../scss/colors.scss */
+#preface-group .mbp-defaults-row > div {
+  background-color: #c5d8db;
+}
+
+/* line 69, ../scss/colors.scss */
+p.file, div.file, span.file, a.file, div.more-link, a.more-link {
+  background-color: #d9cfc6;
+}
+
+/* line 75, ../scss/colors.scss */
 .node-basic-slideshow .field-slideshow-pager a {
   background-color: #c5d8db;
 }
+/* line 78, ../scss/colors.scss */
 .node-basic-slideshow .field-slideshow-pager a.activeSlide {
   background-color: #6d9591;
 }

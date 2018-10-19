@@ -1,10 +1,9 @@
 body {
-  background-color: #a99071;
+  background-color: #d2c0ac;
   color: #333333;
 }
 body a, body #sidebar-second .glyphicon {
-  color: #b73a10;
-  text-decoration-line: underline;
+  color: #ed5c2d;
 }
 body a:visited {
   color: #ad4321;
@@ -24,7 +23,7 @@ body a:visited {
 
 @media (max-width: 768px) {
   #zone-branding {
-    background-color: #547d79;
+    background-color: #5c8984;
   }
 }
 #zone-branding .region-menu .content > ul.menu > li > a {
@@ -36,19 +35,19 @@ body a:visited {
 }
 
 #zone-footer {
-  background-color: #547d78;
+  background-color: #5e8a85;
 }
 #zone-footer p, #zone-footer div, #zone-footer span {
   color: #ffffff;
 }
 #zone-footer a {
-  color: #fdfdfd;
+  color: #eeeeee;
 }
 #zone-footer #region-footer-second {
   background-color: #8b8175;
 }
 #zone-footer #footer-contact a {
-  color: #b73a10;
+  color: #ed5c2d;
 }
 
 #zone-header .region {
@@ -64,19 +63,19 @@ body a:visited {
 }
 
 #preface-group .menu-block-placement-doesnt-exist {
-  background-color: #d9e5e8;
+  background-color: #c5d8db;
 }
 
 #preface-group .mbp-defaults-row > div {
-  background-color: #d9e5e8;
+  background-color: #c5d8db;
 }
 
 p.file, div.file, span.file, a.file, div.more-link, a.more-link, .read-more a, a.views-more-link {
-  background-color: #e8e2de;
+  background-color: #d9cfc6 !important;
 }
 
 .node-basic-slideshow .field-slideshow-pager a {
-  background-color: #d9e5e8;
+  background-color: #c5d8db;
 }
 .node-basic-slideshow .field-slideshow-pager a.activeSlide {
   background-color: #6d9591;

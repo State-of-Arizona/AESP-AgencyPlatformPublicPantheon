@@ -564,7 +564,6 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
   } else {
     $other_components = webform_component_list($node, FALSE);
     foreach ($other_components as $cid => $component) {
-      $other_components[$cid]=ltrim($component, '-');
       if ($node->webform['components'][$cid]['type'] == 'paymethod_select') {
         unset($other_components[$cid]);
       }
@@ -877,7 +876,7 @@ function scs_payment_webform_submission_presave($node, &$submission) {
                     $line_item->quantity = 0;
                 }
             }elseif ( isset($line_item->quantity_source) && $line_item->quantity_source == 'fixed' && is_numeric($line_item->quantity) && $line_item->quantity > 0) {
-              $valid_quantity++;
+                $valid_quantity++;
             }
        }
         if ($valid_quantity < 1 && $component_quantity) {

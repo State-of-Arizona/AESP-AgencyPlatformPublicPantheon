@@ -22,5 +22,17 @@ function feature_basic_config_user_default_permissions() {
     'module' => 'admin_menu',
   );
 
+  // Exported permission: 'access ckeditor link'.
+  $permissions['access ckeditor link'] = array(
+    'name' => 'access ckeditor link',
+    'roles' => array(
+      'Contributor' => 'Contributor',
+      'Editor' => 'Editor',
+      'Power User' => 'Power User',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'ckeditor_link',
+  );
+
   return $permissions;
 }

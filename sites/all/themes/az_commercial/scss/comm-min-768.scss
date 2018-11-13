@@ -66,6 +66,10 @@
         &:hover {
           background: transparent;
         }
+        a.glyphicon {
+          text-shadow: none;
+          font-family: "Times New Roman", Georgia, Times, serif;
+        }
       }
     }
   }

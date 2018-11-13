@@ -3,6 +3,14 @@
 function az_commercial_form_system_theme_settings_alter(&$form, &$form_state) {
   unset($form['footer_settings']);
   unset($form['#submit']);
+  //Toggle between black and white logos in the footer
+  $form['footer_settings']['black_footer_logo'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display a black state seal logo in the footer.'),
+      '#default_value' => theme_get_setting('black_footer_logo'),
+      '#tree' => FALSE,
+      '#description' => t('Check here if you want to use a black logo instead of white.')
+  );
   $form['#submit'][] = 'az_commercial_settings_form_submit';
   $themes = list_themes();
   $active_theme = $GLOBALS['theme_key'];

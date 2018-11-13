@@ -3,7 +3,10 @@ body {
   color: #333333;
 }
 body a, body #sidebar-second .glyphicon {
-  color: #ed5c2d;
+  color: #b73a10;
+}
+body a {
+  text-decoration-line: underline;
 }
 body a:visited {
   color: #ad4321;
@@ -14,47 +17,43 @@ body a:visited {
 }
 
 #zone-branding {
-  background-color: #5c8984;
+  background-color: #547d79;
 }
-#zone-branding .region-menu ul.menu ul a:hover {
+#zone-branding .region-menu ul.menu ul a:hover, #zone-branding .region-menu ul.menu ul a:focus, #zone-branding .region-menu ul.focus-within > ul a:hover, #zone-branding .region-menu ul.focus-within > ul a:focus {
   background-color: #5c8984 !important;
   color: #ffffff !important;
 }
 
 #zone-footer {
-  background-color: #5e8a85;
+  background-color: #547d78;
 }
 #zone-footer p, #zone-footer div, #zone-footer span {
   color: #ffffff;
 }
 #zone-footer a {
-  color: #eeeeee;
+  color: #fdfdfd;
 }
 #zone-footer #region-footer-second {
   background-color: #8b8175;
 }
 #zone-footer #footer-contact a {
-  color: #ed5c2d;
+  color: #b73a10;
 }
 
-#breadcrumb, #zone-header .region {
-  background-color: #494949;
-}
-
-#zone-header .region {
-  color: #ffffff;
+.view .view-filters .btn-info {
+  background-color: #00829b;
 }
 
 #preface-group {
-  background-color: #c5d8db;
+  background-color: #d9e5e8;
 }
 #preface-group h2.title, #preface-group .block-title {
-  background-color: #6d9591;
+  background-color: #547d80;
   color: #ffffff;
 }
 
 p.file, div.file, span.file, a.file, div.more-link, a.more-link {
-  background-color: #d9cfc6;
+  background-color: #e8e2de;
 }
 
 .node-basic-slideshow .field-slideshow-pager a {

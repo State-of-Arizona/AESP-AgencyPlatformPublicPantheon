@@ -1,137 +1,108 @@
-/* line 1, ../scss/branded-global.scss */
 html, body, #page {
   font-family: Helvetica, sans-serif;
   font-size: 1.0em;
 }
 
-/* line 6, ../scss/branded-global.scss */
 body {
   font: 13px/1.5 Verdana, Helvetica, Arial, sans-serif;
   line-height: 1.4em;
 }
 
-/* line 12, ../scss/branded-global.scss */
 #page h2 {
   border: none;
 }
 
-/* line 18, ../scss/branded-global.scss */
 #zone-branding .region-menu {
   background-color: rgba(51, 51, 51, 0.2);
 }
 
-/* line 23, ../scss/branded-global.scss */
 #breadcrumb {
-  background-color: rgba(251, 251, 251, 0.6);
+  background-color: #747476;
   border-radius: 0 0 3px 3px;
 }
-/* line 25, ../scss/branded-global.scss */
 #breadcrumb ul.breadcrumb a {
   color: #000;
 }
-/* line 28, ../scss/branded-global.scss */
 #breadcrumb ul.breadcrumb a.active {
-  color: #2b2b2b;
+  color: #fbfbfb;
 }
-/* line 31, ../scss/branded-global.scss */
 #breadcrumb .breadcrumb > li + li:before {
   color: #000;
 }
 
-/* line 37, ../scss/branded-global.scss */
 #page #zone-header {
   box-shadow: none;
 }
-/* line 39, ../scss/branded-global.scss */
 #page #zone-header .block-views {
   margin-top: 20px;
 }
-/* line 42, ../scss/branded-global.scss */
 #page #zone-header .region {
   box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
 }
 
-/* line 47, ../scss/branded-global.scss */
 #zone-content {
   margin-top: 20px;
 }
-/* line 50, ../scss/branded-global.scss */
 #zone-content #preface-group {
   margin-bottom: 10px;
   box-shadow: none;
 }
-/* line 53, ../scss/branded-global.scss */
 #zone-content #preface-group .preface {
   border-right: none;
 }
-/* line 55, ../scss/branded-global.scss */
 #zone-content #preface-group .preface > div.menu-block-placement-doesnt-exist {
   margin: 5px 5px 0;
   box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
 }
-/* line 61, ../scss/branded-global.scss */
 #zone-content #preface-group .mbp-defaults-row {
   border: none;
 }
-/* line 63, ../scss/branded-global.scss */
 #zone-content #preface-group .mbp-defaults-row > div {
   margin: 0 5px;
   box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
 }
 
-/* line 71, ../scss/branded-global.scss */
 #content-wrapper {
   box-shadow: none;
   padding-bottom: 20px;
 }
-/* line 74, ../scss/branded-global.scss */
 #content-wrapper .region {
   box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
 }
-/* line 77, ../scss/branded-global.scss */
 #content-wrapper aside .region {
   border-radius: 3px;
 }
-/* line 80, ../scss/branded-global.scss */
 #content-wrapper #page-title {
   border-radius: 3px 3px 0 0;
 }
-/* line 84, ../scss/branded-global.scss */
 #content-wrapper #content .region {
   border-radius: 0 0 3px 3px;
   box-shadow: none;
 }
-/* line 89, ../scss/branded-global.scss */
 #content-wrapper #region-content {
   box-shadow: 0px 6px 7px -1px rgba(0, 0, 0, 0.5);
 }
 
-/* line 94, ../scss/branded-global.scss */
 #content {
   z-index: 10;
 }
 
-/* line 98, ../scss/branded-global.scss */
 #footer-branding {
   margin-bottom: 20px;
 }
-/* line 100, ../scss/branded-global.scss */
 #footer-branding .footer-wrapper .footer-field {
   color: #000;
 }
 
-/* line 106, ../scss/branded-global.scss */
 #footer-contact .footer-info .footer-address {
   background: none;
   box-shadow: none;
   padding: 10px 10px 0 0;
 }
-/* line 111, ../scss/branded-global.scss */
 #footer-contact .footer-title {
   border: none;
   padding-bottom: 7px;
 }
-/* line 115, ../scss/branded-global.scss */
 #footer-contact .footer-title:before {
   background: url("../img/icons/icon-contactus.png") no-repeat scroll 13px 8px #d9cfc6;
   display: block;
@@ -140,4 +111,8 @@ body {
   width: 60px;
   content: "";
   margin: -10px 10px 0 0;
+}
+
+table caption {
+  color: #676764;
 }

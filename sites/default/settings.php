@@ -632,6 +632,11 @@ else {
 // Only allowing administrators to authorize account creation
 $conf['user_register'] = 0;
 
+// Turn off the X-Frame-Options header entirely, to restore the previous
+// behavior of allowing the site to be embedded in a frame on another site.
+// Doing this to prevent potential click-jacking
+$conf['x_frame_options'] = '';
+
 // Require HTTPS.
 //if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' ) {
 //  if ($_SERVER['HTTP_HOST'] !=  $sitename . '.az.gov' || !isset($_SERVER['HTTP_X_SSL']) || $_SERVER['HTTP_X_SSL'] != 'ON') {

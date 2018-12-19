@@ -14,7 +14,6 @@ protected_web_paths:
   - /modules/image/tests
   - /modules/search/tests
   - /modules/statistics
-  - /modules/system
   - /modules/system/tests
   - /modules/user/tests
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Password policy constraint callbacks.
@@ -26,14 +27,11 @@ function password_policy_constraint_punctuation_error($constraint) {
  * Password validation.
  */
 function password_policy_constraint_punctuation_validate($password, $constraint, $account) {
-  $chars = drupal_strlen($password);
-  $num = 0;
-  for ($i = 0; $i < $chars; ++$i) {
-    if (ctype_punct(drupal_substr($password, $i, 1))) {
-      $num++;
-    }
-  }
-  return $num >= $constraint;
+  $matches = array();
+  $punctuation_characters = '`~!@#$%^&*()_+=-|}{"?:><,./;\'\\[]';
+  $punctuation_pattern = '/[' . preg_quote($punctuation_characters, '/') . ']/';
+  $count = preg_match_all($punctuation_pattern, $password, $matches);
+  return $count >= $constraint;
 }
 
 /**
@@ -42,18 +40,9 @@ function password_policy_constraint_punctuation_validate($password, $constraint,
 function password_policy_constraint_punctuation_js($constraint, $account) {
   return <<<JS
 
-    var i = 0;
-    var num = 0;
-    var chr = "";
-    while (i < value.length) {
-      chr = value.charAt(i);
-      if (chr.toUpperCase() == chr.toLowerCase() && "1234567890".indexOf(chr) == -1 && chr != ' ') {
-        num++;
-      }
-      i++;
-    }
-    if (num < $constraint) {
-      strength = "low";
+    var count = (value.match(/[`~!@#$%^&*()_+=\-|}{"?:><,./;'\\\[\]]/g) || []).length;
+    if (count < $constraint) {
+      strength = 'low';
       msg.push(translate.constraint_punctuation);
     }
 JS;

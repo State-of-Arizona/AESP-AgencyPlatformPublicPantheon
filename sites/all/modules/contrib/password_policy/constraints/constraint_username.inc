@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Password policy constraint callbacks.
@@ -43,7 +44,7 @@ function password_policy_constraint_username_js($constraint, $account) {
   // Add username as JavaScript setting.
   $username = isset($account->name) ? $account->name : '';
   $data = array(
-    'password_policy' => array(
+    'passwordPolicy' => array(
       'username' => $username,
     ),
   );
@@ -57,13 +58,13 @@ function password_policy_constraint_username_js($constraint, $account) {
       username = usernameInput.val();
     }
     else {
-      username = Drupal.settings.password_policy.username;
+      username = Drupal.settings.passwordPolicy.username;
     }
     if (username) {
       var username_lowercase = username.toLowerCase();
       var password_lowercase = value.toLowerCase();
       if (password_lowercase.indexOf(username_lowercase) != -1) {
-        strength = "low";
+        strength = 'low';
         msg.push(translate.constraint_username);
       }
     }

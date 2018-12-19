@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Password policy constraint callbacks.
@@ -26,14 +27,9 @@ function password_policy_constraint_digit_error($constraint) {
  * Password validation.
  */
 function password_policy_constraint_digit_validate($password, $constraint, $account) {
-  $chars = drupal_strlen($password);
-  $num = 0;
-  for ($i = 0; $i < $chars; ++$i) {
-    if (ctype_digit(drupal_substr($password, $i, 1))) {
-      $num++;
-    }
-  }
-  return $num >= $constraint;
+  $matches = array();
+  $count = preg_match_all('/[0-9]/', $password, $matches);
+  return $count >= $constraint;
 }
 
 /**
@@ -42,18 +38,9 @@ function password_policy_constraint_digit_validate($password, $constraint, $acco
 function password_policy_constraint_digit_js($constraint, $account) {
   return <<<JS
 
-    var i = 0;
-    var num = 0;
-    var chr = "";
-    while (i < value.length) {
-      chr = value.charAt(i);
-      if ("1234567890".indexOf(chr) != -1) {
-        num++;
-      }
-      i++;
-    }
-    if (num < $constraint) {
-      strength = "low";
+    var count = (value.match(/[0-9]/g) || []).length;
+    if (count < $constraint) {
+      strength = 'low';
       msg.push(translate.constraint_digit);
     }
 JS;

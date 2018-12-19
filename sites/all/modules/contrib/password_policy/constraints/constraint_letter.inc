@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Password policy constraint callbacks.
@@ -26,15 +27,9 @@ function password_policy_constraint_letter_error($constraint) {
  * Password validation.
  */
 function password_policy_constraint_letter_validate($password, $constraint, $account) {
-  $chars = drupal_strlen($password);
-  $num = 0;
-  for ($i = 0; $i < $chars; ++$i) {
-    $char = drupal_substr($password, $i, 1);
-    if (ctype_alpha($char)) {
-      $num++;
-    }
-  }
-  return $num >= $constraint;
+  $matches = array();
+  $count = preg_match_all('/[a-z]/i', $password, $matches);
+  return $count >= $constraint;
 }
 
 /**
@@ -43,18 +38,9 @@ function password_policy_constraint_letter_validate($password, $constraint, $acc
 function password_policy_constraint_letter_js($constraint, $account) {
   return <<<JS
 
-    var i = 0;
-    var num = 0;
-    var chr = "";
-    while (i < value.length) {
-      chr = value.charAt(i);
-      if (chr.toUpperCase() != chr.toLowerCase()) {
-        num++;
-      }
-      i++;
-    }
-    if (num < $constraint) {
-      strength = "low";
+    var count = (value.match(/[a-z]/gi) || []).length;
+    if (count < $constraint) {
+      strength = 'low';
       msg.push(translate.constraint_letter);
     }
 JS;

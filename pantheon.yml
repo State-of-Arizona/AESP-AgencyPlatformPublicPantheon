@@ -2,6 +2,22 @@ api_version: 1
 drush_version: 8
 php_version: 5.6
 
+protected_web_paths:
+  - /README.txt
+  - /CHANGELOG.txt
+  - /INSTALL.txt
+  - /includes
+  - /database/mysql
+  - /includes/database
+  - /includes/database/mysql
+  - /modules/file/tests
+  - /modules/image/tests
+  - /modules/search/tests
+  - /modules/statistics
+  - /modules/system
+  - /modules/system/tests
+  - /modules/user/tests
+
 workflows:
   deploy:
     after:

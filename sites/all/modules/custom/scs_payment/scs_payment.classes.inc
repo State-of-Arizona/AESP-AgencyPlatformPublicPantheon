@@ -205,9 +205,15 @@ class PaymentMethodSCSController extends PaymentMethodController {
     foreach ($payment->line_items as $product) {
         if($product->quantity > 0) {
             $xml->push('lineItem');
+          if ($product->amount_source == 'fixed') {
             $xml->element('gaoProductCode', utf8_encode($product->product_code_id));
             $xml->element('function', utf8_encode($product->product_function));
             $xml->element('revenueSource', utf8_encode($product->product_revenue_source));
+          }else {
+            $xml->element('gaoProductCode',utf8_encode($payment->product_code));
+            $xml->element('function', utf8_encode($payment->function));
+            $xml->element('revenueSource', utf8_encode($payment->revenue_source));
+          }
             $xml->element('AccountingTemplate', utf8_encode((isset($product->product_accounting_template) ? $product->product_accounting_template : '')));
             $xml->element('departmentRevenueSource', utf8_encode((isset($product->product_department_revenue_source) ? $product->product_department_revenue_source : '')));
             $xml->element('gaoAgency', utf8_encode($payment->method->controller_data['gao_doc_no_agency']));

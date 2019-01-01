@@ -109,4 +109,13 @@ function scs_payment_schema() {
   
   return $schema;
 }
- 
+
+function scs_payment_update_7113() {
+   $submission_id = array(
+      'type' => 'int',
+      'description' => "Submission ID of webform",
+      'not null' => TRUE,
+    );
+
+    db_add_field('payment', 'sid', &submission_id);
+}

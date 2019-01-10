@@ -479,10 +479,13 @@ html, body {
   bottom: 0;
   width: 100%;
   display: block;
-  height: 240px;
 }
 #zone-footer .region {
   padding: 0;
+}
+#zone-footer #region-footer-second {
+  display: inline-block;
+  width: 100%;
 }
 #zone-footer .region-footer-second p {
   margin-bottom: 0;
@@ -497,7 +500,7 @@ html, body {
   display: inline-block;
   letter-spacing: 0.02em;
   list-style: none outside none;
-  margin: 0 10px 5px 0;
+  margin: 0px 10px 0px 0;
   padding-bottom: 0;
   text-transform: uppercase;
 }

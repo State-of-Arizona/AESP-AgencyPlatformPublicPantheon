@@ -178,6 +178,7 @@ function scs_payment_return() {
   watchdog('SCS E-Check',  'Echeck:'. $echeck);
   if ($paymentstatus == '1' && $authorizationcode != '' && $ordernumber != 0 ) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
+    watchdog('SCS Payment return', $paymentstatus . ' and ' . $authorizationcode);
     //Redirect to Confirmation Page
     $md5_pid = md5($ordernumber . 'extra_string');
     //update authorization code
@@ -200,6 +201,8 @@ function scs_payment_return() {
       if($component['form_key'] == 'invoice_nid') {
         $invoice_nid_cid = $component['cid'];
         $invoice_nid = $submission->data[$invoice_nid_cid][0];
+        watchdog('Invoice Payment', 'submission inv nid: ' .$invoice_nid );
+        //watchdog('Invoice Payment', 'Invoice nid : ' . $submission->data['invoice_nid'][0]);
         $invoice = node_load($invoice_nid);
         $wrapper = entity_metadata_wrapper('node', $invoice);
         if ($echeck) {
@@ -259,7 +262,6 @@ function scs_payment_confirmation($payment, $md5_pid, $authorizationcode) {
     scs_payment_webform_hash($hash);
     $options = array();
     $options['query']['sid'] = $payment->context_data['sid'];
-    $options['query']['token'] = $one_time_token;
     drupal_goto('node/' . $payment->context_data['nid'] . '/done', $options);
   } else {
     drupal_goto($base_url . $base_path . 'scs_payment/failed');

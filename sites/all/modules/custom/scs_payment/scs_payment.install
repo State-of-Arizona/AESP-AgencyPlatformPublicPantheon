@@ -109,3 +109,4 @@ function scs_payment_schema() {
   
   return $schema;
 }
+ 

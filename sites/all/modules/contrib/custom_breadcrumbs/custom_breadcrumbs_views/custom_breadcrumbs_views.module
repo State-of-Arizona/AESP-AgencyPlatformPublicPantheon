@@ -1,19 +1,26 @@
 <?php
+
 /**
  * @file
  * Provide custom breadcrumbs for views pages.
  */
+
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
 
 /**
  * Implements hook_cb_breadcrumb_info().
  *
- * @return an array with elements:
+ * @codingStandardsIgnoreStart
+ * @return array
+ *   An array with elements:
  *   'table' indicating the db_table to load the breadcrumb from,
- *   'field' a unique field of the database table used to identify the breadcrumb,
+ *   'field' a unique field of the database table used to identify the
+ *   breadcrumb,
  *   'type' a string used for indicating the breadcrumb type on the admin list,
- *   'name_constructor' a function which generates the breadcrumb name from the breadcrumb.
+ *   'name_constructor' a function which generates the breadcrumb name from the
+ *   breadcrumb.
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_views_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
@@ -29,10 +36,10 @@ function custom_breadcrumbs_views_cb_breadcrumb_info() {
 /**
  * Constructs a default name to display in the admin screen.
  *
- * @param $breadcrumb
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return
+ * @return breadcrumbviews_path
  *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbs_views_breadcrumb_name($breadcrumb) {
@@ -72,7 +79,8 @@ function custom_breadcrumbs_views_menu() {
  * Implements hook_views_pre_render().
  */
 function custom_breadcrumbs_views_views_pre_render(&$view) {
-  // Don't really do anything with the view. This is just a pretense to insert a breadcrumb.
+  // Don't really do anything with the view. This is just a pretense to insert a
+  // breadcrumb.
   global $language;
   $languages = array(
     'language' => $language->language,
@@ -92,8 +100,10 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
       $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_views', NULL, array('views_path' => $loadpath), $languages);
       if (!empty($breadcrumbs)) {
         if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('view' => $view))) {
-          // Select breadcrumb for the matching display with the greatest number of explicit arguments.
+          // Select breadcrumb for the matching display with the greatest number
+          // of explicit arguments.
           $num = substr_count($breadcrumb->views_path, '%');
+          // @codingStandardsIgnoreLine
           if (!isset($max) || (isset($max) && ($num > $max))) {
             $max = $num;
             $candidate = $breadcrumb;
@@ -114,7 +124,8 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
     return;
   }
   if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE) && (!custom_breadcrumbs_exclude_path())) {
-    // If a views breadcrumb has not been defined for this view, then use the default menu structure.
+    // If a views breadcrumb has not been defined for this view, then use the
+    // default menu structure.
     custom_breadcrumbs_set_menu_breadcrumb();
   }
 }
@@ -122,7 +133,7 @@ function custom_breadcrumbs_views_views_pre_render(&$view) {
 /**
  * Form builder; Displays an edit form for a views breadcrumb.
  *
- * @param $type
+ * @param string $type
  *   The type of custom breadcrumb to edit.
  *
  * @ingroup forms
@@ -142,7 +153,7 @@ function custom_breadcrumbs_views_form($form, &$form_state, $type) {
     drupal_set_title(t('Add Custom Breadcrumb for View'));
   }
   $options = array();
-  $views =  views_get_all_views();
+  $views = views_get_all_views();
   foreach ($views as $view) {
     if (!isset($view->disabled) || (isset($view->disabled) && !$view->disabled)) {
       foreach ($view->display as $display) {

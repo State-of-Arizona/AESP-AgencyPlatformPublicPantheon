@@ -7,6 +7,7 @@
 
 /**
  * Finds all terms associated with a node.
+ *
  * This is a D7 Replacement for Drupal 6 taxonomy_node_get_terms.
  */
 function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
@@ -15,8 +16,9 @@ function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
     if (!isset($terms[$node->vid][$key])) {
       $query = db_select('taxonomy_index', 'r');
       $t_alias = $query->join('taxonomy_term_data', 't', 'r.tid = t.tid');
+      // @codingStandardsIgnoreLine
       $v_alias = $query->join('taxonomy_vocabulary', 'v', 't.vid = v.vid');
-      $query->fields( $t_alias );
+      $query->fields($t_alias);
       $query->condition("r.nid", $node->nid);
       $query->orderBy('v.weight');
       $query->orderBy('t.weight');
@@ -35,18 +37,23 @@ function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
 /**
  * Sets the breadcrumb using a node's taxonomy.
  *
- * @param $tid
+ * @param string $tid
  *   A taxonomy id.
- * @param $vid
+ * @param string $vid
  *   A taxonomy vocabulary id.
- * @param $is_term_page
- *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE otherwise.
- * @param $objs
+ * @param bool $is_term_page
+ *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE
+ *   otherwise.
+ * @param array $objs
  *   An optional array of objects to be used for token replacement.
- * @param $terms
- *   An array of taxonomy terms to use (potentially) to construct the breadcrumb.
+ * @param array $terms
+ *   An array of taxonomy terms to use (potentially) to construct the
+ *   breadcrumb.
+ *
+ * @codingStandardsIgnoreStart
  */
 function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = array(), $terms = array()) {
+  // @codingStandardsIgnoreEnd
   if (isset($_SESSION['custom_breadcrumbs_taxonomy_set'])) {
     unset($_SESSION['custom_breadcrumbs_taxonomy_set']);
   }
@@ -75,7 +82,7 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
     if (!empty($terms)) {
       foreach ($terms as $term) {
         $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('tid' => $term->tid), $languages);
-        $objs['taxonomy'] = $term;
+        $objs['taxonomy_term'] = $term;
         if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
           if (custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs)) {
             custom_breadcrumbs_taxonomy_set_session();
@@ -94,7 +101,7 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
     // No terms match, look for a match on the taxonomy vocabulary.
     foreach ($vids as $vid => $term) {
       $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $vid), $languages);
-      $objs['taxonomy'] = $term;
+      $objs['taxonomy_term'] = $term;
       if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
         if (custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs)) {
           custom_breadcrumbs_taxonomy_set_session();
@@ -108,10 +115,10 @@ function _custom_breadcrumbs_taxonomy_set_breadcrumb($tid, $vid = NULL, $is_term
 /**
  * Returns the previous selected term or the lightest term for a given node.
  *
- * @param $node
+ * @param object $node
  *   The node object.
  *
- * @return
+ * @return object
  *   The taxonomy term object.
  */
 function custom_breadcrumbs_taxonomy_node_get_term($node) {
@@ -127,10 +134,10 @@ function custom_breadcrumbs_taxonomy_node_get_term($node) {
 /**
  * Returns the most recently selected term for a given node.
  *
- * @param $node
+ * @param object $node
  *   The node object.
  *
- * @return
+ * @return string
  *   The previously selected taxonomy term object that also belongs to the node.
  */
 function custom_breadcrumbs_taxonomy_node_get_recent_term($node) {
@@ -144,12 +151,13 @@ function custom_breadcrumbs_taxonomy_node_get_recent_term($node) {
 /**
  * Sets or returns the previous selected term id.
  *
- * @param $tid
- *   An optional term id to store in the session variable to establish a term history.
+ * @param string $tid
+ *   An optional term id to store in the session variable to establish a term
+ *   history.
  *
- * @return
- *   If this function is called without a term id, then it will return the previously
- *   selected taxonomy term id, retrieved from the session variable.
+ * @return string
+ *   If this function is called without a term id, then it will return the
+ *   previously selected taxonomy term id, retrieved from the session variable.
  */
 function _custom_breadcrumbs_taxonomy_recent_term($tid = NULL) {
   global $user;
@@ -172,10 +180,10 @@ function _custom_breadcrumbs_taxonomy_recent_term($tid = NULL) {
  * the deepest child term will be returned. If the child terms have the same
  * depth, then the lightest child term is returned.
  *
- * @param $node
+ * @param object $node
  *   The node object.
  *
- * @return
+ * @return object
  *   The taxonomy term object.
  */
 function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
@@ -184,13 +192,15 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
     if (count($terms) > 1) {
       foreach ($terms as $term) {
         // Only consider terms in the lightest vocabulary.
+        // @codingStandardsIgnoreLine
         if (!isset($vid)) {
           $vid = $term->vid;
         }
         elseif ($term->vid != $vid) {
           continue;
         }
-        // If the term has parents, the weight of the term is the weight of the lightest parent.
+        // If the term has parents, the weight of the term is the weight of the
+        // lightest parent.
         $parents = taxonomy_get_parents_all($term->tid);
         $depth = count($parents);
         if ($depth > 0) {
@@ -200,19 +210,22 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
         else {
           $weight = $term->weight;
         }
+        // @codingStandardsIgnoreLine
         if ((isset($lweight) && ($weight < $lweight)) || !isset($lweight)) {
           $lterm = $term;
           $lweight = $weight;
           $ldepth = $depth;
         }
         elseif (isset($lweight) && ($weight == $lweight)) {
-          // If the node has multiple child terms with the same parent, choose the child with the greatest depth.
+          // If the node has multiple child terms with the same parent, choose
+          // the child with the greatest depth.
           if ($depth > $ldepth) {
             $lterm = $term;
             $ldepth = $depth;
           }
           elseif ($depth == $ldepth) {
-            // If the terms have the same depth, pick the term with the lightest weight.
+            // If the terms have the same depth, pick the term with the lightest
+            // weight.
             $lterm = ($lterm->weight < $term->weight) ? $lterm : $term;
           }
         }
@@ -226,22 +239,30 @@ function custom_breadcrumbs_taxonomy_node_get_lightest_term($node) {
 }
 
 /**
- * Generates a breadcrumb from the taxonomy hierarchy of the term id or vocab id.
- * This will only be called if custom_breadcrumbs_taxonomy_use_hierarchy has been enabled.
+ * Generate Breadcrumb.
  *
- * @param $tid
+ * Generates a breadcrumb from the taxonomy hierarchy of the term id or vocab
+ * id.
+ * This will only be called if custom_breadcrumbs_taxonomy_use_hierarchy has
+ * been enabled.
+ *
+ * @param string $tid
  *   A taxonomy id.
- * @param $vid
+ * @param string $vid
  *   A taxonomy vocabulary id.
- * @param $is_term_page
- *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE otherwise.
- * @param $objs
+ * @param bool $is_term_page
+ *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE
+ *   otherwise.
+ * @param array $objs
  *   An optional array of objects to be used for token replacement.
  *
- * @return
+ * @return array
  *   The breadcrumb trail.
+ *
+ * @codingStandardsIgnoreStart
  */
 function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_term_page = FALSE, $objs = NULL) {
+  // @codingStandardsIgnoreEnd
   if ($is_term_page && isset($objs['taxonomy'])) {
     $term = $objs['taxonomy'];
   }
@@ -277,13 +298,14 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
 /**
  * Translates configurable string when i18n_string module is installed.
  *
- * @param $name
+ * @param string $name
  *   The name of the string.
- * @param $default
+ * @param string $default
  *   String in default language.
- * @param $langcode
+ * @param string $langcode
  *   The language code for translation if not the one used for the page.
- * @return
+ *
+ * @return string
  *   The translated string if possible, or the original string if not.
  */
 function _custom_breadcrumbs_taxonomy_tt($name, $default, $langcode = NULL) {
@@ -293,7 +315,7 @@ function _custom_breadcrumbs_taxonomy_tt($name, $default, $langcode = NULL) {
 /**
  * Generates the home breadcrumb trail.
  *
- * @return
+ * @return array
  *   The breadcrumb trail.
  */
 function _custom_breadcrumbs_taxonomy_home_trail() {
@@ -311,21 +333,26 @@ function _custom_breadcrumbs_taxonomy_home_trail() {
 /**
  * Generates the vocabulary trail.
  *
- * @param $vid
+ * @param string $vid
  *   A taxonomy vocabulary id.
- * @param $is_term_page
- *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE otherwise.
- * @param $objs
- *   An optional array of objects to be used to determine breadcrumb visibility and for token replacement.
- * @param $types
+ * @param bool $is_term_page
+ *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE
+ *   otherwise.
+ * @param array $objs
+ *   An optional array of objects to be used to determine breadcrumb visibility
+ *   and for token replacement.
+ * @param array $types
  *   An array of token types to be used in token replacement.
- * @param $part
- *   A postive integer indicating the breadcrumb segment (home crumb = 0).
+ * @param int $part
+ *   A positive integer indicating the breadcrumb segment (home crumb = 0).
  *
- * @return
+ * @return array
  *   The breadcrumb trail.
+ *
+ * @codingStandardsIgnoreStart
  */
 function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FALSE, $objs = array(), $types = array('global' => NULL), $part = 1) {
+  // @codingStandardsIgnoreEnd
   // Generate the VOCABULARY breadcrumb.
   $trail = array();
   // Check to see if a vocabulary breadcrumb exists.
@@ -342,7 +369,12 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
   }
   if ($title == NULL) {
     $vocabulary = taxonomy_vocabulary_load($vid);
-    $title = _custom_breadcrumbs_taxonomy_tt(array('taxonomy', 'vocabulary', $vid, 'name'), $vocabulary->name);
+    $title = _custom_breadcrumbs_taxonomy_tt(array(
+      'taxonomy',
+      'vocabulary',
+      $vid,
+      'name',
+    ), $vocabulary->name);
   }
   if ($vocabulary_path != NULL) {
     $options = _custom_breadcrumbs_identifiers_option($part, $bid);
@@ -357,21 +389,26 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
 /**
  * Generates the taxonomy term trail.
  *
- * @param $tid
+ * @param string $tid
  *   A taxonomy term id.
- * @param $is_term_page
- *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE otherwise.
- * @param $objs
- *   An optional array of objects to be used to determine breadcrumb visibility and for token replacement.
- * @param $types
+ * @param bool $is_term_page
+ *   TRUE if the breadcrumb is being prepared for the taxonomy term page, FALSE
+ *   otherwise.
+ * @param array $objs
+ *   An optional array of objects to be used to determine breadcrumb visibility
+ *   and for token replacement.
+ * @param array $types
  *   An array of token types to be used in token replacement.
- * @param $part
- *   A postive integer indicating the breadcrumb segment (home crumb = 0).
+ * @param int $part
+ *   A positive integer indicating the breadcrumb segment (home crumb = 0).
  *
- * @return
+ * @return array
  *   The breadcrumb trail.
+ *
+ * @codingStandardsIgnoreStart
  */
 function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $objs = array(), $types = array('global' => NULL), $part = 1) {
+  // @codingStandardsIgnoreEnd
   // Generate the TERM breadcrumb.
   $trail = array();
   $parent_terms = array_reverse(taxonomy_get_parents_all($tid));
@@ -385,10 +422,15 @@ function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $o
       $title = $breadcrumb->titles;
       $bid = $breadcrumb->bid;
       $term_path = token_replace($term_path, $types, array('clear' => TRUE));
-      $title = token_replace($title, $types,  array('clear' => TRUE));
+      $title = token_replace($title, $types, array('clear' => TRUE));
     }
     if ($title == NULL) {
-      $title = _custom_breadcrumbs_taxonomy_tt(array('taxonomy', 'term', $parent_term->tid, 'name'), $parent_term->name);
+      $title = _custom_breadcrumbs_taxonomy_tt(array(
+        'taxonomy',
+        'term',
+        $parent_term->tid,
+        'name',
+      ), $parent_term->name);
     }
     if ($term_path == NULL) {
       $uri = entity_uri('taxonomy_term', $parent_term);
@@ -409,7 +451,10 @@ function _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page = FALSE, $o
 }
 
 /**
- * Optionally, set a session variable to indicate that a custom breadcrumbs taxonomy breadcrumb has been set.
+ * Set Session.
+ *
+ * Optionally, set a session variable to indicate that a custom breadcrumbs
+ * taxonomy breadcrumb has been set.
  */
 function custom_breadcrumbs_taxonomy_set_session() {
   global $user;

@@ -70,25 +70,10 @@ function custom_breadcrumbs_schema() {
  * Implements hook_uninstall().
  */
 function custom_breadcrumbs_uninstall() {
-
   // Remove persistent variables.
-  variable_del('custom_breadcrumbs_sort');
-  variable_del('custom_breadcrumb_home');
-  variable_del('custom_breadcrumbs_set_global_home_breadcrumb');
-  variable_del('custom_breadcrumbs_set_menu_breadcrumb');
-  variable_del('custom_breadcrumbs_force_active_trail');
-  variable_del('custom_breadcrumbs_menu_theme');
-  variable_del('custom_breadcrumbs_adjust_module_weights');
-  variable_del('custom_breadcrumbs_use_php_in_titles');
-  variable_del('custom_breadcrumbs_use_exclude_list');
-  variable_del('custom_breadcrumbs_menu_list');
-  variable_del('custom_breadcrumbs_append_bid_class');
-  variable_del('custom_breadcrumbs_type_class');
-  variable_del('custom_breadcrumbs_even_odd_class');
-  variable_del('custom_breadcrumbs_exclude_list');
-  variable_del('custom_breadcrumbs_home_id');
-  variable_del('custom_breadcrumbs_none_span');
-  variable_del('custom_breadcrumbs_parts_class');
+  db_delete('variable')
+    ->condition('name', 'custom_breadcrumbs_%', 'like')
+    ->execute();
 }
 
 /**
@@ -139,7 +124,10 @@ function custom_breadcrumbs_update_2() {
 }
 
 /**
- * Ensure this module's weight is larger than other modules, like views, so custom breadcrumbs page callback is used.
+ * Implements hook_update_N().
+ *
+ * Ensure this module's weight is larger than other modules, like views, so
+ * custom breadcrumbs page callback is used.
  */
 function custom_breadcrumbs_update_3() {
   db_update('system')
@@ -154,7 +142,11 @@ function custom_breadcrumbs_update_3() {
  * Add the menu flag.
  */
 function custom_breadcrumbs_update_6001() {
-  db_add_field('custom_breadcrumb', 'set_active_menu', array('type' => 'int', 'default' => 1, 'NOT NULL' => TRUE));
+  db_add_field('custom_breadcrumb', 'set_active_menu', array(
+    'type' => 'int',
+    'default' => 1,
+    'NOT NULL' => TRUE,
+  ));
   return t('Added set_active_menu flag to custom_breadcrumb database table.');
 }
 
@@ -170,7 +162,12 @@ function custom_breadcrumbs_update_6101() {
  * Adds language support to breadcrumbs.
  */
 function custom_breadcrumbs_update_6200() {
-  db_add_field('custom_breadcrumb', 'language', array('type' => 'varchar', 'length' => 12, 'not null' => TRUE, 'default' => ''));
+  db_add_field('custom_breadcrumb', 'language', array(
+    'type' => 'varchar',
+    'length' => 12,
+    'not null' => TRUE,
+    'default' => '',
+  ));
   return t('Added language field to custom_breadcrumb database table.');
 }
 
@@ -184,10 +181,15 @@ function custom_breadcrumbs_update_6201() {
 }
 
 /**
- * Adds name field for improved organization of breadcrumbs
+ * Adds name field for improved organization of breadcrumbs.
  */
 function custom_breadcrumbs_update_6202() {
-  db_add_field('custom_breadcrumb', 'name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
+  db_add_field('custom_breadcrumb', 'name', array(
+    'type' => 'varchar',
+    'length' => 128,
+    'NOT NULL' => FALSE,
+    'description' => 'An optional name for the custom breadcrumb.',
+  ));
   return t('Added name field for improved organization of custom breadcrumbs.');
 }
 
@@ -200,20 +202,19 @@ function custom_breadcrumbs_update_6203() {
 }
 
 /**
- * Change the titles and paths fields to fit longer text
+ * Change the titles and paths fields to fit longer text.
  */
 function custom_breadcrumbs_update_7001() {
-	db_change_field('custom_breadcrumb', 'titles', 'titles', array(
-      'type' => 'text',
-			'size' => 'medium',
-			'not null' => TRUE,
-			'description' => 'A return-delimited list of titles for the breadcrumb links.',
+  db_change_field('custom_breadcrumb', 'titles', 'titles', array(
+    'type' => 'text',
+    'size' => 'medium',
+    'not null' => TRUE,
+    'description' => 'A return-delimited list of titles for the breadcrumb links.',
   ));
-	db_change_field('custom_breadcrumb', 'paths', 'paths', array(
-      'type' => 'text',
-			'size' => 'medium',
-			'not null' => TRUE,
-			'description' => 'A return-delimited list of url paths for the breadcrumb links.',
-	));
+  db_change_field('custom_breadcrumb', 'paths', 'paths', array(
+    'type' => 'text',
+    'size' => 'medium',
+    'not null' => TRUE,
+    'description' => 'A return-delimited list of url paths for the breadcrumb links.',
+  ));
 }
-

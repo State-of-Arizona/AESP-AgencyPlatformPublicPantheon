@@ -4,12 +4,13 @@ dependencies[] = custom_breadcrumbs
 description = Provides a simple API to set breadcrumbs on module pages not served by other custom breadcrumbs submodules.
 core = 7.x
 
+# @codingStandardsIgnoreLine
 files[] = custom_breadcrumbsapi.install
+# @codingStandardsIgnoreLine
 files[] = custom_breadcrumbsapi.module
 
-; Information added by Drupal.org packaging script on 2014-09-09
-version = "7.x-2.0-beta1"
+; Information added by Drupal.org packaging script on 2019-01-21
+version = "7.x-2.0-beta1+31-dev"
 core = "7.x"
 project = "custom_breadcrumbs"
-datestamp = "1410287363"
-
+datestamp = "1548092884"

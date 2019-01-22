@@ -10,8 +10,11 @@
  */
 function custom_breadcrumbs_paths_install() {
 
-  // Search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to new table.
-  drupal_set_message(t('Looking for Specify Path breadcrumbs to copy from {custom_breadcrumb}...'));
+  $t = get_t();
+
+  // Search for Paths breadcrumbs in existing {custom_breadcrumb} and copy to
+  // new table.
+  drupal_set_message($t('Looking for Specify Path breadcrumbs to copy from {custom_breadcrumb}...'));
   $result = db_query("SELECT * FROM {custom_breadcrumb} WHERE node_type = :node_type", array(':node_type' => 'Specify Path'));
   $found = 0;
   foreach ($result as $breadcrumb) {
@@ -19,7 +22,7 @@ function custom_breadcrumbs_paths_install() {
     $specific_path = drupal_substr($breadcrumb->paths, 0, $start);
     $title = drupal_substr($breadcrumb->titles, strpos($breadcrumb->titles, "\n") + 1);
     $newpath = drupal_substr($breadcrumb->paths, strpos($breadcrumb->paths, "\n") + 1);
-    $id = db_insert('custom_breadcrumbs_paths')
+    db_insert('custom_breadcrumbs_paths')
       ->fields(array(
         'titles' => $title,
         'paths' => $newpath,
@@ -29,15 +32,15 @@ function custom_breadcrumbs_paths_install() {
         'language' => $breadcrumb->language,
       ))
       ->execute();
-    drupal_set_message('Copied path ' . $specific_path . ' to {custom_breadcrumbs_paths}.' );
+    drupal_set_message($t('Copied path @specific_path to {custom_breadcrumbs_paths}.', array('@specific_path' => $specific_path)));
     ++$found;
   }
   if ($found > 0) {
     drupal_set_message(format_plural($found, 'Copied 1 breadcrumb.', 'Copied @count breadcrumbs.'));
-    drupal_set_message(t('You can now delete the old Specify Path breadcrumb from <a href="@link">admin/structure/custom_breadcrumbs</a>. They will be listed with title Specify Path and page type node.', array('@link' => url('admin/structure/custom_breadcrumbs'))));
+    drupal_set_message($t('You can now delete the old Specify Path breadcrumb from <a href="@link">admin/structure/custom_breadcrumbs</a>. They will be listed with title Specify Path and page type node.', array('@link' => url('admin/structure/custom_breadcrumbs'))));
   }
   else {
-    drupal_set_message(t('No Specify Path breadcrumbs were found in {custom_breadcrumb}'));
+    drupal_set_message($t('No Specify Path breadcrumbs were found in {custom_breadcrumb}'));
   }
 }
 
@@ -112,6 +115,8 @@ function custom_breadcrumbs_paths_update_6000() {
 }
 
 /**
+ * Implements hook_update_N().
+ *
  * Adds name field for improved organization of breadcrumbs
  * Remove set_active_menu field because it is no longer used.
  */
@@ -132,5 +137,7 @@ function custom_breadcrumbs_paths_update_6200() {
  */
 function custom_breadcrumbs_paths_uninstall() {
   // Remove persistent variables.
-  variable_del('custom_breadcrumbs_paths_allow_wildcards');
+  db_delete('variable')
+    ->condition('name', 'custom_breadcrumbs_paths_%', 'like')
+    ->execute();
 }

@@ -6,7 +6,10 @@
  */
 
 /**
- * Form builder; Displays an edit form for a custom breadcrumb taxonomy term record.
+ * Term Form.
+ *
+ * Form builder; Displays an edit form for a custom breadcrumb taxonomy term
+ * record.
  *
  * @ingroup forms
  * @see custom_breadcrumbs_form_validate()
@@ -31,7 +34,9 @@ function custom_breadcrumbs_taxonomy_term_form($form, &$form_state, $type) {
   $excluded = variable_get('custom_breadcrumbs_taxonomy_excluded_vocabs', array());
   $vocabularies = taxonomy_get_vocabularies();
   foreach ($vocabularies as $vocabulary) {
-    if (in_array($vocabulary->vid, $excluded)) continue;
+    if (in_array($vocabulary->vid, $excluded)) {
+      continue;
+    }
     $tree = taxonomy_get_tree($vocabulary->vid);
     if ($tree) {
       foreach ($tree as $term) {
@@ -47,7 +52,7 @@ function custom_breadcrumbs_taxonomy_term_form($form, &$form_state, $type) {
     '#required' => TRUE,
     '#options' => $options,
     '#description' => t('Select the taxonomy term to apply this breadcrumb to. Terms from <a href="@excluded">excluded vocabularies</a> will not be listed here.', array('@excluded' => url('admin/config/user-interface/custom-breadcrumbs'))),
-    '#default_value' => isset($breadcrumb->tid) ?  $breadcrumb->tid : '',
+    '#default_value' => isset($breadcrumb->tid) ? $breadcrumb->tid : '',
     '#weight' => -10,
   );
   module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
@@ -70,6 +75,11 @@ function custom_breadcrumbs_taxonomy_term_form($form, &$form_state, $type) {
       '#default_value' => isset($breadcrumb->paths) ? $breadcrumb->paths : NULL,
     );
   }
+
+  if (module_exists('token')) {
+    $form['help']['tokens']['#token_types'][] = 'term';
+  }
+
   $form['#module'] = 'custom_breadcrumbs_taxonomy';
   $form['#infokey'] = 'taxonomy_term';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';
@@ -79,7 +89,10 @@ function custom_breadcrumbs_taxonomy_term_form($form, &$form_state, $type) {
 }
 
 /**
- * Form builder; Displays an edit form for a custom breadcrumb taxonomy vocabulary record.
+ * Vocabulary Form.
+ *
+ * Form builder; Displays an edit form for a custom breadcrumb taxonomy
+ * vocabulary record.
  *
  * @ingroup forms
  * @see custom_breadcrumbs_form_validate()
@@ -138,6 +151,11 @@ function custom_breadcrumbs_taxonomy_vocabulary_form($form, &$form_state, $type)
       '#default_value' => isset($breadcrumb->paths) ? $breadcrumb->paths : NULL,
     );
   }
+
+  if (module_exists('token')) {
+    $form['help']['tokens']['#token_types'][] = 'term';
+  }
+
   $form['#module'] = 'custom_breadcrumbs_taxonomy';
   $form['#infokey'] = 'taxonomy_vocabulary';
   $form['#submit'][] = 'custom_breadcrumbs_form_submit';

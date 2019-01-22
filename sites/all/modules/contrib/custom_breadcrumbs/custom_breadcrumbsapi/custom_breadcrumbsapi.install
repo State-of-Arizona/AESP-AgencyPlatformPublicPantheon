@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Install file for the custom_breadcrumbsapi module.
@@ -66,10 +67,16 @@ function custom_breadcrumbsapi_schema() {
 }
 
 /**
+ * Implements hook_update_N().
+ *
  * Adds name field for improved organization of breadcrumbs
  * Remove set_active_menu field because it is no longer used.
  */
 function custom_breadcrumbsapi_update_6200() {
-  db_add_field('name', array('type' => 'varchar', 'length' => 128, 'NOT NULL' => FALSE, 'description' => 'An optional name for the custom breadcrumb.'));
+  db_add_field('name', array(
+    'type' => 'varchar',
+    'length' => 128,
+    'NOT NULL' => FALSE,
+    'description' => 'An optional name for the custom breadcrumb.',
+  ));
 }
-

@@ -1,18 +1,23 @@
 <?php
+
 /**
  * @file
  * Provide custom breadcrumbs for module pages.
  */
+
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 
 /**
  * Implements hook_cb_breadcrumb_info().
- *
+ * @codingStandardsIgnoreStart
  * @return an array with elements:
  *   'table' indicating the db_table to load the breadcrumb from,
- *   'field' a unique field of the database table used to identify the breadcrumb,
+ *   'field' a unique field of the database table used to identify the
+ *   breadcrumb,
  *   'type' a string used for indicating the breadcrumb type on the admin list,
- *   'name_constructor' a function which generates the breadcrumb name from the breadcrumb.
+ *   'name_constructor' a function which generates the breadcrumb name from the
+ *   breadcrumb.
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbsapi_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
@@ -28,10 +33,10 @@ function custom_breadcrumbsapi_cb_breadcrumb_info() {
 /**
  * Constructs a default name to display in the admin screen.
  *
- * @param $breadcrumb
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return
+ * @return string
  *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbsapi_breadcrumb_name($breadcrumb) {
@@ -78,6 +83,8 @@ function custom_breadcrumbsapi_menu() {
 /**
  * Implements hook_breadcrumb_alter().
  *
+ * @codingStandardsIgnoreStart
+ *
  * Provide a function for module developers to provide custom breadcrumbs for module pages.
  * Modules wishing to provide custom breadcrumbs access to specific pages should include
  *   drupal_alter('breadcrumb', $breadcrumb, $modulepage, $objs);
@@ -87,10 +94,12 @@ function custom_breadcrumbsapi_menu() {
  *   The breadcrumb array to be altered
  * @param $modulepage
  *   a string identifying the module page. This name will be displayed on the customb breadcrumb list.
- * @param $objs
- *   an array of objects that can be used in token replacement with array keys indicating the type of object.
+ * @param array $objs
+ *   An array of objects that can be used in token replacement with array keys
+ *   indicating the type of object.
  */
 function custom_breadcrumbsapi_breadcrumb_alter($breadcrumb, $modulepage, $objs = array()) {
+  // @codingStandardsIgnoreEnd
   global $language;
   $languages = array(
     'language' => $language->language,

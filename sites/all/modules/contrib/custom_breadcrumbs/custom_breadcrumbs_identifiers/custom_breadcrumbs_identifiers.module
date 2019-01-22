@@ -8,8 +8,10 @@
 /**
  * Implements hook_cb_identifier_list().
  *
+ * @codingStandardsIgnoreStart
  * @return
  *   An array of text strings describing special identifier behavoir.
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_identifiers_cb_identifier_list() {
   $identifiers = array();
@@ -20,7 +22,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_list() {
   }
 
   // Additional identifiers can be added here.
-  $identifiers['<book-hierarchy>'] =  t('Provides crumbs for each parent node of a book page. Whatever is placed in the corresponding position of the title area will be ignored. It should not be used with the pipe (|) symbol.');
+  $identifiers['<book-hierarchy>'] = t('Provides crumbs for each parent node of a book page. Whatever is placed in the corresponding position of the title area will be ignored. It should not be used with the pipe (|) symbol.');
   $identifiers['<page-title>'] = t('Provides a plain text crumb using the page title. Whatever is placed in the corresponding position of the title area will be ignored. It should not be used with the pipe (|) symbol.');
   $identifiers['<menu-parent-trail>'] = t('Produces crumbs for each parent item for the given path. The title information for this line will be ignored because the menu link titles are used. If a path is not provided following the pipe (|) symbol, the current path with be used.');
   return $identifiers;
@@ -64,6 +66,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       );
       $crumb_items[] = $crumb_item;
       break;
+
     case '<page-title>':
       // Decode title to properly handle special characters.
       $title = filter_xss(drupal_get_title());
@@ -73,6 +76,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       );
       $crumb_items[] = $crumb_item;
       break;
+
     case '<pathauto>':
       $options = drupal_parse_url($obj['path']);
       $options = array_merge($options, $obj['attributes']);
@@ -96,8 +100,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       $crumb_items[] = $crumb_item;
       break;
 
-      // New identifiers can be added here.
-
+    // New identifiers can be added here.
     case '<book-hierarchy>':
       // Get the node object for the current page and make sure its a book page.
       if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
@@ -128,7 +131,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       }
       break;
 
-      // Support for showing a paths parent menu link items as crumbs.
+    // Support for showing a paths parent menu link items as crumbs.
     case '<menu-parent-trail>':
       $title = $obj['title'];
       $path = ($obj['path'] != '') ? $obj['path'] : $_GET['q'];
@@ -136,7 +139,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
       // Search for both alias and normal path.
       $normal_path = drupal_get_normal_path($path);
 
-      $menu_item = db_select('menu_links')->condition('link_path', array($path, $normal_path), 'IN')->execute()->fetch();
+      $menu_item = db_select('menu_links', 'ml')->fields('ml')->condition('link_path', array($path, $normal_path), 'IN')->execute()->fetch();
 
       if ($menu_item) {
         // Parent ids of menu item.
@@ -166,7 +169,7 @@ function custom_breadcrumbs_identifiers_cb_identifier_values($identifier, $obj) 
         }
 
         // Query parent items.
-        $result = db_select('menu_links')->condition('mlid', $pids, 'IN')->execute();
+        $result = db_select('menu_links', 'ml')->fields('ml')->condition('mlid', $pids, 'IN')->execute();
         $trail = array();
 
         foreach ($result as $item) {
@@ -197,6 +200,7 @@ function custom_breadcrumbs_identifiers_form_alter(&$form, $form_state, $form_id
       '#type' => 'checkbox',
       '#title' => t("Wrap plain text breadcrumbs in &lt;span&gt; tags."),
       '#description' => t("If enabled, breadcrumbs that use &lt;none&gt; for the link will be wrapped in &lt;span&gt; tags with the custom-breadcrumbs-none class identifier and any other applicable classes."),
+      // @codingStandardsIgnoreLine
       '#default_value' => variable_get('custom_breadcrumbs_none_span', FALSE),
     );
   }

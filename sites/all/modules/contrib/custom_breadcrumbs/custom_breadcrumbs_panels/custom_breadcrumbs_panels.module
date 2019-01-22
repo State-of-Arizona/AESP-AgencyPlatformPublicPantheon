@@ -1,8 +1,10 @@
 <?php
+
 /**
  * @file
  * Provide custom breadcrumbs for panels pages.
  */
+
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
 module_load_include('inc', 'page_manager', 'page_manager.admin');
@@ -10,11 +12,16 @@ module_load_include('inc', 'page_manager', 'page_manager.admin');
 /**
  * Implements hook_cb_breadcrumb_info().
  *
- * @return an array with elements:
+ * @codingStandardsIgnoreStart
+ * @return array
+ *   an array with elements:
  *   'table' indicating the db_table to load the breadcrumb from,
- *   'field' a unique field of the database table used to identify the breadcrumb,
+ *   'field' a unique field of the database table used to identify the
+ *    breadcrumb,
  *   'type' a string used for indicating the breadcrumb type on the admin list,
- *   'name_constructor' a function which generates the breadcrumb name from the breadcrumb.
+ *   'name_constructor' a function which generates the breadcrumb name from the
+ *   breadcrumb.
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_panels_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
@@ -30,10 +37,10 @@ function custom_breadcrumbs_panels_cb_breadcrumb_info() {
 /**
  * Constructs a default name to display in the admin screen.
  *
- * @param $breadcrumb
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return
+ * @return string
  *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbs_panels_breadcrumb_name($breadcrumb) {
@@ -75,8 +82,8 @@ function custom_breadcrumbs_panels_menu() {
 function custom_breadcrumbs_panels_node_view($node, $build_mode) {
   static $module_weights = array();
   if ($build_mode == 'full' && $node->type == 'panel') {
-    // Loop through content objects and call hook_node_view for custom_breadcrumbs
-    // and its submodules for each node object.
+    // Loop through content objects and call hook_node_view for
+    // custom_breadcrumbs and its submodules for each node object.
     $display = panels_load_display($node->panels_node['did']);
     $contents = $display->content;
     foreach ((array) $contents as $content) {
@@ -102,7 +109,8 @@ function custom_breadcrumbs_panels_node_view($node, $build_mode) {
  * Implements hook_ctools_render_alter().
  */
 function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $data) {
-  // Don't really do anything with the panel. This is just a pretense to insert a breadcrumb.
+  // Don't really do anything with the panel. This is just a pretense to insert
+  // a breadcrumb.
   static $module_weights = array();
   extract($data);
   if ($page) {
@@ -113,24 +121,31 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $data) {
     );
     // Check to see if the panel ID matches any custom_breadcrumb panel_id.
     // First, try to find a match on panels variant id.
+    // @codingStandardsIgnoreLine
     $id = $handler->name;
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_panels', NULL, array('panel_id' => $id), $languages);
     // If nothing matched, try matching on panels page id.
     if (empty($breadcrumbs)) {
+      // @codingStandardsIgnoreLine
       $id = $handler->task;
       $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_panels', NULL, array('panel_id' => $id), $languages);
     }
     if (!empty($breadcrumbs)) {
       if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('panel' => $info))) {
         $objs = array('panel' => $info);
+        // @codingStandardsIgnoreLine
         foreach ($contexts as $context) {
           if (is_array($context->type) && (in_array('node', $context->type) || in_array('entity:node', $context->type)) && isset($context->data)) {
             $objs['node'] = $context->data;
           }
         }
-        foreach ($handler->conf['display']->content as $pane) {
-          if ($pane->type == 'node') {
-            $objs['node'] =  node_load($pane->configuration['nid']);
+        // @codingStandardsIgnoreStart
+        if (!empty($handler->conf['display'])) {
+          foreach ($handler->conf['display']->content as $pane) {
+            // @codingStandardsIgnoreEnd
+            if ($pane->type == 'node') {
+              $objs['node'] = node_load($pane->configuration['nid']);
+            }
           }
         }
         custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
@@ -141,8 +156,10 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $data) {
   }
 
   // Is this a taxonomy term template?
+  // @codingStandardsIgnoreLine
   if (isset($task['admin path']) && ($task['admin path'] == "taxonomy/term/%taxonomy_term") && module_exists('custom_breadcrumbs_taxonomy') && variable_get('custom_breadcrumbs_taxonomy_panels', FALSE)) {
     module_load_include('inc', 'custom_breadcrumbs_taxonomy');
+    // @codingStandardsIgnoreLine
     foreach ($contexts as $context) {
       if (isset($context->data->tid)) {
         $terms = array($context->data->tid => $context->data);
@@ -153,13 +170,15 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $data) {
   }
 
   // Is this a node template?
+  // @codingStandardsIgnoreLine
   if (isset($task['admin path']) && ($task['admin path'] == "node/%node")) {
 
     $context = array_pop($contexts);
     if (is_array($context->type)  && (in_array('node', $context->type) || in_array('entity:node', $context->type))
        && isset($context->data)) {
       $node = $context->data;
-      // Call hook_nodeapi for each Custom Breadcrumbs submodule in order of the module's weight.
+      // Call hook_nodeapi for each Custom Breadcrumbs submodule in order of the
+      // module's weight.
       if (empty($module_weights)) {
         $modules = module_implements('cb_breadcrumb_info');
         $module_weights = _custom_breadcrumbs_get_module_weight($modules);
@@ -176,7 +195,8 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $data) {
   }
 
   if (variable_get('custom_breadcrumbs_set_menu_breadcrumb', FALSE)) {
-    // If a panels breadcrumb has not been defined for this panel, then use the default menu structure.
+    // If a panels breadcrumb has not been defined for this panel, then use the
+    // default menu structure.
     custom_breadcrumbs_set_menu_breadcrumb();
   }
 }
@@ -196,6 +216,7 @@ function custom_breadcrumbs_panels_form_alter(&$form, $form_state, $form_id) {
       $form['settings']['custom_breadcrumbs_panels']['custom_breadcrumbs_taxonomy_panels'] = array(
         '#type' => 'checkbox',
         '#title' => t('Use taxonomy breadcrumbs for panels'),
+        // @codingStandardsIgnoreLine
         '#default_value' => variable_get('custom_breadcrumbs_taxonomy_panels', FALSE),
         '#description' => t('If enabled, the view argument and/or the taxonomy structure of nodes returned by panels will be used to form the taxonomy breadcrumb trail.'),
         '#weight' => 45,
@@ -242,8 +263,9 @@ function custom_breadcrumbs_panels_form($form, &$form_state, $type) {
     else {
       $handler = reset($task->handlers);
       if (isset($handler->name)) {
-        // The ID stored must be the ID of the variant, but we use the page admin
-        // title since this is often more helpful when there's only one variant.
+        // The ID stored must be the ID of the variant, but we use the page
+        // admin title since this is often more helpful when there's only one
+        // variant.
         $options[$handler->name] = $title;
       }
     }
@@ -253,7 +275,7 @@ function custom_breadcrumbs_panels_form($form, &$form_state, $type) {
     '#title' => t('Custom Panel Page'),
     '#required' => TRUE,
     '#options' => $options,
-    '#description' => t('The Panel variant (or page) that this custom breadcrumb trail will apply to. If you want to apply the custom breadcrumb trail to all variants of a Panel page, choose the \'All variants\' option for that page.'),
+    '#description' => t("The Panel variant (or page) that this custom breadcrumb trail will apply to. If you want to apply the custom breadcrumb trail to all variants of a Panel page, choose the 'All variants' option for that page."),
     '#default_value' => isset($breadcrumb->panel_id) ? $breadcrumb->panel_id : NULL,
     '#weight' => -10,
   );

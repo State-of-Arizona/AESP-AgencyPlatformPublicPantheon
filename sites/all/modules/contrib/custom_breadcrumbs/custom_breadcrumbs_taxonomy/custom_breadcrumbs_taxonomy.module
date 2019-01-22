@@ -2,6 +2,8 @@
 
 /**
  * @file
+ * Main file for the Custom breadcrumbs for taxonomy.
+ *
  * This module implements taxonomy_based breadcrumbs using a hybrid of methods
  * developed for the custom_breadcrumbs and taxonomy_breadcrumbs modules.
  * Breadcrumbs are provided for node and taxonomy term pages.
@@ -10,8 +12,8 @@
  *   [HOME] >> [VOCABULARY] >> TERM >> [TERM] ...
  *
  *   - The HOME breadcrumb (if present) links to the home page.  The text
- *     displayed for HOME is administrator configurable on the custom_breadcrumbs
- *     settings page.
+ *     displayed for HOME is administrator configurable on the
+ *     custom_breadcrumbs settings page.
  *   - The VOCABULARY breadcrumb (if present) will link to an administrator
  *     defined page.  If the VOCABULARY does not have an administrator
  *     defined page, it will not appear in the breadcrumb trail.
@@ -26,11 +28,12 @@
  *   vocabulary >> term >> term
  *
  * If 'Use taxonomy hierarchy' is not checked, then the titles and paths used to
- * construct the breadcrumb should be defined at the custom_breadcrumbs administration
- * page in the same as other custom breadcrumbs. For a node containing multiple terms
- * and vocabularies, the lightest term with a visible, matching custom breadcrumb is
- * selected. If a taxonomy_term custom breadcrumb is not found, then taxonomy_vocabulary
- * custom breadcrumbs are matched against the node's vocabularies.
+ * construct the breadcrumb should be defined at the custom_breadcrumbs
+ * administration page in the same as other custom breadcrumbs. For a node
+ * containing multiple terms and vocabularies, the lightest term with a visible,
+ * matching custom  breadcrumb is selected. If a taxonomy_term custom breadcrumb
+ * is not found, then taxonomy_vocabulary custom breadcrumbs are matched against
+ * the node's vocabularies.
  */
 
 // Default value for Advanced Settings, Node Types.
@@ -39,11 +42,16 @@ define('CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT', 'book');
 /**
  * Implements hook_cb_breadcrumb_info().
  *
+ * @codingStandardsIgnoreStart
+ *
  * @return an array with elements
  *   'table' indicating the db_table to load the breadcrumb from,
  *   'field' a field of the database table used to identify the breadcrumb,
  *   'type' a string used for indicating the breadcrumb type on the admin list,
- *   'name_constructor' a function which generates the breadcrumb name from the breadcrumb.
+ *   'name_constructor' a function which generates the breadcrumb name from the
+ *   breadcrumb.
+ *
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_taxonomy_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
@@ -65,10 +73,10 @@ function custom_breadcrumbs_taxonomy_cb_breadcrumb_info() {
 /**
  * Constructs a name to display in the admin screen from the taxonomy term.
  *
- * @param $breadcrumb
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return
+ * @return string
  *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbs_taxonomy_term_breadcrumb_name($breadcrumb) {
@@ -86,12 +94,15 @@ function _custom_breadcrumbs_taxonomy_term_breadcrumb_name($breadcrumb) {
 }
 
 /**
- * Constructs a name to display in the admin screen from the taxonomy vocabularyd.
+ * Vocabulary breadcrumb name.
  *
- * @param $breadcrumb
+ * Constructs a name to display in the admin screen from the taxonomy
+ * vocabularyd.
+ *
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return
+ * @return string
  *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbs_taxonomy_vocabulary_breadcrumb_name($breadcrumb) {
@@ -149,7 +160,8 @@ function custom_breadcrumbs_taxonomy_node_view($node, $build_mode) {
   if ($build_mode == 'full') {
     if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
       module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-      // Extract the most recently viewed term or the lightest term from lightest vocabulary assosciated with node.
+      // Extract the most recently viewed term or the lightest term from
+      // lightest vocabulary assosciated with node.
       $term = custom_breadcrumbs_taxonomy_node_get_term($node);
       if ($term) {
         $terms = custom_breadcrumbs_taxonomy_node_get_terms($node);
@@ -166,7 +178,7 @@ function custom_breadcrumbs_taxonomy_page_alter(&$page) {
   // Set the breadcrumb on taxonomy term pages.
   if ($page_term = menu_get_object('taxonomy_term', 2)) {
     module_load_include('inc', 'custom_breadcrumbs_taxonomy');
-    _custom_breadcrumbs_taxonomy_set_breadcrumb($page_term->tid, NULL, TRUE, array('taxonomy' => $page_term));
+    _custom_breadcrumbs_taxonomy_set_breadcrumb($page_term->tid, $page_term->vid, TRUE, array('taxonomy_term' => $page_term), array($page_term));
   }
 }
 
@@ -179,7 +191,8 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
     // Set the taxonomy breadcrumb for the view.
     if (isset($view->display) && !empty($view->display)) {
       $curpath = drupal_get_normal_path($_GET['q']);
-      // A taxonomy term page is any page with path a component 'taxonomy' followed by 'term'.
+      // A taxonomy term page is any page with path a component 'taxonomy'
+      // followed by 'term'.
       $arg_values = arg(NULL, $curpath);
       $is_term_page = FALSE;
       if (($key = array_search('taxonomy', $arg_values)) !== FALSE) {
@@ -193,8 +206,10 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
         $viewpath = _custom_breadcrumbs_construct_view_path($display);
         // Verify the view path matches the current path.
         if (_custom_breadcrumbs_match_path($curpath, $viewpath)) {
-          // Select matching display with the greatest number of explicit arguments.
+          // Select matching display with the greatest number of explicit
+          // arguments.
           $num = substr_count($display->display_options['path'], '%');
+          // @codingStandardsIgnoreLine
           if (!isset($max) || (isset($max) && ($num > $max))) {
             $max = $num;
             $max_id = $id;
@@ -214,6 +229,7 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
               case 'tid':
                 $tid = $arg_values['values'][$key];
                 break;
+
               case 'vid':
                 $vid = $arg_values['values'][$key];
                 break;
@@ -236,7 +252,8 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
             }
           }
         }
-        // Otherwise, optionally use the first result node that is of an allowed node type to generate the breadcrumb.
+        // Otherwise, optionally use the first result node that is of an allowed
+        // node type to generate the breadcrumb.
         if (variable_get('custom_breadcrumbs_taxonomy_result_nodes', FALSE) &&
             _custom_breadcrumbs_allowed_display($display) && !empty($view->result)) {
           foreach ($view->result as $result) {
@@ -452,7 +469,9 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_vocabulary_alter(&$form,
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $form['vid']['#value']));
     $output = NULL;
     if (count($breadcrumbs) > 0) {
-      $output = '<p>' . t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/structure/custom_breadcrumbs'))) . '</p>';
+      $output = '<p>' . t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array(
+        '!link' => l(t('Custom Breadcrumbs Administration Page'), 'admin/structure/custom_breadcrumbs'))
+      ) . '</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
     module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
@@ -496,12 +515,16 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_term_alter(&$form, &$for
 /**
  * Implements hook_cb_node_form_table().
  *
+ * @codingStandardsIgnoreStart
+ *
  * @param $node
  *   The node object being edited
  *
- * @return $breadcrumbs
- *   an array of breadcrumb objects for taxonomy terms and vocabs matching the node
- *   to be used in the custom_breadcrumbs fieldset on the node edit page
+ * @return array
+ *   an array of breadcrumb objects for taxonomy terms and vocabs matching the
+ *   node to be used in the custom_breadcrumbs fieldset on the node edit page
+ *
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_taxonomy_cb_node_form_table($node) {
   $breadcrumbs = array();
@@ -530,20 +553,23 @@ function custom_breadcrumbs_taxonomy_cb_node_form_table($node) {
 }
 
 /**
- * Determines if the current node is one of the types listed on the advanced settings page.
+ * Function for allowed node type.
  *
- * @param $nodetype
+ * Determines if the current node is one of the types listed on the advanced
+ * settings page.
+ *
+ * @param string $nodetype
  *   The node type being considered for a custom breadcrumb.
  *
- * @return
- *   TRUE if the node type is selected for a custom breadcrumbs taxonomy breadcrumb,
- *   FALSE otherwise.
+ * @return bool
+ *   TRUE if the node type is selected for a custom breadcrumbs taxonomy
+ *   breadcrumb, FALSE otherwise.
  */
 function _custom_breadcrumbs_taxonomy_allowed_node_type($nodetype) {
-  // If the node type IS IN     the node types list and the list IS     inclusive OR
-  // If the node type IS NOT IN the node types list and the list IS NOT inclusive (e.g. exclusive)
+  // If the node type IS IN     the node types list and the list IS inclusive OR
+  // If the node type IS NOT IN the node types list and the list IS NOT
+  // inclusive (e.g. exclusive)
   // THEN modify the breadcrumb trail.
-
   $array_of_types = array_filter((array) variable_get('custom_breadcrumbs_taxonomy_node_types', CUSTOM_BREADCRUMBS_TAXONOMY_NODE_TYPES_DEFAULT));
   $in_list = in_array($nodetype, $array_of_types);
   $allowed = ($in_list == variable_get('custom_breadcrumbs_taxonomy_include_nodes', 0));
@@ -551,31 +577,18 @@ function _custom_breadcrumbs_taxonomy_allowed_node_type($nodetype) {
 }
 
 /**
- * Implements hook_enable().
- */
-function custom_breadcrumbs_taxonomy_enable() {
-  // Sets weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
-  $max_weight = custom_breadcrumbs_taxonomy_minimum_module_weight();
-  $current_weight = _custom_breadcrumbs_get_module_weight(array('custom_breadcrumbs_taxonomy'));
-  if ($current_weight['custom_breadcrumbs_taxonomy'] < $max_weight) {
-    drupal_set_message(t('Increasing the weight of custom_breadcrumbs_taxonomy for use with other modules.'));
-    db_update('system')
-      ->fields(array(
-        'weight' => $max_weight,
-        ))
-      ->condition('name', 'custom_breadcrumbs_taxonomy')
-      ->execute();
-    variable_set('menu_rebuild_needed', TRUE);
-  }
-}
-
-/**
  * Implements hook_minimum_module_weight().
  *
- * @see custom_breadcrumbs_admin_settings_submit().
+ * @see custom_breadcrumbs_admin_settings_submit()
  */
 function custom_breadcrumbs_taxonomy_minimum_module_weight() {
-  $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs', 'i18ntaxonomy');
+  $modules = array(
+    'taxonomy',
+    'views',
+    'page_manager',
+    'custom_breadcrumbs',
+    'i18ntaxonomy',
+  );
   $weights = _custom_breadcrumbs_get_module_weight($modules);
   $max_weight = array_pop($weights);
   return $max_weight + 1;
@@ -586,8 +599,10 @@ function custom_breadcrumbs_taxonomy_minimum_module_weight() {
  */
 function custom_breadcrumbs_taxonomy_exit() {
   // Optionally, do not cache page on which a taxonomy breadcrumb has been set.
-  // For nodes with more than one vocabulary, the breadcrumb may depend on the sequence of pages visited.
-  // If the page is cached for anonymous users (normal caching) for performance, the breadcrumb may not reflect
+  // For nodes with more than one vocabulary, the breadcrumb may depend on the
+  // sequence of pages visited.
+  // If the page is cached for anonymous users (normal caching) for performance,
+  // the breadcrumb may not reflect.
   // the correct sequence. This should not be a problem for authenticated users.
   if (variable_get('custom_breadcrumbs_taxonomy_uncache', FALSE) && isset($_SESSION['custom_breadcrumbs_taxonomy_set'])) {
     global $base_root;

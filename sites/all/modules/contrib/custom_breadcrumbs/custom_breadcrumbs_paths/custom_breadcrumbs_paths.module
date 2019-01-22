@@ -4,17 +4,23 @@
  * @file
  * Assign custom breadcrumbs based on the Drupal path.
  */
+
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs.admin');
 module_load_include('inc', 'custom_breadcrumbs', 'custom_breadcrumbs_common');
 
 /**
  * Implements hook_cb_breadcrumb_info().
  *
- * @return an array with elements:
+ * @codingStandardsIgnoreStart
+ * @return array
+ *   an array with elements:
  *   'table' indicating the db_table to load the breadcrumb from,
- *   'field' a unique field of the database table used to identify the breadcrumb,
+ *   'field' a unique field of the database table used to identify the
+ *    breadcrumb,
  *   'type' a string used for indicating the breadcrumb type on the admin list,
- *   'name_constructor' a function which generates the breadcrumb name from the breadcrumb.
+ *   'name_constructor' a function which generates the breadcrumb name from the
+ *   breadcrumb.
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_paths_cb_breadcrumb_info() {
   $breadcrumb_type_info = array();
@@ -30,10 +36,10 @@ function custom_breadcrumbs_paths_cb_breadcrumb_info() {
 /**
  * Constructs a default name to display in the admin screen.
  *
- * @param $breadcrumb
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return
+ * @return string
  *   A text string that will be used as the breadcrumb name.
  */
 function _custom_breadcrumbs_paths_breadcrumb_name($breadcrumb) {
@@ -93,7 +99,8 @@ function custom_breadcrumbs_paths_node_view($node, $build_mode) {
  * Implements hook_views_pre_render().
  */
 function custom_breadcrumbs_paths_views_pre_render(&$view) {
-  // Don't really do anything with the view. This is just a pretense to insert a breadcrumb.
+  // Don't really do anything with the view. This is just a pretense to insert a
+  // breadcrumb.
   $curpath = drupal_get_normal_path($_GET['q']);
   // Check to see if the view path matches the current path.
   $viewpage = FALSE;
@@ -113,15 +120,21 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
 }
 
 /**
- * Checks for a custom breadcrumb at the current path and sets it if one is found.
+ * Set Breadcrumb.
  *
- * @param $objs
- *    An array of objects to be used in token replacement. Array keys indicate type of object.
- * @param $priority
- *    An integer indicating whether this attempt should override previous attempts.
- *    The lowest priority is 1. Higher values are given priority over lower values.
+ * Checks for a custom breadcrumb at the current path and sets it if one is
+ * found.
+ *
+ * @param array $objs
+ *   An array of objects to be used in token replacement. Array keys indicate
+ *   type of object.
+ * @param int $priority
+ *   An integer indicating whether this attempt should override previous
+ *   attempts.
+ *   The lowest priority is 1. Higher values are given priority over lower
+ *   values.
  */
-function _custom_breadcrumbs_paths_set_breadcrumb($objs = array(), $priority = 1) {
+function _custom_breadcrumbs_paths_set_breadcrumb(array $objs = array(), $priority = 1) {
   static $success;
   // Allow a higher priority request to take precedence.
   if (!isset($success) || ($priority > $success)) {
@@ -132,8 +145,10 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array(), $priority = 1
         if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb)) {
           if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
             if ($matchpath) {
-              // Assume a longer path match is a better fit than a prior shorter match.
+              // Assume a longer path match is a better fit than a prior shorter
+              // match.
               if (($pos = strrpos($breadcrumb->specific_path, '*')) !== FALSE) {
+                // @codingStandardsIgnoreLine
                 if (!isset($max) || (isset($max) && ($pos > $max))) {
                   $max = $pos;
                   $max_id = $id;
@@ -168,13 +183,13 @@ function _custom_breadcrumbs_paths_set_breadcrumb($objs = array(), $priority = 1
 /**
  * Gets the custom_breadcrumbs_paths breadcrumbs.
  *
- * @param $matchpath
+ * @param bool $matchpath
  *   If TRUE, then load all paths breadcrumbs to allow wildcard matching,
  *   otherwise only the current path is queried.
- * @param $path
+ * @param string $path
  *   The drupal path to match against.
  *
- * @return $breadcrumbs
+ * @return breadcrumbs
  *   An array of breadcrumb objects meeting the query criteria.
  */
 function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = NULL) {
@@ -202,11 +217,12 @@ function _custom_breadcrumbs_paths_get_breadcrumbs($matchpath = FALSE, $path = N
 /**
  * Determines if the current path matches the breadcrumb specific path.
  *
- * @param $breadcrumb
+ * @param object $breadcrumb
  *   The breadcrumb object.
  *
- * @return $page_match
- *   TRUE if the current path matches the breadcrumb specific path, FALSE otherwise.
+ * @return page_match
+ *   TRUE if the current path matches the breadcrumb specific path, FALSE
+ *   otherwise.
  */
 function _custom_breadcrumbs_paths_page_match($breadcrumb) {
   $page_match = FALSE;
@@ -234,12 +250,14 @@ function _custom_breadcrumbs_paths_page_match($breadcrumb) {
 /**
  * Implements hook_cb_node_form_table().
  *
- * @param $node
+ * @codingStandardsIgnoreStart
+ * @param object $node
  *   The node object being edited.
  *
- * @return $breadcrumbs
+ * @return array breadcrumbs
  *   An array of breadcrumb objects with the same path as the node
  *   used in the custom_breadcrumbs fieldset on the node edit page.
+ * @codingStandardsIgnoreEnd
  */
 function custom_breadcrumbs_paths_cb_node_form_table($node) {
   // Don't return anything if the node is newly created.
@@ -269,7 +287,8 @@ function custom_breadcrumbs_paths_form($form, &$form_state, $type) {
   $breadcrumb = NULL;
   if (isset($bid)) {
     drupal_set_title(t('Edit Custom Breadcrumb for Path'));
-    $breadcrumb = array_pop(custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, array('bid' => $bid)));
+    $path_breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_paths', NULL, array('bid' => $bid));
+    $breadcrumb = array_pop($path_breadcrumbs);
   }
   else {
     drupal_set_title(t('Add Custom Breadcrumb for Path'));

@@ -1,18 +1,21 @@
 name = Custom breadcrumbs for taxonomy
-description = "Enables taxonomy based breadcrumbs and allows for node assosciations with taxonomy terms."
+description = "Enables taxonomy based breadcrumbs and allows for node associations with taxonomy terms."
 package = Custom breadcrumbs
 dependencies[] = custom_breadcrumbs
 dependencies[] = taxonomy
 core = 7.x
 configure = admin/config/user-interface/custom-breadcrumbs
+# @codingStandardsIgnoreLine
 files[] = custom_breadcrumbs_taxonomy.admin.inc
+# @codingStandardsIgnoreLine
 files[] = custom_breadcrumbs_taxonomy.inc
+# @codingStandardsIgnoreLine
 files[] = custom_breadcrumbs_taxonomy.install
+# @codingStandardsIgnoreLine
 files[] = custom_breadcrumbs_taxonomy.module
 
-; Information added by Drupal.org packaging script on 2014-09-09
-version = "7.x-2.0-beta1"
+; Information added by Drupal.org packaging script on 2019-01-21
+version = "7.x-2.0-beta1+31-dev"
 core = "7.x"
 project = "custom_breadcrumbs"
-datestamp = "1410287363"
-
+datestamp = "1548092884"

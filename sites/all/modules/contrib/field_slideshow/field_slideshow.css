@@ -9,6 +9,15 @@
   width: auto !important;
 }
 
+.field-slideshow-slide img{
+  float: left;
+  margin-bottom: 0 !important;
+}
+
+.field-slideshow-slide .inner-slide{
+  overflow: hidden;
+}
+
 .region-content ul.field-slideshow-pager {
   list-style-type: none;
   padding: 0;

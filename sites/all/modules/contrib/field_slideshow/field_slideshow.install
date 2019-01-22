@@ -61,7 +61,7 @@ function field_slideshow_requirements($phase) {
           'title'       => $t('JCarousel plugin'),
           'value'       => $t('Not found'),
           'severity'    => REQUIREMENT_ERROR,
-          'description' => $t('You need to download the !name and move the content of the downloaded folder into the %path folder of your server. When this is done there should be a file sites/all/libraries/jquery.jcarousel/lib/jquery.jcarousel.js, or jquery.jcarousel.min.js', array('!name' => l($t('JCarousel plugin'), 'http://sorgalla.com/jcarousel/'), '%path' => $path)),
+          'description' => $t('You need to download the !name and move the content of the downloaded folder into the %path folder of your server. When this is done there should be a file sites/all/libraries/jquery.jcarousel/lib/jquery.jcarousel.js, or jquery.jcarousel.min.js', array('!name' => l($t('JCarousel plugin'), 'https://github.com/jsor/jcarousel/archive/0.2.9.zip'), '%path' => $path)),
         );
       }
     }
@@ -80,7 +80,7 @@ function field_slideshow_requirements($phase) {
         'title'       => $t('JQuery ImagesLoaded plugin'),
         'value'       => $t('Not found'),
         'severity'    => REQUIREMENT_WARNING,
-        'description' => $t('For best results, you should download the !name and move the downloaded js file(s) into the %path folder of your server.', array('!name' => l($t('JQuery ImagesLoaded plugin'), 'https://github.com/desandro/imagesloaded/downloads'), '%path' => $path)),
+        'description' => $t('For best results, you should download the !name 2.1.2 and move the downloaded js file(s) into the %path folder of your server.', array('!name' => l($t('JQuery ImagesLoaded plugin'), 'https://github.com/desandro/imagesloaded/archive/v2.1.2.zip'), '%path' => $path)),
       );
     }
   }

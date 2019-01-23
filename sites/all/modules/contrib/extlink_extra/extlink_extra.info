@@ -1,0 +1,12 @@
+name = External Links Extra
+description = Adds extra functionality to the external links module
+package = User interface
+core = 7.x
+configure = admin/config/user-interface/extlink
+dependencies[] = extlink
+; Information added by Drupal.org packaging script on 2014-09-29
+version = "7.x-1.0-rc2"
+core = "7.x"
+project = "extlink_extra"
+datestamp = "1412012983"
+

@@ -316,7 +316,25 @@ html, body {
 #zone-content {
   display: block;
   width: 100%;
-  padding-bottom: 300px;
+}
+@media (min-width: 901px) {
+  #zone-content {
+    padding-bottom: 320px;
+  }
+}
+@media (max-width: 768px) {
+  #zone-content {
+    display: block;
+    width: 100%;
+    padding-bottom: 575px;
+  }
+}
+@media (min-width: 769px) and (max-width: 900px) {
+  #zone-content {
+    display: block;
+    width: 100%;
+    padding-bottom: 400px;
+  }
 }
 #zone-content h2 {
   text-transform: uppercase;

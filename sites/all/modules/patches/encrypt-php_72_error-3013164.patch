@@ -1,0 +1,12 @@
+diff --git a/sites/all/modules/contrib/encrypt/encrypt.install b/sites/all/modules/contrib/encrypt/encrypt.install
+index a45150b..b4de80e 100644
+--- a/sites/all/modules/contrib/encrypt/encrypt.install
++++ b/sites/all/modules/contrib/encrypt/encrypt.install
+@@ -142,6 +142,7 @@ function encrypt_uninstall() {
+ function encrypt_requirements($phase) {
+   $t = get_t();
+   $requirements = array();
++  $dependency_errors = '';
+ 
+   switch ($phase) {
+     case 'runtime':

@@ -316,7 +316,7 @@ function encrypt_get_default_config($reset = FALSE) {
 
   if (!$default_config || $reset) {
     $default_config = variable_get('encrypt_default_config', NULL);
-    $default_config = encrypt_get_config($default_config);
+    $default_config = encrypt_get_config($default_config, $reset);
 
     // For backward compatibility.
     if (empty($default_config)) {

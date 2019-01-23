@@ -63,7 +63,7 @@ function _encrypt_phpseclib_dependencies() {
   if (!module_exists('libraries')) {
     $errors[] = t('You must download and enable the <a href="http://drupal.org/project/libraries">Libraries API</a> module.');
   }
-  if (!file_exists('sites/all/libraries/phpseclib') && !file_exists(conf_path() . '/phpseclib')) {
+  elseif (!libraries_get_path('phpseclib')) {
     $errors[] = t('You must download the <a href="http://phpseclib.sourceforge.net/">phpseclib</a> library and place it in either sites/all/libraries or sites/yourdomain/libraries.');
   }
 

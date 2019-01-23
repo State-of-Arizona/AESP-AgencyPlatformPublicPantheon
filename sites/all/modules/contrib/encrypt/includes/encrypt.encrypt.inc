@@ -2,7 +2,7 @@
 
 /**
  * @file
- * This file holds the ffunctions necessary to encrypt and decrypt
+ * This file holds the functions necessary to encrypt and decrypt.
  *
  * @ingroup encrypt
  */

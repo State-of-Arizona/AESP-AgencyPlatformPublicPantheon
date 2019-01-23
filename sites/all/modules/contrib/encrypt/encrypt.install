@@ -142,6 +142,7 @@ function encrypt_uninstall() {
 function encrypt_requirements($phase) {
   $t = get_t();
   $requirements = array();
+  $dependency_errors = '';
 
   switch ($phase) {
     case 'runtime':

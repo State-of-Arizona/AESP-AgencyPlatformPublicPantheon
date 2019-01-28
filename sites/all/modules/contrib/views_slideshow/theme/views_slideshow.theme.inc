@@ -127,8 +127,8 @@ function _views_slideshow_preprocess_views_slideshow(&$vars) {
 
     // Build weights
     for ($i = 1; $i <= count($widgets); $i++) {
-      $weight['top'][$i] = '';
-      $weight['bottom'][$i] = '';
+      $weight['top'][$i] = array();
+      $weight['bottom'][$i] = array();
     }
 
     foreach ($widgets as $widget_id => $widget_name) {

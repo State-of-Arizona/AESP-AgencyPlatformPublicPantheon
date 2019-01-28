@@ -1,0 +1,15 @@
+diff --git a/sites/all/modules/contrib/views_slideshow/theme/views_slideshow.theme.inc b/sites/all/modules/contrib/views_slideshow/theme/views_slideshow.theme.inc
+index 7997a8f..1707988 100644
+--- a/sites/all/modules/contrib/views_slideshow/theme/views_slideshow.theme.inc
++++ b/sites/all/modules/contrib/views_slideshow/theme/views_slideshow.theme.inc
+@@ -129,8 +129,8 @@ function _views_slideshow_preprocess_views_slideshow(&$vars) {
+ 
+     // Build weights
+     for ($i = 1; $i <= count($widgets); $i++) {
+-      $weight['top'][$i] = '';
+-      $weight['bottom'][$i] = '';
++      $weight['top'][$i] = array();
++      $weight['bottom'][$i] = array();
+     }
+ 
+     foreach ($widgets as $widget_id => $widget_name) {

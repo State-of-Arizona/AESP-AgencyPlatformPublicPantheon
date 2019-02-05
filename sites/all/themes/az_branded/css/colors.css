@@ -20,6 +20,10 @@ body a:visited {
   background-color: #eae5d9;
 }
 
+#search-block-form .btn-primary {
+  background-color: #232323;
+}
+
 #zone-branding {
   background-color: #547d79;
 }

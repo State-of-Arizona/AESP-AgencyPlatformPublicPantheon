@@ -24,6 +24,10 @@ body a:visited {
   color: #ffffff !important;
 }
 
+#search-block-form .btn-primary {
+  background-color: #232323;
+}
+
 #zone-footer {
   background-color: #547d78;
 }
@@ -61,9 +65,4 @@ p.file, div.file, span.file, a.file, div.more-link, a.more-link {
 }
 .node-basic-slideshow .field-slideshow-pager a.activeSlide {
   background-color: #6d9591;
-}
-
-#search-block-form .btn-primary {
-  background-color: #232323;
-  border-color:transparent;
 }

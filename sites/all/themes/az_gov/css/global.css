@@ -944,3 +944,7 @@ table caption {
 .node-webform .form-actions .btn-primary {
   background-color: #00829b !important;
 }
+
+#search-block-form .btn-primary {
+  border-color: transparent;
+}

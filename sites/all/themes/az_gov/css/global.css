@@ -524,6 +524,7 @@ html, body {
 }
 #zone-footer .region-footer-second ul.menu li:hover > a, #zone-footer .region-footer-second ul.menu li:focus-within > a, #zone-footer .region-footer-second ul.menu .focus-within > a {
   color: #000;
+  background-color: #eee;
 }
 #zone-footer .region-footer-second ul.menu a {
   padding: 5px 15px;

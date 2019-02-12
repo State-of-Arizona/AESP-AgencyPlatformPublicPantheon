@@ -1,9 +1,10 @@
-name = AddThis Displays
-description = Adds the AddThis display types to render several basic types of AddThis buttons.
+name = AddThis tests
+description = Module for testing AddThis functionality.
 core = 7.x
-package = Sharing
+hidden = true
+
 dependencies[] = addthis
-files[] = addthis_displays.field.inc
+dependencies[] = addthis_displays
 
 ; Information added by Drupal.org packaging script on 2015-06-15
 version = "7.x-4.0-alpha6"

@@ -34,6 +34,7 @@ class AddThis {
   const CUSTOM_CONFIGURATION_CODE_ENABLED_KEY = 'addthis_custom_configuration_code_enabled';
   const CUSTOM_CONFIGURATION_CODE_KEY = 'addthis_custom_configuration_code';
   const ENABLED_SERVICES_KEY = 'addthis_enabled_services';
+  const EXCLUDED_SERVICES_KEY = 'addthis_excluded_services';
   const GOOGLE_ANALYTICS_TRACKING_ENABLED_KEY = 'addthis_google_analytics_tracking_enabled';
   const GOOGLE_ANALYTICS_SOCIAL_TRACKING_ENABLED_KEY = 'addthis_google_analytics_social_tracking_enabled';
   const FACEBOOK_LIKE_COUNT_SUPPORT_ENABLED = 'addthis_facebook_like_count_support_enabled';
@@ -46,7 +47,9 @@ class AddThis {
   const UI_HEADER_BACKGROUND_COLOR_KEY = 'addthis_ui_header_background_color';
   const UI_HEADER_COLOR_KEY = 'addthis_ui_header_color';
   const WIDGET_JS_URL_KEY = 'addthis_widget_js_url';
-  const WIDGET_JS_LOAD_TYPE = 'addthis_widget_load_type';
+  const WIDGET_JS_LOAD_DOMREADY = 'addthis_widget_load_domready';
+  const WIDGET_JS_LOAD_ASYNC = 'addthis_widget_load_async';
+  const WIDGET_JS_INCLUDE = 'addthis_widget_include';
 
   // Twitter.
   const TWITTER_VIA_KEY = 'addthis_twitter_via';
@@ -59,7 +62,16 @@ class AddThis {
   const DEFAULT_SERVICES_CSS_URL = 'http://cache.addthiscdn.com/icons/v1/sprites/services.css';
   const DEFAULT_SERVICES_JSON_URL = 'http://cache.addthiscdn.com/services/v1/sharing.en.json';
   const DEFAULT_WIDGET_JS_URL = 'http://s7.addthis.com/js/300/addthis_widget.js';
-  const DEFAULT_WIDGET_JS_LOAD_TYPE = 'async';
+  const DEFAULT_WIDGET_JS_LOAD_DOMREADY = TRUE;
+  const DEFAULT_WIDGET_JS_LOAD_ASYNC = FALSE;
+
+  // Type of inclusion.
+  // 0 = don't include, 1 = pages no admin, 2 = on usages only.
+  const DEFAULT_WIDGET_JS_INCLUDE = 2;
+  const WIDGET_JS_INCLUDE_NONE = 0;
+  const WIDGET_JS_INCLUDE_PAGE = 1;
+  const WIDGET_JS_INCLUDE_USAGE = 2;
+
 
   // Internal resources.
   const ADMIN_CSS_FILE = 'addthis.admin.css';
@@ -84,8 +96,6 @@ class AddThis {
    *   Instance of AddThis.
    */
   public static function getInstance() {
-    module_load_include('php', 'addthis', 'classes/AddThisJson');
-    module_load_include('php', 'addthis', 'classes/AddThisWidgetJs');
 
     if (!isset(self::$instance)) {
       $add_this = new AddThis();
@@ -133,10 +143,6 @@ class AddThis {
     if (!array_key_exists($display, $formatters)) {
       return array();
     }
-
-    // Load resources.
-    self::$instance->includeWidgetJs();
-    self::$instance->addConfigurationOptionsJs();
 
     // The display type exists. Now get it and get the markup.
     $display_information = $formatters[$display];
@@ -206,140 +212,6 @@ class AddThis {
     return $rows;
   }
 
-  /**
-   * Add the AddThis Widget JavaScript to the page.
-   */
-  public function addWidgetJs() {
-    $widgetjs = new AddThisWidgetJs(self::getWidgetUrl());
-    $widgetjs->addAttribute('pubid', $this->getProfileId());
-
-    if (self::getWidgetJsLoadType() != 'include') {
-      $widgetjs->addAttribute(self::getWidgetJsLoadType(), '1');
-    }
-
-    $url = $widgetjs->getFullUrl();
-
-    switch (self::getWidgetJsLoadType()) {
-
-      // Load as DOM is ready.
-      case 'domready':
-        drupal_add_js(
-          array(
-            'addthis' => array(
-              'widget_url' => $url,
-              'load_type' => self::getWidgetJsLoadType(),
-            ),
-          ),
-          'setting'
-        );
-        break;
-
-      // Load as async.
-      case 'async':
-        drupal_add_js(
-          array(
-            'addthis' => array(
-              'load_type' => self::getWidgetJsLoadType(),
-            ),
-          ),
-          'setting'
-        );
-
-        drupal_add_js(
-          $url,
-          array(
-            'type' => 'external',
-            'scope' => 'footer',
-          )
-        );
-        break;
-
-      // Load as include in the page.
-      default:
-        drupal_add_js(
-          $url,
-          array(
-            'type' => 'external',
-            'scope' => 'footer',
-          )
-        );
-        break;
-    }
-
-    // Add local internal behaviours.
-    drupal_add_js(
-      drupal_get_path('module', 'addthis') . '/addthis.js',
-      array(
-        'type' => 'file',
-        'scope' => 'footer',
-      )
-    );
-  }
-
-  /**
-   * Load function for widget information.
-   *
-   * Loading widget information only once.
-   */
-  public function includeWidgetJs() {
-    static $loaded;
-
-    if (!isset($loaded)) {
-      $loaded = TRUE;
-      $this->addWidgetJs();
-
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  public function addConfigurationOptionsJs() {
-    if ($this->isCustomConfigurationCodeEnabled()) {
-      $configurationOptionsJavascript = $this->getCustomConfigurationCode();
-    }
-    else {
-      $enabledServices = $this->getServiceNamesAsCommaSeparatedString() . 'more';
-
-      global $language;
-      $configuration = array(
-        'pubid' => $this->getProfileId(),
-        'services_compact' => $enabledServices,
-        'data_track_clickback' => $this->isClickbackTrackingEnabled(),
-        'ui_508_compliant' => $this->get508Compliant(),
-        'ui_click' => $this->isClickToOpenCompactMenuEnabled(),
-        'ui_cobrand' => $this->getCoBrand(),
-        'ui_delay' => $this->getUiDelay(),
-        'ui_header_background' => $this->getUiHeaderBackgroundColor(),
-        'ui_header_color' => $this->getUiHeaderColor(),
-        'ui_open_windows' => $this->isOpenWindowsEnabled(),
-        'ui_use_css' => $this->isStandardCssEnabled(),
-        'ui_use_addressbook' => $this->isAddressbookEnabled(),
-        'ui_language' => $language->language,
-      );
-      if (module_exists('googleanalytics')) {
-        if ($this->isGoogleAnalyticsTrackingEnabled()) {
-          $configuration['data_ga_property'] = variable_get('googleanalytics_account', '');
-          $configuration['data_ga_social'] = $this->isGoogleAnalyticsSocialTrackingEnabled();
-        }
-      }
-      $configuration['templates']['twitter'] = $this->getTwitterTemplate();
-      drupal_alter('addthis_configuration', $configuration);
-
-      $templates = array('templates' => $configuration['templates']);
-      unset($configuration['templates']);
-      $configurationOptionsJavascript = 'var addthis_config = ' . drupal_json_encode($configuration) . "\n";
-      $configurationOptionsJavascript .= 'var addthis_share = ' . drupal_json_encode($templates);
-    }
-    drupal_add_js(
-      $configurationOptionsJavascript,
-      array(
-      'type' => 'inline',
-      'scope' => 'footer',
-      'every_page' => TRUE,
-    )
-    );
-  }
-
   public function getAddThisAttributesMarkup($options) {
     if (isset($options)) {
       $attributes = array();
@@ -390,14 +262,38 @@ class AddThis {
     return variable_get(self::ENABLED_SERVICES_KEY, array());
   }
 
+  public function getExcludedServices() {
+    return variable_get(self::EXCLUDED_SERVICES_KEY, array());
+  }
+
   /**
-   * Return the type of loading.
+   * Return the type of inclusion.
    *
    * @return string
    *   Retuns domready or async.
    */
-  public function getWidgetJsLoadType() {
-    return variable_get(self::WIDGET_JS_LOAD_TYPE, self::DEFAULT_WIDGET_JS_LOAD_TYPE);
+  public function getWidgetJsInclude() {
+    return variable_get(self::WIDGET_JS_INCLUDE, self::DEFAULT_WIDGET_JS_INCLUDE);
+  }
+
+  /**
+   * Return if domready loading should be active.
+   *
+   * @return bool
+   *   Returns TRUE if domready is enabled.
+   */
+  public function getWidgetJsDomReady() {
+    return variable_get(self::WIDGET_JS_LOAD_DOMREADY, self::DEFAULT_WIDGET_JS_LOAD_DOMREADY);
+  }
+
+  /**
+   * Return if async initialization should be active.
+   *
+   * @return bool
+   *   Returns TRUE if async is enabled.
+   */
+  public function getWidgetJsAsync() {
+    return variable_get(self::WIDGET_JS_LOAD_ASYNC, self::DEFAULT_WIDGET_JS_LOAD_ASYNC);
   }
 
   public function isClickToOpenCompactMenuEnabled() {
@@ -485,10 +381,17 @@ class AddThis {
     return $this->getBaseBookmarkUrl() . $this->getProfileIdQueryParameterPrefixedWithAmp();
   }
 
+  /**
+   * Transform the entity title to a attribute.
+   *
+   * @remarks
+   *   The title of the entity and site can not contain double-qoutes. These are
+   *   encoded into html chars.
+   */
   private function getAttributeTitle($entity) {
     if (isset($entity->title)) {
       return array(
-        self::TITLE_ATTRIBUTE => (check_plain($entity->title) . ' - ' . variable_get('site_name')),
+        self::TITLE_ATTRIBUTE => htmlentities($entity->title . ' - ' . variable_get('site_name'), ENT_COMPAT),
       );
     }
     return array();
@@ -503,15 +406,15 @@ class AddThis {
     return array();
   }
 
-  private function getServiceNamesAsCommaSeparatedString() {
-    $enabledServiceNames = array_values($this->getEnabledServices());
-    $enabledServicesAsCommaSeparatedString = '';
-    foreach ($enabledServiceNames as $enabledServiceName) {
-      if ($enabledServiceName != '0') {
-        $enabledServicesAsCommaSeparatedString .= $enabledServiceName . ',';
+  public function getServiceNamesAsCommaSeparatedString($services) {
+    $serviceNames = array_values($services);
+    $servicesAsCommaSeparatedString = '';
+    foreach ($serviceNames as $serviceName) {
+      if ($serviceName != '0') {
+        $servicesAsCommaSeparatedString .= $serviceName . ',';
       }
     }
-    return $enabledServicesAsCommaSeparatedString;
+    return $servicesAsCommaSeparatedString;
   }
 
   private function getAdminCssFilePath() {

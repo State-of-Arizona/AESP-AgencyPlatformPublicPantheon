@@ -80,6 +80,7 @@ function addthis_menu() {
     'file' => AddThis::ADMIN_INCLUDE_FILE,
     'weight' => 10
   );
+
   return $menu_items;
 }
 
@@ -143,6 +144,25 @@ function addthis_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Implements hook_page_build().
+ */
+function addthis_page_build(&$page) {
+  // Include the addthis.js as a library on every page. Widget js will be loaded
+  // according to the settings.
+  $addthis_js_path = drupal_get_path('module', 'addthis') . '/addthis.js';
+  $page['content']['#attached']['js'][$addthis_js_path] = array(
+    'type' => 'file',
+    'scope' => 'footer',
+  );
+
+  // Include the widget js when we include on all but admin pages.
+  if (!path_is_admin(current_path()) && AddThis::getInstance()->getWidgetJsInclude() == AddThis::WIDGET_JS_INCLUDE_PAGE) {
+    $manager = AddThisScriptManager::getInstance();
+    $manager->attachJsToElement($page['content']);
+  }
+}
+
+/**
  * Implements hook_preprocess() for theme_addthis.
  */
 function template_preprocess_addthis(&$variables) {
@@ -199,10 +219,15 @@ function theme_addthis_element($variables) {
 /**
  * Create a addthis settings form.
  */
-function _addthis_settings_form($form = array(), &$form_state, $display_type = NULL, $display_settings = NULL) {
-  // Toggle variables
-  $no_js = FALSE;
+function _addthis_settings_form($form = array(), &$form_state = array(), $display_type = NULL, $display_settings = array()) {
 
+  // Check display setting to be not null.
+  if (!isset($display_settings) || (isset($display_settings) && !is_array($display_settings))) {
+    $display_settings = array();
+  }
+
+  // Toggle variables.
+  $no_js = FALSE;
 
   // Default display type if not set in the parameters.
   $display_type = (isset($display_type)) ? $display_type : 'addthis_disabled';

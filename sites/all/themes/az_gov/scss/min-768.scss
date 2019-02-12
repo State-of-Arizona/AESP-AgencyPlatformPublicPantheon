@@ -4,9 +4,13 @@
     width: 65%;
   }
   .region-branding {
-    float: left;
+    float:left;
     width: 35%;
     padding-top: 20px;
+    #block-search-form {
+      float: right;
+      width: 250px;
+    }
   }
 }
 

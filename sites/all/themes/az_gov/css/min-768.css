@@ -7,6 +7,10 @@
   width: 35%;
   padding-top: 20px;
 }
+#region-branding .region-branding #block-search-form {
+  float: right;
+  width: 250px;
+}
 
 #zone-branding .region-menu {
   display: block !important;

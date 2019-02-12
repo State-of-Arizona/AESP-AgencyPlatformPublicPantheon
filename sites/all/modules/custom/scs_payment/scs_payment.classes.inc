@@ -83,7 +83,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
       'headers' => array('Content-Type' => 'text/xml'),
       'method' => 'POST',
       'data' => $this->generate_xml($payment)
-      //'data' => $this->xmlTest()
+      // 'data' => $this->xmlTest()
     ); 
     
     //do the debug log for the XML
@@ -202,6 +202,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
     $xml->element('summaryDescription', utf8_encode(scs_payment_webform_payment_notes_load($payment->context_data['nid'])));
     $xml->push('lineItemList'); 
     // Start Foreach 
+    $total_amount = 0;
     foreach ($payment->line_items as $product) {
         if($product->quantity > 0) {
             $xml->push('lineItem');
@@ -217,6 +218,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
             } else {
                 $amount = strval(100 * (floatval($product->amount) + floatval($product->amount) * $product->tax_rate));
                 $xml->element('amount', $amount);
+                $total_amount += $amount;
             }
             $xml->element('quantity', $product->quantity);
             $xml->pop();
@@ -224,6 +226,9 @@ class PaymentMethodSCSController extends PaymentMethodController {
     }
     // End Foreach
     $xml->pop();
+    
+    // Set allowed payment types
+    $xml->element('paymentType', utf8_encode(scs_payment_type_load($payment->context_data['nid'], $total_amount/100)));
 
     // Close Transaction
     $xml->pop();
@@ -277,6 +282,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
       <quantity>1</quantity>
       </lineItem>
       </lineItemList>
+      <paymentType>ALL</paymentType>
       </GAOPaymentTransaction:transaction>';
 
     return '<?xml version="1.0" encoding="UTF-8"?><GAOPaymentTransaction:transaction xmlns:GAOPaymentTransaction="http://payment.az.gov" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://payment.az.gov GAOPaymentTransaction.xsd"><merchantName>Arizona Test Merchant</merchantName><merchantNumber>ADOA_TEST</merchantNumber><service>ADOA_TEST_LICENSING</service><orderNumber>1001</orderNumber><gaoBatchAgency>TST</gaoBatchAgency><gaoDocNoAgency>TST</gaoDocNoAgency><totalAmount>5000</totalAmount><returnURL>https://prodtest.az.gov/app/pmtpages/testGovReceive.serv</returnURL><summaryDescription>This is a test transaction. License #AZ123456</summaryDescription><test>test</test><lineItemList><lineItem><gaoProductCode>PM000091</gaoProductCode><gaoAgency>TST</gaoAgency><gaoIndex>13100</gaoIndex><gaoCompObject>4312</gaoCompObject><gaoAgencyObject>9999</gaoAgencyObject><gaoMultipurposeCode></gaoMultipurposeCode><gaoDescription>SR App - Test</gaoDescription><amount>5000</amount><quantity>1</quantity></lineItem></lineItemList></GAOPaymentTransaction:transaction>';

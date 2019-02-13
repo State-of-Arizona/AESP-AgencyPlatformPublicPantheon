@@ -216,7 +216,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
             if ($product->amount == 0) {
                 $xml->element('amount', '0');
             } else {
-                $amount = strval(100 * (floatval($product->amount) + floatval($product->amount) * $product->tax_rate));
+                $amount = strval(100 * round( (floatval($product->amount) + floatval($product->amount) * $product->tax_rate), 2));
                 $xml->element('amount', $amount);
                 $total_amount += $amount;
             }

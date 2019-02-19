@@ -33,9 +33,13 @@ body {
   background-color: #547d79;
   .region-menu ul.menu ul {
     a:hover {
-      background-color: #5c8984 !important;
+      background-color: #547d79 !important;
       color: #ffffff !important;
     }
+  }
+  .nav > li > a:focus {
+    color: #547d79;
+    background-color: #ffffff;
   }
 }
 

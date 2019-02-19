@@ -20,9 +20,14 @@ body {
   background-color: #547d79;
   .region-menu ul.menu ul, .region-menu ul.focus-within > ul {
     a:hover, a:focus  {
-      background-color: #5c8984 !important;
+      background-color: #547d79 !important;
       color: #ffffff !important;
     }
+
+  }
+  .nav > li > a:focus {
+    color: #547d79;
+    background-color: #ffffff;
   }
 }
 
@@ -54,14 +59,6 @@ body {
     }
   }
 }
-
-//#breadcrumb, #zone-header .region {
-//  background-color: #262626;
-//}
-//
-//#zone-header .region {
-//  color: #ffffff;
-//}
 
 #preface-group {
   background-color: #d9e5e8;

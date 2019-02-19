@@ -20,8 +20,12 @@ body a:visited {
   background-color: #547d79;
 }
 #zone-branding .region-menu ul.menu ul a:hover, #zone-branding .region-menu ul.menu ul a:focus, #zone-branding .region-menu ul.focus-within > ul a:hover, #zone-branding .region-menu ul.focus-within > ul a:focus {
-  background-color: #5c8984 !important;
+  background-color: #547d79 !important;
   color: #ffffff !important;
+}
+#zone-branding .nav > li > a:focus {
+  color: #547d79;
+  background-color: #ffffff;
 }
 
 #search-block-form .btn-primary {

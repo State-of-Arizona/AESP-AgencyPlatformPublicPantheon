@@ -522,7 +522,7 @@ html, body {
   padding-bottom: 0;
   text-transform: uppercase;
 }
-#zone-footer .region-footer-second ul.menu li:hover > a, #zone-footer .region-footer-second ul.menu li:focus-within > a, #zone-footer .region-footer-second ul.menu .focus-within > a {
+#zone-footer .region-footer-second ul.menu li:hover > a, #zone-footer .region-footer-second ul.menu li:focus-within > a, #zone-footer .region-footer-second ul.menu .focus-within > a, #zone-footer .region-footer-second ul.menu li:focus > a, #zone-footer .region-footer-second ul.menu li > a:focus {
   color: #000;
   background-color: #eee;
 }

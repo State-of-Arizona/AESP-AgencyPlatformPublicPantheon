@@ -559,7 +559,7 @@ html, body {
         padding-bottom: 0;
         text-transform: uppercase;
       }
-      li:hover > a, li:focus-within > a, .focus-within > a {
+      li:hover > a, li:focus-within > a, .focus-within > a, li:focus > a, li > a:focus {
         color: #000;
         background-color:#eee;
       }

@@ -56,8 +56,8 @@ function scs_payment_menu() {
  */
 function scs_payment_menu_alter(&$items) {
   if (isset($items['node/%node/webform-continue/%webform_menu_submission/%'])) {
-    $items['node/%/webform-continue/%/%']['page callback'] = 'scs_payment_cancel_message';
-    $items['node/%/webform-continue/%/%']['access callback'] = 'scs_payment_cancel_webform_continue';
+    $items['node/%/webform-continue/%/%']['page callback'] = 'scs_payment_status_message';
+    $items['node/%/webform-continue/%/%']['access callback'] = 'scs_payment_message_webform_continue';
     $items['node/%/webform-continue/%/%']['page arguments'] = array(1, 3, 4);
   }
 }
@@ -65,17 +65,29 @@ function scs_payment_menu_alter(&$items) {
 /**
  * could use this function later on to fix the access call back if need base on the requirement.
  */
-function scs_payment_cancel_webform_continue() {
+function scs_payment_message_webform_continue() {
   return true;
 }
 
-function scs_payment_cancel_message($nid, $sid, $page_num) {
+function scs_payment_status_message($nid, $sid, $page_num) {
   module_load_include('inc', 'webform', 'includes/webform.submissions');
+  module_load_include('module', 'webform', 'webform.module');
   $submission = webform_get_submission($nid, $sid);
 
   if (is_object($submission)) {
     //get the payment pid base on the submission id n nid.
     $pid = get_pid_by_sid($nid, $sid);
+
+    //get the payment status
+    $result = db_select('payment_status_item')
+      ->fields('payment_status_item')
+      ->condition('pid', $pid)
+      ->orderBy('psiid', 'DESC')
+      ->range(0, 1)
+      ->execute();
+    $status_items = array();
+    $payment_status_item = $result->fetchObject();
+    $status = $payment_status_item->status;
 
     //get the payment method id
     $query = db_select('payment', 'p')
@@ -84,14 +96,26 @@ function scs_payment_cancel_message($nid, $sid, $page_num) {
 
     $pmid = $query->execute()->fetchObject();
 
-    $messsage = '';
-
-    if (isset($pmid->pmid) && !empty($pmid->pmid)) {
-      $url = drupal_get_path_alias('node/' . $nid);
-      $message = variable_get('scs_cancelled_message_' . $pmid->pmid, '');
-      $message = str_replace('[nid]', '/' . $url, $message);
+    $message = '';
+    if($status == 'payment_status_pending'){
+      if (isset($pmid->pmid) && !empty($pmid->pmid)) {
+        $url = drupal_get_path_alias('node/' . $nid);
+        $message = variable_get('scs_pending_message_' . $pmid->pmid, '');
+        $message = str_replace('[nid]', '/' . $url, $message);
+        $message = webform_replace_tokens($message,NULL ,$submission, NULL, FALSE );
+      }
+    }elseif($status == 'payment_status_failed'){
+      //cancelled message
+      if (isset($pmid->pmid) && !empty($pmid->pmid)) {
+        $url = drupal_get_path_alias('node/' . $nid);
+        $message = variable_get('scs_cancelled_message_' . $pmid->pmid, '');
+        $message = str_replace('[nid]', '/' . $url, $message);
+        $message = webform_replace_tokens($message,NULL ,$submission, NULL, FALSE );
+      }
+    }else{
+      $message = 'Thank you.  Your payment is ' . $status;
+      Watchdog('SCS Payment', 'Unknown payment status: '. $status);
     }
-
     return $message;
   }
 }
@@ -442,6 +466,13 @@ function scs_payment_payment_method_configuration_form_elements(array $form, arr
     '#type' => 'fieldset',
   );
 
+  //Cancel message
+  $form['scs_pending'] = array(
+    '#title' => t('SCS Pending Message'),
+    '#type' => 'fieldset',
+  );
+
+
   $pmid = '';
 
   if (isset($form_state['build_info']['args'][0]->pmid) && $form_state['build_info']['args'][0]->pmid != '0') {
@@ -450,6 +481,14 @@ function scs_payment_payment_method_configuration_form_elements(array $form, arr
   //need to get the nid for the form
   $form['scs_cancel']['message'] = array(
     '#default_value' => variable_get('scs_cancelled_message_' . $pmid, 'Your order has been canceled.'),
+    '#title' => t('To create a link back to the form, use this token "[nid]". Example "please go &lt;a href="[nid]"&gt;here&lt;/a&gt;'),
+    '#description' => t('To create a link back to the form, use this token "[nid]". Example "please go &lt;a href="[nid]"&gt;here&lt;/a&gt;'),
+    '#required' => TRUE,
+    '#type' => 'textarea',
+  );
+
+  $form['scs_pending']['message'] = array(
+    '#default_value' => variable_get('scs_pending_message_' . $pmid, 'Thank you.  Your payment is processing.'),
     '#title' => t('To create a link back to the form, use this token "[nid]". Example "please go &lt;a href="[nid]"&gt;here&lt;/a&gt;'),
     '#description' => t('To create a link back to the form, use this token "[nid]". Example "please go &lt;a href="[nid]"&gt;here&lt;/a&gt;'),
     '#required' => TRUE,
@@ -479,9 +518,14 @@ function scs_payment_payment_method_configuration_form_elements_validate(array $
   //need to validate if any
   //do variable_set for message
   $message = $values['scs_cancel']['message'];
+  $pending_message = $values['scs_pending']['message'];
   if (isset($form_state['build_info']['args'][0]->pmid) && !empty($message)) {
     $pmid = $form_state['build_info']['args'][0]->pmid;
     variable_set('scs_cancelled_message_' . $pmid, $message);
+  }
+  if (isset($form_state['build_info']['args'][0]->pmid) && !empty($pending_message)) {
+    $pmid = $form_state['build_info']['args'][0]->pmid;
+    variable_set('scs_pending_message_' . $pmid, $pending_message);
   }
 }
 

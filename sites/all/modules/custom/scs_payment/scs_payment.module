@@ -100,7 +100,7 @@ function scs_payment_status_message($nid, $sid, $page_num) {
     if($status == 'payment_status_pending'){
       if (isset($pmid->pmid) && !empty($pmid->pmid)) {
         $url = drupal_get_path_alias('node/' . $nid);
-        $message = variable_get('scs_pending_message_' . $pmid->pmid, '');
+        $message = variable_get('scs_pending_message_' . $pmid->pmid, 'Thank you.  Your payment is processing.');
         $message = str_replace('[nid]', '/' . $url, $message);
         $message = webform_replace_tokens($message,NULL ,$submission, NULL, FALSE );
       }

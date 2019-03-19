@@ -378,15 +378,6 @@ function _context_context_plugins() {
       'parent' => 'context_reaction',
     ),
   );
-  if (module_exists('css_injector')) {
-    $plugins['context_reaction_css_injector'] = array(
-      'handler' => array(
-        'path' => drupal_get_path('module', 'context') . '/plugins',
-        'file' => 'context_reaction_css_injector.inc',
-        'class' => 'context_reaction_css_injector',
-        'parent' => 'context_reaction',
-      ),
-    );
   }
   return $plugins;
 }

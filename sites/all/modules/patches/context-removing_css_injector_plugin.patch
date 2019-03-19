@@ -1,0 +1,59 @@
+diff --git a/sites/all/modules/contrib/context/context.plugins.inc b/sites/all/modules/contrib/context/context.plugins.inc
+index 95d003d3a..de2408a38 100644
+--- a/sites/all/modules/contrib/context/context.plugins.inc
++++ b/sites/all/modules/contrib/context/context.plugins.inc
+@@ -378,15 +378,6 @@ function _context_context_plugins() {
+       'parent' => 'context_reaction',
+     ),
+   );
+-  if (module_exists('css_injector')) {
+-    $plugins['context_reaction_css_injector'] = array(
+-      'handler' => array(
+-        'path' => drupal_get_path('module', 'context') . '/plugins',
+-        'file' => 'context_reaction_css_injector.inc',
+-        'class' => 'context_reaction_css_injector',
+-        'parent' => 'context_reaction',
+-      ),
+-    );
+   }
+   return $plugins;
+ }
+diff --git a/sites/all/modules/contrib/context/plugins/context_reaction_css_injector.inc b/sites/all/modules/contrib/context/plugins/context_reaction_css_injector.inc
+deleted file mode 100644
+index 0ff790ffb..000000000
+--- a/sites/all/modules/contrib/context/plugins/context_reaction_css_injector.inc
++++ /dev/null
+@@ -1,33 +0,0 @@
+-<?php
+-
+-class context_reaction_css_injector extends context_reaction {
+-
+-  function options_form($context) {
+-    $list = array();
+-    foreach (_css_injector_load_rule() as $css_rule) {
+-      $list[$css_rule['crid']] = $css_rule['title'];
+-    }
+-    ksort($list);
+-
+-    return array(
+-      '#title' => $this->title,
+-      '#description' => $this->description,
+-      '#options' => $list,
+-      '#type' => 'checkboxes',
+-      '#default_value' => $this->fetch_from_context($context),
+-    );
+-  }
+-
+-  function execute() {
+-    $contexts = $this->get_contexts();
+-    foreach ($contexts as $context) {
+-      if (!empty($context->reactions[$this->plugin])) {
+-        foreach ($context->reactions[$this->plugin] as $crid => $enabled) {
+-          if ($enabled && $css_rule = _css_injector_load_rule($crid)) {
+-            drupal_add_css(_css_injector_rule_uri($crid), 'module', $css_rule['media'], $css_rule['preprocess']);
+-          }
+-        }
+-      }
+-    }
+-  }
+-}

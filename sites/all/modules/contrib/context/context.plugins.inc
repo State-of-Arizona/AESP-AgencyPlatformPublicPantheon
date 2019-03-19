@@ -378,6 +378,5 @@ function _context_context_plugins() {
       'parent' => 'context_reaction',
     ),
   );
-  }
   return $plugins;
 }

@@ -1,8 +1,8 @@
 diff --git a/sites/all/modules/contrib/context/context.plugins.inc b/sites/all/modules/contrib/context/context.plugins.inc
-index 95d003d3a..de2408a38 100644
+index 95d003d3a..ff521e103 100644
 --- a/sites/all/modules/contrib/context/context.plugins.inc
 +++ b/sites/all/modules/contrib/context/context.plugins.inc
-@@ -378,15 +378,6 @@ function _context_context_plugins() {
+@@ -378,15 +378,5 @@ function _context_context_plugins() {
        'parent' => 'context_reaction',
      ),
    );
@@ -15,7 +15,7 @@ index 95d003d3a..de2408a38 100644
 -        'parent' => 'context_reaction',
 -      ),
 -    );
-   }
+-  }
    return $plugins;
  }
 diff --git a/sites/all/modules/contrib/context/plugins/context_reaction_css_injector.inc b/sites/all/modules/contrib/context/plugins/context_reaction_css_injector.inc

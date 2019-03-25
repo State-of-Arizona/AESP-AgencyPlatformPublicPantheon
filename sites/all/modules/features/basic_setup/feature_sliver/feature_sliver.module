@@ -76,7 +76,13 @@ function feature_sliver_block_view($delta = '') {
         '#markup' => '',
         '#attached' => array(
           'css' => array(),
-          'js' => array(feature_sliver_get_library_file()),
+          'js' => array(
+            array(
+              'type' => 'external',
+              'data' => feature_sliver_get_library_file(),
+              'scope' => 'footer',
+            )
+          ),
         ),
       );
       if ($block['content']['#attached']['js'][0] == ''){

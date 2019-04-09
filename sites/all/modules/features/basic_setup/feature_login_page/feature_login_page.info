@@ -1,0 +1,16 @@
+name = Feature Login Page
+description = Login page for agency platform
+core = 7.x
+package = Distribution Basic Setup
+version = 7.x-1.0
+dependencies[] = ctools
+dependencies[] = feature_basic_content
+dependencies[] = features
+dependencies[] = node_export_features
+dependencies[] = node_export
+dependencies[] = node_export_features
+dependencies[] = strongarm
+dependencies[] = uuid
+features[ctools][] = strongarm:strongarm:1
+features[features_api][] = api:2
+features[node_export_features][] = 93877501-872c-42f2-b255-0d9e48ec1b30

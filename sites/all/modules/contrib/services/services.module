@@ -1160,7 +1160,7 @@ function services_features_export_alter(&$export, $module_name) {
  *   Whether or not the operator is valid.
  */
 function _services_is_valid_query_op($op) {
-  return in_array(strtoupper(trim($op)), [
+  return in_array(strtoupper(trim($op)), array(
     '=',
     '<=>',
     '>',
@@ -1180,5 +1180,5 @@ function _services_is_valid_query_op($op) {
     'BETWEEN',
     'EXISTS',
     'NOT EXISTS',
-  ], TRUE);
+  ), TRUE);
 }

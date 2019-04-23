@@ -1053,7 +1053,7 @@ function simplesamlphp_auth_simplesamlphp_auth_addauthmaps_alter(&$existing_user
 
   if (empty($existing_user)) {
 
-    $user = user_load_by_name($context['authname']);
+    $user = user_load_by_name($context['authname']) ?: user_load_by_mail($context['authname']);
     $existing_user = $user == FALSE ? NULL : $user;
   }
 }

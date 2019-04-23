@@ -476,10 +476,12 @@ function simplesamlphp_auth_settings() {
   }
 
   $roles = user_roles(TRUE);
+  $default_key = array_search ('administrator', $roles);
 
   $form['simplesamlphp_auth_grp_setup'] = array(
     '#type' => 'fieldset',
     '#title' => t('Basic Setup'),
+    '#description' => t('<div><strong>WARNING:</strong> Entering incorrect values in this configuration can lead to the site breaking or potential security issues. Please follow the following process document of how to set up your website with Okta: <a href="https://docs.google.com/document/d/17hXbfBL501I7lSDVws01bf55TNEGLJhG92ddZyugysA/edit">https://docs.google.com/document/d/17hXbfBL501I7lSDVws01bf55TNEGLJhG92ddZyugysA/edit</a></div><br>'),
     '#collapsible' => FALSE, 
   );
   $form['simplesamlphp_auth_grp_setup']['simplesamlphp_auth_activate'] = array(
@@ -515,14 +517,14 @@ function simplesamlphp_auth_settings() {
   $form['simplesamlphp_auth_grp_user']['simplesamlphp_auth_user_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Which attribute from simpleSAMLphp should be used as user\'s name'),
-    '#default_value' => variable_get('simplesamlphp_auth_user_name', 'eduPersonPrincipalName'),
+    '#default_value' => variable_get('simplesamlphp_auth_user_name', 'mail'),
     '#description' => t('Example: <i>eduPersonPrincipalName</i> or <i>displayName</i><br />If the attribute is multivalued, the first value will be used.'),
     '#required' => TRUE,
   );
   $form['simplesamlphp_auth_grp_user']['simplesamlphp_auth_unique_id'] = array(
     '#type' => 'textfield',
     '#title' => t('Which attribute from simpleSAMLphp should be used as unique identifier for the user'),
-    '#default_value' => variable_get('simplesamlphp_auth_unique_id', 'eduPersonPrincipalName'),
+    '#default_value' => variable_get('simplesamlphp_auth_unique_id', 'mail'),
     '#description' => t('Example: <i>eduPersonPrincipalName</i> or <i>eduPersonTargetedID</i><br />If the attribute is multivalued, the first value will be used.'),
     '#required' => TRUE,
   );
@@ -589,7 +591,7 @@ function simplesamlphp_auth_settings() {
       '#options' => $roles,
       '#multiple' => TRUE,
       '#title' => t('Which ROLES should be allowed to login with local accounts?'),
-      '#default_value' => variable_get('simplesamlphp_auth_allowdefaultloginroles', ''),
+      '#default_value' => variable_get('simplesamlphp_auth_allowdefaultloginroles', $default_key),
       '#description' => t('Roles that should be allowed to login without simpleSAMLphp. Examples are dev/admin roles or guest roles.'),
   );
   $form['simplesamlphp_auth_grp_auth']['simplesamlphp_auth_allowdefaultloginusers'] = array(
@@ -1053,7 +1055,7 @@ function simplesamlphp_auth_simplesamlphp_auth_addauthmaps_alter(&$existing_user
 
   if (empty($existing_user)) {
 
-    $user = user_load_by_name($context['authname']);
+    $user = user_load_by_name($context['authname']) ?: user_load_by_mail($context['authname']);
     $existing_user = $user == FALSE ? NULL : $user;
   }
 }

@@ -1,0 +1,280 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ * Define user permissions.
+ */
+function az_okta_permission() {
+  return array(
+   'gaz_okta_perms' => array(
+     'title' => t('Administer AZ OKTA Integration'),
+     'description' => t('Administer any configuration related to the AZ OKTA Integration module.'),
+   ),
+ );
+} 
+
+
+/**
+ * Implements hook_menu().
+ * Define menu items and page callbacks.
+ */
+function az_okta_menu() {
+   $items = array();
+   $items['admin/config/people/az-okta-settings'] = array(
+       'title' => 'AZ OKTA Settings',
+       'description' => 'Configure AZ OKTA Integration settings',
+       //Everything in form callback
+       'page callback' => array('drupal_get_form'),
+       'page arguments' => array('_form_az_okta_1'),                                   
+       'access arguments' => array('administer site configuration'),
+       'file' => 'inc/az_okta_menu.inc',
+ 	'file path' => drupal_get_path('module', 'az_okta'),
+       //'type' => MENU_NORMAL_ITEM,
+   );
+   return $items;
+}
+
+// function az_okta_form_alter(&$form, &$form_state, $form_id) {
+//   //dsm($form_id, "The form ID is");
+//   if ($form_id == "_form_az_okta_1") {
+//   //$output = _az_okta_parse_xml ();
+//   dsm($GLOBALS['base_url'], "base url");
+//   // $test_array = _az_okta_template_array ();
+//   // dsm($test_array, 'The test array');
+//   }
+// }
+
+function _az_okta_gethostname () {
+	return $_SERVER['SERVER_NAME'];
+}
+
+function _az_okta_parse_xml () {
+  //return result to authsources as an array
+  $xml_string = variable_get('xml_data', '');
+  if (isset($xml_string)  && $xml_string != "") {
+    $xml = simplexml_load_string($xml_string, "SimpleXMLElement", LIBXML_NOCDATA);
+    //$xml = simplexml_load_string($xml_string);
+    //$json = json_encode($xml);
+    $arrayData = xmlToArray($xml);
+    $json =  json_encode($arrayData);
+    $array = json_decode($json,TRUE);
+    return $array;
+  }
+}
+
+function _az_okta_parse_xml_2 ($env) {
+  //return result to authsources as an array
+  if ($env == 'dev') {
+    $xml_string = variable_get('xml_data', '');
+  } elseif ($env == 'test') {
+    $xml_string = variable_get('test_xml_data', '');
+  } else {
+    $xml_string = variable_get('live_xml_data', '');
+  }
+
+
+  if (isset($xml_string) && $xml_string != "") {
+    $xml = simplexml_load_string($xml_string, "SimpleXMLElement", LIBXML_NOCDATA);
+    $arrayData = xmlToArray($xml);
+    $json =  json_encode($arrayData);
+    $array = json_decode($json,TRUE);
+    return $array;
+  }
+}
+
+function _az_okta_entity_id () {
+  $entityid = variable_get('entity_id', '');
+  return $entityid;
+}
+
+function _az_okta_environment () {
+  $environment = variable_get('environment', '');
+  return $environment;
+}
+
+function _az_okta_assertion_url () {
+  $assertionurl = variable_get('assertion_url', '');
+  return $assertionurl;
+}
+
+function _az_okta_xml_fid () {
+  //TODO: Read file and process as required
+  $xmlfid = variable_get('xml_upload_fid', '');
+  $file = file_load($xmlfid);
+  $uri = $file->uri;
+  $url = file_create_url($uri);
+  //convert to string
+  //$str = $url;
+  $path = explode('/', $url, 7);
+  $server = $_SERVER['SERVER_NAME'];
+  $server_host = $_SERVER['HTTP_HOST'];
+  $server_remote = $_SERVER['REMOTE_HOST'];
+  return $server . "/" . $path[6];
+  //return $url;
+}
+
+
+/**From https://outlandish.com/blog/tutorial/xml-to-json/
+* Make modification to default below to generate what is required 
+* by OKTA
+*/
+function xmlToArray($xml, $options = array()) {
+    $defaults = array(
+        'namespaceSeparator' => ':',//you may want this to be something other than a colon
+        'attributePrefix' => '@',   //to distinguish between attributes and nodes with the same name
+        //'attributePrefix' => '',   //to distinguish between attributes and nodes with the same name
+        'alwaysArray' => array(),   //array of xml tag names which should always become arrays
+        'autoArray' => true,        //only create arrays for tags which appear more than once
+        //'autoArray' => false,        //only create arrays for tags which appear more than once
+        'textContent' => '$',       //key used for the text content of elements
+        'autoText' => true,         //skip textContent key if node has no attributes or child nodes
+        'keySearch' => false,       //optional search and replace on tag and attribute names
+        'keyReplace' => false       //replace values for above search values (as passed to str_replace())
+    );
+    $options = array_merge($defaults, $options);
+    $namespaces = $xml->getDocNamespaces();
+    $namespaces[''] = null; //add base (empty) namespace
+ 
+    //get attributes from all namespaces
+    $attributesArray = array();
+    foreach ($namespaces as $prefix => $namespace) {
+        foreach ($xml->attributes($namespace) as $attributeName => $attribute) {
+            //replace characters in attribute name
+            if ($options['keySearch']) $attributeName =
+                    str_replace($options['keySearch'], $options['keyReplace'], $attributeName);
+            $attributeKey = $options['attributePrefix']
+                    . ($prefix ? $prefix . $options['namespaceSeparator'] : '')
+                    . $attributeName;
+            $attributesArray[$attributeKey] = (string)$attribute;
+        }
+    }
+ 
+    //get child nodes from all namespaces
+    $tagsArray = array();
+    foreach ($namespaces as $prefix => $namespace) {
+        foreach ($xml->children($namespace) as $childXml) {
+            //recurse into child nodes
+            $childArray = xmlToArray($childXml, $options);
+            list($childTagName, $childProperties) = each($childArray);
+ 
+            //replace characters in tag name
+            if ($options['keySearch']) $childTagName =
+                    str_replace($options['keySearch'], $options['keyReplace'], $childTagName);
+            //add namespace prefix, if any
+            if ($prefix) $childTagName = $prefix . $options['namespaceSeparator'] . $childTagName;
+ 
+            if (!isset($tagsArray[$childTagName])) {
+                //only entry with this key
+                //test if tags of this type should always be arrays, no matter the element count
+                $tagsArray[$childTagName] =
+                        in_array($childTagName, $options['alwaysArray']) || !$options['autoArray']
+                        ? array($childProperties) : $childProperties;
+            } elseif (
+                is_array($tagsArray[$childTagName]) && array_keys($tagsArray[$childTagName])
+                === range(0, count($tagsArray[$childTagName]) - 1)
+            ) {
+                //key already exists and is integer indexed array
+                $tagsArray[$childTagName][] = $childProperties;
+            } else {
+                //key exists so convert to integer indexed array with previous value in position 0
+                $tagsArray[$childTagName] = array($tagsArray[$childTagName], $childProperties);
+            }
+        }
+    }
+ 
+    //get text content of node
+    $textContentArray = array();
+    $plainText = trim((string)$xml);
+    if ($plainText !== '') $textContentArray[$options['textContent']] = $plainText;
+ 
+    //stick it all together
+    $propertiesArray = !$options['autoText'] || $attributesArray || $tagsArray || ($plainText === '')
+            ? array_merge($attributesArray, $tagsArray, $textContentArray) : $plainText;
+ 
+    //return node as array
+    return array(
+        $xml->getName() => $propertiesArray
+    );
+}
+
+/**Utility function to grab string between two other strings
+*
+* Possible use is to grab the data required from the XML, and then
+* set the value of the corresponding part of the array required
+* by OKTA
+*/
+function _az_okta_get_string_between($string, $start, $end){
+    $string = ' ' . $string;
+    $ini = strpos($string, $start);
+    if ($ini == 0) return '';
+    $ini += strlen($start);
+    $len = strpos($string, $end, $ini) - $ini;
+    return substr($string, $ini, $len);
+}
+
+/**Template XML PHP Array function
+*
+*
+*/
+function _az_okta_template_array () {
+  $template_array = $metadata['http://www.okta.com/exk1e9f1nzDsrYw1Z297'] = array (
+  'entityid' => 'http://www.okta.com/exk1e9f1nzDsrYw1Z297',
+  'contacts' => 
+  array (
+  ),
+  'metadata-set' => 'saml20-idp-remote',
+  'SingleSignOnService' => 
+  array (
+    0 => 
+    array (
+      'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+      'Location' => 'https://az.okta.com/app/stateofarizonaprod_arizonastrategicenterprisetechnologywebsite_1/exk1e9f1nzDsrYw1Z297/sso/saml',
+    ),
+    1 => 
+    array (
+      'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+      'Location' => 'https://az.okta.com/app/stateofarizonaprod_arizonastrategicenterprisetechnologywebsite_1/exk1e9f1nzDsrYw1Z297/sso/saml',
+    ),
+  ),
+  'SingleLogoutService' => 
+  array (
+  ),
+  'ArtifactResolutionService' => 
+  array (
+  ),
+  'NameIDFormats' => 
+  array (
+    0 => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    1 => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+  ),
+  'keys' => 
+  array (
+    0 => 
+    array (
+      'encryption' => false,
+      'signing' => true,
+      'type' => 'X509Certificate',
+      'X509Certificate' => 'MIIDlDCCAnygAwIBAgIGAWEGR7Z9MA0GCSqGSIb3DQEBCwUAMIGKMQswCQYDVQQGEwJVUzETMBEG
+      A1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNjbzENMAsGA1UECgwET2t0YTEU
+      MBIGA1UECwwLU1NPUHJvdmlkZXIxCzAJBgNVBAMMAmF6MRwwGgYJKoZIhvcNAQkBFg1pbmZvQG9r
+      dGEuY29tMB4XDTE4MDExNzIyMzkxOFoXDTI4MDExNzIyNDAxN1owgYoxCzAJBgNVBAYTAlVTMRMw
+      EQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMQ0wCwYDVQQKDARPa3Rh
+      MRQwEgYDVQQLDAtTU09Qcm92aWRlcjELMAkGA1UEAwwCYXoxHDAaBgkqhkiG9w0BCQEWDWluZm9A
+      b2t0YS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC0OczVU6i/Hb1Fjjce0rwp
+      BxYUDeTjCEiVAKBtnz8ZK+SdNblu/wAuyiPHsH7MyJgU5n8QMSGmv9Flv41b71ZUj0yGX6Uzlrgd
+      yHz2jj665G0rGDNW98wMXVLzUM3+ZKdHsQWbigvuEVrhIggqeubGMx6xtFLkdSgKz74ly7tnnFwV
+      qBt1mxg4MFgykvn8TY+bZ0hBKwHycPoHgB2g3Kj31eMe25yj+04MisZ1ibvrH9YGgonXaTGsZ8cn
+      AJp8CoKHGbY+zl0MKQuil5U3kqPjXDlZebd5u3hyl5X3Gx58qL2dQ9w/9aboq34+BD7Jft8Ai8hw
+      IIfQHLSFSxdueLEDAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAGlaN3jh3dR9gtACny9opEsUeOuE
+      SYxPmk+k6kxSyRi+KeS5i1ZlDmHYDtY+PJK/4iX4d57N9PHERm7TV+/8yiGWGVjX2haEMFBafAuq
+      /LhzZaJjGWH0UH18jSESKPty7TXnVfjoJpFKNf8sKpPNe3ALZX124jWjB5NYUnvuMAVj+IhCQ5P1
+      32jLKepdR262LV6EYnLsaa3sNtV3N/JWBCcOLGOQjETtP1NrskEfDr2kUeZJACZHxehzD5Fy4+YD
+      stFULxx5lozR8iyG02x1rUo2zDnVlnpy3KrW6oeM8L2btBYcgh0tqFmquu10cfrG0rZ/8ABXOqKB
+      V2E8K7T3QIc=',
+          ),
+        ),
+      );
+
+return $template_array;
+
+}

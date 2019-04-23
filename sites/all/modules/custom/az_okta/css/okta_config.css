@@ -1,0 +1,8 @@
+#okta-outer {
+    background: #f1f3f9;
+    /* border: 1px solid grey; */
+}
+.alert {
+	color: red;
+	font-weight: bold;
+}

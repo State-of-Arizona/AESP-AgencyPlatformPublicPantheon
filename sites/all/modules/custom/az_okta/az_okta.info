@@ -1,0 +1,13 @@
+name = AZ OKTA Integration
+description = "This module facilitates the OKTA Integration<br/>More info here."
+package = ASET
+core = 7.x
+version = 7.x-1.0
+;dependencies[] = ##
+dependencies[] = drupal:system (>= 7.40)
+;remove dependency below after development is complete.
+;dependencies[] = devel:devel
+dependencies[] = simplesamlphp_auth:simplesamlphp_auth
+files[] = az_okta_menu.module
+files[] = inc/az_okta_menu.inc
+configure = admin/config/services/az-okta-settings

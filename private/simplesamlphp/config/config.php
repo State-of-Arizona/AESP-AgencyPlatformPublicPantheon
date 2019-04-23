@@ -4,6 +4,14 @@
  *
  */
 
+//Bootstrap Drupal
+//Go to the Drupal root
+// chdir("../../../");
+// define('DRUPAL_ROOT', getcwd()); //the most important line - get current working directory, define the Drupal Root
+// require_once 'includes/bootstrap.inc';
+// drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+//End Bootstrap code
+
 if (!ini_get('session.save_handler')) {
   ini_set('session.save_handler', 'file');
 }

@@ -1,42 +1,92 @@
 <?php
+//Bootstrap Drupal
+//Go to the Drupal root
+chdir("../../../");
+define('DRUPAL_ROOT', getcwd()); //the most important line - get current working directory, define the Drupal Root
+require_once 'includes/bootstrap.inc';
+drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+//End Bootstrap code
 
-$realpath = $_SERVER['DOCUMENT_ROOT'] . '/../files/private/';
-//Including the configuration values
-include $realpath . 'az_okta_config.php';
-include $realpath . 'test_az_okta_config.php';
-include $realpath . 'live_az_okta_config.php';
+//Testing output only - remove HTML after testing
+echo "<!DOCTYPE html>
+<html>
+<head>
+    <title>this is the title</title>
+</head>
+<body>Test 5<br/>";
+//echo "another test<br/>";
+//drupal_set_message(t("testing the dsm"), 'status', FALSE);
+//$test_output = _az_okta_test ();
+//$gethostname = _az_okta_gethostname ();
+$xmlstring = print_r(_az_okta_parse_xml ());
+//$xmlfileid = _az_okta_xml_fid ();
+//echo $test_output;
+//Below for entitiy_id make sure to add single quotes to string
+// echo "</br>The entitiy_id is as follows: " . "'" . _az_okta_entity_id () . "'" .  "</br>";
+// echo "</br>The environment is as follows: " . "'" . _az_okta_environment () . "'" .  "</br>";
+// echo "</br>The assertion URL is as follows: " . "'" . _az_okta_assertion_url () . "'" .  "</br>";
+// echo "</br>The idp_config is as follows: " . "'" .$xmlstring['EntityDescriptor']['@entityID'] . "'" .  "</br>";
+// echo "</br>The hostname is as follows: " . $gethostname . "</br>";
+//echo "</br>The xml file ID is as follows: " . $xmlfileid . "</br>";
+//echo "</br>The xml is as follows: " . $xmlstring . "</br>";
+
+
+
 
 // Entity ID
-//Will this be the same for all environments?
-//$the_entityID = $az_okta_array['entity_id'];
-//$the_entityID = 'az_aset_okta';
+// The entity ID should be a string with no spaces and only use underscores (ie az_doa_okta)
+// Note: Don't forget the '' around the string
 
-// IDP Links for various environments
-//$live_idp = 'http://www.okta.com/exk1g2lol2QRVHjOH297';
-$live_idp = $live_az_okta_xml['EntityDescriptor']['@entityID'];
-// //$test_idp = 'http://www.okta.com/exk1g3z5t3rA6BsJk297';
-$test_idp = $test_az_okta_xml['EntityDescriptor']['@entityID'];
-//$dev_idp = 'http://www.okta.com/exk1g3zjvnI1RxZY4297';
-$dev_idp = $az_okta_xml['EntityDescriptor']['@entityID'];
+//$the_entityID = null;
+$the_entityID = "'" . _az_okta_entity_id () . "'";
+
+// IDP Links for various environmentst  
+// IDP link should be pulled from the converted metadata provided by SI and the Okta Application
+// It is found under the array from the converted metadata labeled as entityid => 'http://www.okta.com/xxxxxxxxxx'
+// Note: Don't forget the '' around the string
+//check for the environment and then set the idp values accordingly.
+
+$live_idp = null;
+$test_idp = null;
+$dev_idp = null;
 
 // Setting the default IDP
 $the_idp = null;
 
+//Set the idp values per the environment in the az_okta module configuration
+//TODO: Remove echo statements once dev is complete.
+$array = _az_okta_parse_xml ();
+//Are the single quotes required?
+//$idp_config = "'" . $array['EntityDescriptor']['@entityID'] . "'";
+$idp_config = $array['EntityDescriptor']['@entityID'];
+$environment_config = _az_okta_environment ();
+//echo "Environment returned is " . $environment_config . "</br>";
+if ($environment_config == "development") {
+    echo "This is development</br>";
+    //set development idp
+    $dev_idp = $idp_config;
+} elseif ($environment_config == "test") {
+    echo "This is test</br>";
+    //set test idp
+    $test_idp = $idp_config;
+} else {
+    //set production
+    echo "This is production</br>";
+    $live_idp = $idp_config;
+}
+
 
 // Depending on the environments, we can call specific IDP links
 if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' ) {
-    $the_idp = $live_idp;
-    $the_entityID = $live_az_okta_array['entity_id'];
+	$the_idp = $live_idp;
 }
 
 if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'test' ) {
-    $the_idp = $test_idp;
-    $the_entityID = $test_az_okta_array['entity_id'];
+	$the_idp = $test_idp;
 }
 
 if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'dev' ) {
-    $the_idp = $dev_idp;
-    $the_entityID = $az_okta_array['entity_id'];
+	$the_idp = $dev_idp;
 }
 
 $config = array(
@@ -366,3 +416,6 @@ $config = array(
     */
 
 );
+echo "</body>
+</html>";
+//End of testing HTML

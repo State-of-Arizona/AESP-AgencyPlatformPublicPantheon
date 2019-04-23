@@ -1,42 +1,53 @@
 <?php
 
-$realpath = $_SERVER['DOCUMENT_ROOT'] . '/../files/private/';
-//Including the configuration values
-include $realpath . 'az_okta_config.php';
-include $realpath . 'test_az_okta_config.php';
-include $realpath . 'live_az_okta_config.php';
+//Bootstrap Drupal
+//Go to the Drupal root
+// chdir("../../../");
+// define('DRUPAL_ROOT', getcwd()); //the most important line - get current working directory, define the Drupal Root
+// require_once 'includes/bootstrap.inc';
+// drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+//End Bootstrap code
 
 // Entity ID
-//Will this be the same for all environments?
-//$the_entityID = $az_okta_array['entity_id'];
 //$the_entityID = 'az_aset_okta';
+$the_entityID = _az_okta_entity_id ();
 
 // IDP Links for various environments
-//$live_idp = 'http://www.okta.com/exk1g2lol2QRVHjOH297';
-$live_idp = $live_az_okta_xml['EntityDescriptor']['@entityID'];
-// //$test_idp = 'http://www.okta.com/exk1g3z5t3rA6BsJk297';
-$test_idp = $test_az_okta_xml['EntityDescriptor']['@entityID'];
-//$dev_idp = 'http://www.okta.com/exk1g3zjvnI1RxZY4297';
-$dev_idp = $az_okta_xml['EntityDescriptor']['@entityID'];
+$live_idp = null;
+$test_idp = null;
+$dev_idp = null;
 
 // Setting the default IDP
 $the_idp = null;
 
 
+//Set the idp values per the environment in the az_okta module configuration
+$array = _az_okta_parse_xml ();
+$idp_config = $array['EntityDescriptor']['@entityID'];
+$environment_config = _az_okta_environment ();
+if ($environment_config == "development") {
+    //set development idp
+    $dev_idp = $idp_config;
+} elseif ($environment_config == "test") {
+    //set test idp
+    $test_idp = $idp_config;
+} else {
+    //set production
+    $live_idp = $idp_config;
+}
+
+
 // Depending on the environments, we can call specific IDP links
 if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' ) {
     $the_idp = $live_idp;
-    $the_entityID = $live_az_okta_array['entity_id'];
 }
 
 if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'test' ) {
     $the_idp = $test_idp;
-    $the_entityID = $test_az_okta_array['entity_id'];
 }
 
 if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'dev' ) {
     $the_idp = $dev_idp;
-    $the_entityID = $az_okta_array['entity_id'];
 }
 
 $config = array(

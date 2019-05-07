@@ -281,8 +281,8 @@ function _form_az_okta_1_submit($form, &$form_state) {
   $dev_var_xml = var_export($az_okta_xml_data, true);
   $dev_var = "<?php\n\n\$az_okta_array = $dev_var_str;\n\n\$az_okta_xml = $dev_var_xml" . ";\n\n";
   //Is there a config file?
-  fopen("./sites/default/files/private/az_okta_config.php", "w");
-  file_put_contents('./sites/default/files/private/az_okta_config.php', $dev_var);
+  fopen("private://az_okta_config.php", "w");
+  file_put_contents('private://az_okta_config.php', $dev_var);
 }
 
   //Test INFO
@@ -299,8 +299,8 @@ function _form_az_okta_1_submit($form, &$form_state) {
   $test_var_xml = var_export($test_az_okta_xml_data, true);
   $test_var = "<?php\n\n\$test_az_okta_array = $test_var_str;\n\n\$test_az_okta_xml = $test_var_xml" . ";\n\n";
   //Is there a config file?
-  fopen("./sites/default/files/private/test_az_okta_config.php", "w");
-  file_put_contents('./sites/default/files/private/test_az_okta_config.php', $test_var);
+  fopen("private://test_az_okta_config.php", "w");
+  file_put_contents('private://test_az_okta_config.php', $test_var);
 }
 
   //Live INFO
@@ -317,8 +317,8 @@ if ($save_live_config == 1 && ($live_entity_id != '' && $live_xml_data != '')) {
   $live_var_xml = var_export($live_az_okta_xml_data, true);
   $live_var = "<?php\n\n\$live_az_okta_array = $live_var_str;\n\n\$live_az_okta_xml = $live_var_xml" . ";\n\n";
   //Is there a config file?
-  fopen("./sites/default/files/private/live_az_okta_config.php", "w");
-  file_put_contents('./sites/default/files/private/live_az_okta_config.php', $live_var);
+  fopen("private://live_az_okta_config.php", "w");
+  file_put_contents('private://live_az_okta_config.php', $live_var);
 }
 
   //drupal_set_message(t('Your configuration has been saved.  Please confirm the changes below.'), 'status');

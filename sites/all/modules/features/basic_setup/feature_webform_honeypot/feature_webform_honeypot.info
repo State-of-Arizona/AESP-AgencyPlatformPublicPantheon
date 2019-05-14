@@ -1,0 +1,13 @@
+name = Feature Webform Honeypot
+description = Enable honeypot on all webforms
+core = 7.x
+package = Distribution Basic Setup
+version = 7.x-1.0
+dependencies[] = ctools
+dependencies[] = honeypot
+dependencies[] = strongarm
+features[ctools][] = strongarm:strongarm:1
+features[features_api][] = api:2
+features[variable][] = honeypot_form_webforms
+features[variable][] = honeypot_log
+features[variable][] = honeypot_time_limit

@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Feature Webform Honeypot feature.
+ */
+
+include_once 'feature_webform_honeypot.features.inc';

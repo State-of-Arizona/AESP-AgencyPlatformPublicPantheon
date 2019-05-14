@@ -53,6 +53,10 @@ dependencies[] = feature_basic_config
 dependencies[] = feature_basic_content
 dependencies[] = feature_sliver
 dependencies[] = feature_smtp_config
+dependencies[] = feature_login_page
+dependencies[] = feature_webform_honeypot
+
+
 
 ;others
 dependencies[] = extlink

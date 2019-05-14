@@ -255,49 +255,16 @@ function simplesamlphp_auth_init() {
         }
 
         if (!$ext_user) {
-          // First we check the admin settings for simpleSAMLphp and find out if we are allowed to register users.
-          if (variable_get('simplesamlphp_auth_registerusers', TRUE)  && !$existing_user) {
-
-            // We are allowed to register new users.
-            _simplesaml_auth_debug(t('Register [%authname]', array('%authname' => $authname)));
-
-            user_external_login_register($authname, 'simplesamlphp_auth');
-
-            if ($user) {
-              // Populate roles based on configuration setting.
-              $roles = _simplesamlphp_auth_rolepopulation(variable_get('simplesamlphp_auth_rolepopulation', ''));
-              $userinfo = array('roles' => $roles);
-              $user = user_save($user, $userinfo); // @todo - Fjernet rolle-delen her da den gav en bra feilmelding når roller ikke finnes ;)
-            }
-
-          }
-          else {
             // We are not allowed to register new users on the site through simpleSAML.
             // We let the user know about this and redirect to the user/login page.
             $msg = t("We are sorry. While you have successfully authenticated, you are not yet entitled to access this site. Please ask the site administrator to provision access for you.");
             drupal_set_message(check_plain($msg));
             $_simplesamlphp_auth_as->logout(base_path());
-          }
+
         }
         else {
-          // If successfully logged into Drupal.
-          // See if we're supposed to re-evaluate role assignments.
-
-          if (variable_get('simplesamlphp_auth_roleevaleverytime', 0)) {
-            // If the user is already registered...
-            // Update the roles.
-            // Populate roles based on configuration setting.
-            _simplesaml_auth_debug(t('User already registered [%authname] updating roles.', array('%authname' => $authname)));
-            $roles = _simplesamlphp_auth_rolepopulation(variable_get('simplesamlphp_auth_rolepopulation', ''));
-            $userinfo = array('roles' => $roles);
-
-            // Save the updated roles and populate the user object.
-            $user = user_save($ext_user, $userinfo);
-          }
-          else {
-            // No need to evaluate roles, populate the user object.
-            $user = $ext_user;
-          }
+          // No need to evaluate roles, populate the user object.
+          $user = $ext_user;
 
           if (module_exists('rules')) {
             rules_invoke_event('simplesamlphp_auth_rules_event_login', $user);
@@ -534,19 +501,6 @@ function simplesamlphp_auth_settings() {
     '#default_value' => variable_get('simplesamlphp_auth_mailattr', 'mail'),
     '#description' => t('Example: <i>mail</i><br />If the user attribute is multivalued, the first value will be used.'),
   );
-  $form['simplesamlphp_auth_grp_user']['simplesamlphp_auth_rolepopulation'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Automatic role population from simpleSAMLphp attributes'),
-    '#default_value' => variable_get('simplesamlphp_auth_rolepopulation', ''),
-    '#description' => t('A pipe separated list of rules.<br />Example: <i>roleid1:condition1|roleid2:contition2...</i> <br />For instance: <i>1:eduPersonPrincipalName,@=,uninett.no;affiliation,=,employee|2:mail,=,andreas@uninett.no</i>'),
-  );
-  $form['simplesamlphp_auth_grp_user']['simplesamlphp_auth_roleevaleverytime'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Reevaluate roles every time the user logs in.'),
-    '#default_value' => variable_get('simplesamlphp_auth_roleevaleverytime', 0),
-    '#description' => t('NOTE: This means users could loose any roles that have been assigned manually in Drupal.'),
-  );
-
   $form['simplesamlphp_auth_grp_reg'] = array(
     '#type' => 'fieldset',
     '#title' => t('User Provisioning'),
@@ -880,60 +834,6 @@ function _simplesamlphp_auth_evaulaterolerule($roleruleevaluation, $attributes) 
   }
 
   return FALSE;
-}
-
-/**
- * Performs role population.
- *
- * @param $rolemap
- *   A string containing the role map.
- *
- * @return
- *   An array containing user's roles.
- */
-function _simplesamlphp_auth_rolepopulation($rolemap) {
-  global $_simplesamlphp_auth_as;
-  global $_simplesamlphp_auth_saml_attributes;
-  $roles = array();
-
-  _simplesaml_auth_debug(t('Rolemap: %rolemap', array('%rolemap' => $rolemap)));
-
-  // Check if valid local session exists..
-  if ($_simplesamlphp_auth_as->isAuthenticated()) {
-    $attributes = $_simplesamlphp_auth_saml_attributes;
-
-    if (empty($rolemap)) return $roles;
-
-    _simplesaml_auth_debug(t('Evaluate rolemap: %rolemap', array('%rolemap' => $rolemap)));
-
-    $rolerules = explode('|', $rolemap);
-
-    foreach ($rolerules AS $rolerule) {
-      _simplesaml_auth_debug(t('Evaluate role rule: %rolerule', array('%rolerule' => $rolerule)));
-
-      $roleruledecompose = explode(':', $rolerule);
-
-      $roleid = $roleruledecompose[0];
-      $roleruleevaluations = explode(';', $roleruledecompose[1]);
-
-      $addnew = TRUE;
-      foreach ($roleruleevaluations AS $roleruleevaluation) {
-
-        _simplesaml_auth_debug(t('Evaluate role evaulation: %roleruleeval', array('%roleruleeval' => $roleruleevaluation)));
-
-        $roleruleevaluationdc = explode(',', $roleruleevaluation);
-        if (!_simplesamlphp_auth_evaulaterolerule($roleruleevaluationdc, $attributes)) {
-          $addnew = FALSE;
-        }
-      }
-      if ($addnew) {
-        $roles[$roleid] = $roleid;
-        _simplesaml_auth_debug(t('Add new role: %roleid', array('%roleid' => $roleid)));
-      }
-
-    }
-  }
-  return $roles;
 }
 
 /**

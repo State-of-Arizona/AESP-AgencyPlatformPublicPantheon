@@ -645,3 +645,17 @@ $conf['x_frame_options'] = '';
 //    exit();
 //  }
 //}
+
+
+
+# Provide universal absolute path to the installation.
+$conf['simplesamlphp_auth_installdir'] = $_ENV['HOME'] .'/code/private/simplesamlphp';
+
+if (isset($_ENV['PANTHEON_ENVIRONMENT'])) {
+  if (isset($_SERVER['HTTP_USER_AGENT_HTTPS']) && $_SERVER['HTTP_USER_AGENT_HTTPS'] === 'ON') {
+    $_SERVER['SERVER_PORT'] = 443;
+  }
+  else {
+    $_SERVER['SERVER_PORT'] = 80;
+  }
+}

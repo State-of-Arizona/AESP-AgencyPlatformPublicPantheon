@@ -71,18 +71,20 @@ class Registration extends Entity {
     );
 
     // Link to host entity.
-    $host_entity_link_label = (isset($host_entity_type_info['bundles'][$host_entity_bundle]['label'])) ? '<div class="field-label">' . $host_entity_type_info['bundles'][$host_entity_bundle]['label'] . '</div>' : '';
+    if(isset($host_uri['path'])){
+      $host_entity_link_label = (isset($host_entity_type_info['bundles'][$host_entity_bundle]['label'])) ? '<div class="field-label">' . $host_entity_type_info['bundles'][$host_entity_bundle]['label'] . '</div>' : '';
 
-    $build['host_entity_link'] = array(
-      '#theme' => 'registration_property_field',
-      '#label' => $host_entity_link_label,
-      '#items' => array(
-        array(
-          '#markup' => l($host_label, $host_uri['path']),
+      $build['host_entity_link'] = array(
+        '#theme' => 'registration_property_field',
+        '#label' => $host_entity_link_label,
+        '#items' => array(
+          array(
+            '#markup' => l($host_label, $host_uri['path']),
+          ),
         ),
-      ),
-      '#classes' => 'field field-label-inline clearfix',
-    );
+        '#classes' => 'field field-label-inline clearfix',
+      );
+    }
 
     $build['created'] = array(
       '#theme' => 'registration_property_field',
@@ -169,7 +171,7 @@ class Registration extends Entity {
     $wrapper = entity_metadata_wrapper('registration', $this);
     $state = $wrapper->state->value();
     if (!$state) {
-      $default_state = registration_get_default_state($wrapper->type->value());
+      $default_state = registration_get_default_state($wrapper->getBundle());
       if ($default_state) {
         $this->state = $default_state->identifier();
       }

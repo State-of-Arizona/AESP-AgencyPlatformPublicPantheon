@@ -17,7 +17,7 @@ function registration_form($form, &$form_state, Registration $registration) {
   $user = $wrapper->user->value();
   $host = $wrapper->entity->value();
   $state = $wrapper->state->value();
-  $type = $wrapper->type->value();
+  $type = $wrapper->getBundle();
 
   $form_state['registration'] = $registration;
 
@@ -134,8 +134,8 @@ function registration_form($form, &$form_state, Registration $registration) {
   $states = registration_get_states_options(array('show_on_form' => TRUE));
 
   // Ensure default state is in options or it won't be set.
-  if (!in_array($default_state->label, $states)) {
-    $states[$default_state->name] = $default_state->label;
+  if (!isset($states[$default_state->name])) {
+    $states[$default_state->name] = t('@state', array('@state' => entity_label('registration_state', $default_state)));
   }
 
   $form['state'] = array(
@@ -167,11 +167,13 @@ function registration_form($form, &$form_state, Registration $registration) {
 
   if ($host && entity_access('view', $registration->entity_type, $host)) {
     $uri = entity_uri($registration->entity_type, $host);
-    $form['actions']['cancel'] = array(
-      '#type' => 'link',
-      '#title' => t('Cancel'),
-      '#href' => $uri['path'],
-    );
+    if(isset($uri['path'])){
+      $form['actions']['cancel'] = array(
+        '#type' => 'link',
+        '#title' => t('Cancel'),
+        '#href' => $uri['path'],
+      );
+    }
   }
   $form['#registration_settings'] = $settings;
 
@@ -280,17 +282,20 @@ function registration_form_submit($form, &$form_state) {
 
   switch ($form_state['values']['who_is_registering']) {
     case REGISTRATION_REGISTRANT_TYPE_ANON:
+      $registration->user_uid = NULL;
       $registration->anon_mail = trim($form_state['values']['anon_mail']);
       break;
 
     case REGISTRATION_REGISTRANT_TYPE_ME:
       global $user;
       $registration->user_uid = $user->uid;
+      $registration->anon_mail = '';
       break;
 
     case REGISTRATION_REGISTRANT_TYPE_USER:
       if ($reg_user = user_load_by_name($form_state['values']['user'])) {
         $registration->user_uid = $reg_user->uid;
+        $registration->anon_mail = '';
       }
       break;
   }
@@ -325,6 +330,10 @@ function registration_form_submit($form, &$form_state) {
         }
       }
     }
+    // Make sure to Start a Session and save the registration info so we
+    // can check it for anonymous user access.
+    drupal_session_start();
+    $_SESSION['registration_ids'][$registration->identifier()] = $wrapper->anon_access_hash->value();
   }
   else {
     drupal_set_message(t('There was a problem submitting your registration.'));
@@ -430,7 +439,7 @@ function registration_registrations_broadcast_form($form, &$form_state, $entity_
   // Add token support:
   if (module_exists('token')) {
     $form['token_tree'] = array(
-      '#theme' => 'token_tree',
+      '#theme' => 'token_tree_link',
       '#token_types' => array(
         $entity_type,
         'registration',
@@ -624,7 +633,7 @@ function registration_entity_settings_form($form, &$form_state, $settings, $enti
   // Add token support:
   if (module_exists('token')) {
     $form['reminder']['reminder_settings']['token_tree'] = array(
-      '#theme' => 'token_tree',
+      '#theme' => 'token_tree_link',
       '#token_types' => array(
         $entity_type,
         'registration',
@@ -995,7 +1004,7 @@ function registration_state_overview_form_validate($form, &$form_state) {
   // Ensure each state is only "active" or "pending" – not both.
   foreach ($form_state['input']['state'] as $state) {
     if ($state['active'] && $state['held']) {
-      form_set_error('state', 'A state can only be "active" or "pending" – not both. Update the "' . $state['label'] . '" state to resolve this warning.');
+      form_set_error('state', 'A state can only be "active" or "held" – not both. Update the "' . $state['label'] . '" state to resolve this warning.');
     }
   }
 }

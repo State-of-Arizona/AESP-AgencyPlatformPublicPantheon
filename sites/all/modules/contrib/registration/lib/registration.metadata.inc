@@ -89,6 +89,25 @@ class RegistrationMetadataController extends EntityDefaultMetadataController {
       'computed' => TRUE,
     );
 
+    // Provides a hash that can be used to assemble accessible URLs for
+    // anonymous registrants to edit, view, or delete their registrations.
+    $properties['anon_access_hash'] = array(
+      'label' => t('Anonymous Access Hash'),
+      'type' => 'text',
+      'description' => t('Append to the end of a registration URL (after /registartion/#/view/ or /edit/ or /delete/) to create a link anonymous users can use to access the registration.'),
+      'getter callback' => 'registration_anonymous_access_hash',
+      'computed' => TRUE,
+    );
+    // Provides a link to be sent to anonymous registrants giving them the
+    // ability to access their registrations from any computer.
+    $properties['anon_link'] = array(
+      'label' => t('Anonymous Access Link'),
+      'type' => 'text',
+      'description' => t('Gives anonymous users access to their registrations across multiple devices.'),
+      'getter callback' => 'registration_anonymous_link_get',
+      'computed' => TRUE,
+    );
+
     // Entities
     $properties['entity'] = array(
       'label' => t("Host entity"),

@@ -32,7 +32,7 @@ class registration_handler_field_registration_link extends views_handler_field_e
   }
 
   function render_link($entity, $values) {
-    if (entity_access('update', 'registration', $entity)) {
+    if (entity_access('view', 'registration', $entity)) {
       $this->options['alter']['make_link'] = TRUE;
       $this->options['alter']['path'] = "registration/{$entity->registration_id}";
       $text = !empty($this->options['text']) ? $this->options['text'] : t('view');

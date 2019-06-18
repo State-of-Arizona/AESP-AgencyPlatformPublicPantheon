@@ -590,7 +590,7 @@ function registration_update_7105(&$sandbox) {
 }
 
 /**
- * Add the new default_state field to the registration_type table
+ * Add the new default_state field to the registration_type table.
  */
 
 function registration_update_7106(&$sandbox) {
@@ -611,4 +611,43 @@ function registration_update_7106(&$sandbox) {
  */
 function registration_update_7107() {
   registry_rebuild();
+}
+
+/**
+ * Grant new "register self" permission for backwards compatibility.
+ */
+function registration_update_7108(&$sandbox) {
+  // The old "create $type registration" is now subdivided into "create $type
+  // registration" and "create $type registration self". To preserve backwards
+  // compatibility, grant the new permission to any role who already has the
+  // old one.
+  foreach (registration_get_types() as $type_info) {
+    $old_permission = "create {$type_info->name} registration";
+    $existing = db_select('role_permission', 'r')
+      ->condition('permission', $old_permission)
+      ->fields('r', array('rid'))
+      ->execute();
+    if (empty($existing)) {
+      return;
+    }
+    $new_permission = "create {$type_info->name} registration self";
+    foreach ($existing as $record) {
+      // Make sure the user has not fixed the permissions themselves.
+      $perm_given = db_select('role_permission', 'r')
+        ->condition('permission', $new_permission)
+        ->fields('r', array('rid'))
+        ->execute();
+      if (!empty($perm_given)) {
+        continue;
+      }
+
+      db_insert('role_permission')
+        ->fields(array(
+          'rid' => $record->rid,
+          'module' => 'registration',
+          'permission' => $new_permission,
+        ))
+        ->execute();
+    }
+  }
 }

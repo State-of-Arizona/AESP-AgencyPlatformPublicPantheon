@@ -8,7 +8,7 @@
 /**
  * Creates a registration type
  * Create node entity type
- * ensure registration type exists
+ * Ensure registration type exists
  */
 class RegistrationWaitlistTestCase extends RegistrationTestCase {
   public static function getInfo() {
@@ -20,7 +20,7 @@ class RegistrationWaitlistTestCase extends RegistrationTestCase {
   }
 
   function setUp() {
-    parent::setUp(array('registration'));
+    parent::setUp(array('registration_waitlist'));
     $this->setUpEntity();
   }
 
@@ -44,10 +44,10 @@ class RegistrationWaitlistTestCase extends RegistrationTestCase {
     $this->checkPermissions($permissions, TRUE);
     $admin_user = $this->drupalCreateUser($permissions);
 
-    // Start with the basic user
+    // Start with the basic user.
     $user = $basic_user;
 
-    // Enable waitlist, wl capacity = unlimited
+    // Enable waitlist, wl capacity = unlimited.
     $this->setHostEntitySettings(array(
       'status' => 1,
       'capacity' => 10,
@@ -58,7 +58,7 @@ class RegistrationWaitlistTestCase extends RegistrationTestCase {
     ));
     $this->assertTrue(registration_status($this->host_entity_type, $this->host_entity_id, TRUE), t('Host entity status is opened with wait list enabled.'), 'Registration');
 
-    // fill capacity
+    // Fill capacity.
     $registrations = array();
     for ($i = 0; $i < 6; $i++) {
       $registrations[$i] = $this->createRegistration(array('count' => 2));
@@ -68,22 +68,18 @@ class RegistrationWaitlistTestCase extends RegistrationTestCase {
     $last_registration = entity_metadata_wrapper('registration', end($registrations));
     $this->assertTrue(($last_registration->state->name->value() === REGISTRATION_WAITLIST_STATE), t('Last registration placed on wait list.'), 'Registration');
 
-    // Test that wait list limit and reserved slots is enforced
+    // Test that wait list limit and reserved slots is enforced.
     $registrations[] = $this->createRegistration(array('count' => 2));
     $this->assertFalse(registration_status($this->host_entity_type, $this->host_entity_id, TRUE), t('Host entity status is closed, wait list full.'), 'Registration');
 
-    // Load user with admin permission
-    $user = $admin_user;
-    $this->assertTrue(registration_status($this->host_entity_type, $this->host_entity_id, TRUE), t('Host entity status is open, wait list full but user has admin permission.'), 'Registration');
-
-    // Switch back to basic user
+    // Switch back to basic user.
     $user = $basic_user;
 
-    // unfill capacity by one registration
+    // Unfill capacity by one registration.
     entity_delete('registration', end($registrations)->registration_id);
     $this->assertTrue(registration_status($this->host_entity_type, $this->host_entity_id, TRUE), t('Deleted a registration, wait list now not at maximum.'), 'Registration');
 
-    // Test dates
+    // Test dates.
     $this->setHostEntitySettings(array(
       'status' => 1,
       'open' => date('Y-m-d H:i:s', (time() + 3600)),

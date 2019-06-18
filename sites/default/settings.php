@@ -628,6 +628,8 @@ else {
   $conf['environment_indicator_overwritten_position'] = 'bottom';
   $conf['environment_indicator_overwritten_fixed'] = TRUE;
 }
+#form cache expiration
+$conf['form_cache_expiration'] = 1800;
 
 # Provide universal absolute path to the installation.
 $conf['simplesamlphp_auth_installdir'] = $_ENV['HOME'] .'/code/private/simplesamlphp';

@@ -255,12 +255,29 @@ function simplesamlphp_auth_init() {
         }
 
         if (!$ext_user) {
+          // First we check the admin settings for simpleSAMLphp and find out if we are allowed to register users.
+          if (variable_get('simplesamlphp_auth_registerusers', TRUE)  && !$existing_user) {
+
+            // We are allowed to register new users.
+            _simplesaml_auth_debug(t('Register [%authname]', array('%authname' => $authname)));
+
+            user_external_login_register($authname, 'simplesamlphp_auth');
+
+            if ($user) {
+              // set up new user as authenticated
+              $roles = _simplesamlphp_auth_rolepopulation( 'authenticated user');
+              $userinfo = array('roles' => $roles);
+              $user = user_save($user, $userinfo); // @todo - Fjernet rolle-delen her da den gav en bra feilmelding når roller ikke finnes ;)
+            }
+
+          }
+          else {
             // We are not allowed to register new users on the site through simpleSAML.
             // We let the user know about this and redirect to the user/login page.
             $msg = t("We are sorry. While you have successfully authenticated, you are not yet entitled to access this site. Please ask the site administrator to provision access for you.");
             drupal_set_message(check_plain($msg));
             $_simplesamlphp_auth_as->logout(base_path());
-
+          }
         }
         else {
           // No need to evaluate roles, populate the user object.
@@ -834,6 +851,60 @@ function _simplesamlphp_auth_evaulaterolerule($roleruleevaluation, $attributes) 
   }
 
   return FALSE;
+}
+
+/**
+ * Performs role population.
+ *
+ * @param $rolemap
+ *   A string containing the role map.
+ *
+ * @return
+ *   An array containing user's roles.
+ */
+function _simplesamlphp_auth_rolepopulation($rolemap) {
+  global $_simplesamlphp_auth_as;
+  global $_simplesamlphp_auth_saml_attributes;
+  $roles = array();
+
+  _simplesaml_auth_debug(t('Rolemap: %rolemap', array('%rolemap' => $rolemap)));
+
+  // Check if valid local session exists..
+  if ($_simplesamlphp_auth_as->isAuthenticated()) {
+    $attributes = $_simplesamlphp_auth_saml_attributes;
+
+    if (empty($rolemap)) return $roles;
+
+    _simplesaml_auth_debug(t('Evaluate rolemap: %rolemap', array('%rolemap' => $rolemap)));
+
+    $rolerules = explode('|', $rolemap);
+
+    foreach ($rolerules AS $rolerule) {
+      _simplesaml_auth_debug(t('Evaluate role rule: %rolerule', array('%rolerule' => $rolerule)));
+
+      $roleruledecompose = explode(':', $rolerule);
+
+      $roleid = $roleruledecompose[0];
+      $roleruleevaluations = explode(';', $roleruledecompose[1]);
+
+      $addnew = TRUE;
+      foreach ($roleruleevaluations AS $roleruleevaluation) {
+
+        _simplesaml_auth_debug(t('Evaluate role evaulation: %roleruleeval', array('%roleruleeval' => $roleruleevaluation)));
+
+        $roleruleevaluationdc = explode(',', $roleruleevaluation);
+        if (!_simplesamlphp_auth_evaulaterolerule($roleruleevaluationdc, $attributes)) {
+          $addnew = FALSE;
+        }
+      }
+      if ($addnew) {
+        $roles[$roleid] = $roleid;
+        _simplesaml_auth_debug(t('Add new role: %roleid', array('%roleid' => $roleid)));
+      }
+
+    }
+  }
+  return $roles;
 }
 
 /**

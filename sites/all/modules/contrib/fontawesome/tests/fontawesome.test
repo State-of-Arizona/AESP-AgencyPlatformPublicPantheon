@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * Test class for the Font Awesome module.
+ */
+
+class FontAwesomeTestCase extends DrupalWebTestCase {
+
+  /**
+   * Returns info displayed in the test interface.
+   *
+   * @return array
+   *   Formatted as specified by simpletest.
+   */
+  public static function getInfo() {
+    // Note: getInfo() strings are not translated with t().
+    return array(
+      'name' => 'Fontawesome Tests',
+      'description' => 'Test core Fontawesome functionality.',
+      'group' => 'Font Awesome',
+    );
+  }
+
+  /**
+   * Setup.
+   */
+  protected function setUp() {
+    parent::setUp('fontawesome');
+
+  }
+
+  /**
+   * Testing of download link.
+   */
+  public function testDownload() {
+    $this->drupalGet(FONTAWESOME_DOWNLOAD_URL);
+    $this->assertResponse(200);
+  }
+
+  /**
+   * Testing of CDN link.
+   */
+  public function testLink() {
+    $this->drupalGet('https:' . FONTAWESOME_CDN_URL);
+    $this->assertResponse(200);
+  }
+
+}

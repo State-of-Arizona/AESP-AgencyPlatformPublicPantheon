@@ -1,8 +1,10 @@
 <?php
 
 /**
+ * @file
  * Field handler to present a link to edit a workflow log comment.
  */
+
 class workflow_views_handler_field_comment_link_edit extends views_handler_field {
 
   function construct() {
@@ -34,13 +36,14 @@ class workflow_views_handler_field_comment_link_edit extends views_handler_field
   }
 
   function render($values) {
-    if (!user_access('edit workflow log')) {
-// @todo: add permission;
-//      return;
+    if (!user_access('edit workflow comment')) {
+      return;
     }
-    $hid = $values->{$this->aliases['hid']};
+    if (!$hid = $values->{$this->aliases['hid']}) {
+      // No link if entity has no history.
+      return;
+    }
     $text = empty($this->options['text']) ? t('edit comment') : $this->options['text'];
-    return l($text, "workflow-comment/$hid/edit", array('query' => drupal_get_destination()));
+    return l($text, "workflow_transition/$hid/edit", array('query' => drupal_get_destination()));
   }
 }
-

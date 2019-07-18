@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Rules integration for the Workflow module with Node API
+ * Rules integration for the Workflow module with Node API.
  */
 
 /**
@@ -110,16 +110,18 @@ function _workflownode_rules_condition_info() {
 function _workflownode_rules_action_info() {
   $actions = array();
 
+  // Warning: keep this action in line between Workflow Field and Workflow Node.
   $actions['workflow_rules_set_state'] = array(
     'group' => t('Workflow'),
-    'label' => t('Set a Workflow state'),
+    'label' => t('Set a Workflow state (with a comment)'),
     'parameter' => array(
       'node' => array(
-        'type' => 'node',
+        'type' => 'entity',
         'label' => t('Node'),
         'description' => t('The node to set the current workflow state of.'),
         // 'save' => TRUE,
       ),
+/*
       //'field' => array(
       //  'type' => 'text', // WORKFLOWFIELD_PROPERTY_TYPE,
       //  'label' => t('Workflow field to set'),
@@ -127,6 +129,7 @@ function _workflownode_rules_action_info() {
       //  'restriction' => 'selector',
       //  'allow null' => TRUE,
       //),
+ */
       'workflow_state' => array(
         'type' => 'list<integer>',
         'label' => t('New workflow state'),

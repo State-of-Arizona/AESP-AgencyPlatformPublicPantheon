@@ -9,7 +9,7 @@
  * Tests for the Workflow classes.
  */
 class WorkflowExampleTestCase extends DrupalWebTestCase {
-  protected $workflow; 
+  protected $workflow;
   public static function getInfo() {
     return array(
       'name' => 'Workflow',
@@ -19,10 +19,12 @@ class WorkflowExampleTestCase extends DrupalWebTestCase {
   }
 
   public function setUp() {
-    parent::setUp('workflow');  // Enable any modules required for the test
+    parent::setUp('workflow');  // Enable any modules required for the test.
   }
 
-  // Create a simpletest_example node using the node form
+  /**
+    * Creates a simpletest_example node using the node form.
+    */
   public function testWorkflow() {
 
 //    $workflows = workflow_load_multiple();
@@ -42,7 +44,7 @@ class WorkflowExampleTestCase extends DrupalWebTestCase {
   function testWorkflowState($sid = 2, $wid = 1) {
     $this->testId = '2';
 
-    $wf_state = new WorkflowState($sid, $wid);
+    $wf_state =  $workflow->createState('State 2');
 dpm($wf_state, 'This is state ' . $sid . ' of workflow ' . $wid);
     $workflow = $wf_state->getWorkflow();
 dpm($workflow, 'This is the workflow of sid ' . $sid);

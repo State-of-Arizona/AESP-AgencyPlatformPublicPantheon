@@ -5,17 +5,20 @@
  */
 
 /**
- * Field handler to allow linking to a user account
+ * Field handler to allow linking to a user account.
  */
 class workflow_views_handler_field_username extends views_handler_field_user_name {
 
-  /*
+  /**
    * Return user name as default value.
    */
   function get_value($values, $field = NULL) {
     if ($field == NULL) {
       if ($uid = $this->get_value($values, 'uid')) {
         $account = user_load($uid);
+        if (!$account) {
+          return "Anonymous (not verified)";
+        }
         return $account->name;
       }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Cleans up Workflow cruft that may build up over time.
@@ -10,16 +11,33 @@
 function workflow_cleanup_menu() {
   $items = array();
 
-  $items['admin/config/workflow/workflow/cleanup'] = array(
-    'title' => 'Workflow Clean Up',
+  $admin_path = WORKFLOW_ADMIN_UI_PATH;
+
+  $items["$admin_path/cleanup"] = array(
+    'title' => 'Clean up workflow',
     'file' => 'workflow_cleanup.pages.inc',
     'access arguments' => array('administer workflow'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('workflow_cleanup_form'),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_LOCAL_ACTION,
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_help().
+ */
+function workflow_cleanup_help($path, $arg) {
+  switch ($path) {
+    case WORKFLOW_ADMIN_UI_PATH . '/cleanup':
+      return t('This page allows you to delete orphaned and inactive states.
+        States can be deleted freely in a development environment, but be
+        careful if you have used a State in a production environment. The
+        transition history of your content will loose the description of a
+        previously used state. If your Workflow must comply to some auditing
+        standards, you should NOT use this function.');
+  }
 }
 
 /**
@@ -29,24 +47,4 @@ function workflow_cleanup_theme() {
   return array(
     'workflow_cleanup_form' => array('render element' => 'form'),
   );
-}
-
-/**
- * Implements hook_workflow_operations().
- *
- * Might as well eat our own cooking.
- */
-function workflow_cleanup_workflow_operations($op, $workflow = NULL, $state = NULL) {
-  switch ($op) {
-    case 'top_actions':
-      $alt = t('Clean up workflow cruft');
-      $actions = array(
-        'workflow-cleanup' => array(
-          'title' => t('Clean up'),
-          'href' => 'admin/config/workflow/workflow/cleanup',
-          'attributes' => array('alt' => $alt, 'title' => $alt),
-        ),
-      );
-      return $actions;
-  }
 }

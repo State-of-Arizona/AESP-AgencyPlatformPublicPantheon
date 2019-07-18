@@ -9,38 +9,41 @@
  * Implements a scheduled transition, as shown on Workflow form.
  */
 class WorkflowScheduledTransition extends WorkflowTransition {
-  public $scheduled; // Scheduled timestamp of state change.
+  // Scheduled timestamp of state change.
+  public $scheduled;
 
   /**
    * Constructor.
    */
   public function __construct(array $values = array(), $entityType = 'WorkflowScheduledTransition') {
+    // Please be aware that $entity_type and $entityType are different things!
     parent::__construct($values, $entityType);
 
     $this->is_scheduled = TRUE;
     $this->is_executed = FALSE;
   }
 
-  public function setValues($entity_type, $entity, $field_name, $old_sid, $new_sid, $uid, $scheduled, $comment) {
+  public function setValues($entity_type, $entity, $field_name, $old_sid, $new_sid, $uid = NULL, $scheduled = REQUEST_TIME, $comment = '') {
     // A scheduled transition does not have a timestamp, yet.
     $stamp = 0;
     parent::setValues($entity_type, $entity, $field_name, $old_sid, $new_sid, $uid, $stamp, $comment);
 
-    $this->scheduled = $scheduled; // Scheduled timestamp of state change.
+    // Set the scheduled timestamp of state change.
+    $this->scheduled = $scheduled;
   }
 
   /**
    * Given a node, get all scheduled transitions for it.
    *
-   * @param $entity_type
-   * @param $entity_id
-   * @param $field_name
-   *  optional
+   * @param string $entity_type
+   * @param int $entity_id
+   * @param string $field_name
+   *   Optional.
    *
    * @return array
-   *  an array of WorkflowScheduledTransitions
+   *   An array of WorkflowScheduledTransitions.
    *
-   * @deprecated: workflow_get_workflow_scheduled_transition_by_nid() --> WorkflowScheduledTransition::load()
+   * deprecated: workflow_get_workflow_scheduled_transition_by_nid() --> WorkflowScheduledTransition::load()
    */
   public static function load($entity_type, $entity_id, $field_name = '', $limit = NULL) {
     if (!$entity_id) {
@@ -51,6 +54,9 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     $query->fields('wst');
     $query->condition('entity_type', $entity_type, '=');
     $query->condition('nid', $entity_id, '=');
+    if ($field_name !== NULL) {
+      $query->condition('field_name', $field_name, '=');
+    }
     $query->orderBy('scheduled', 'ASC');
     $query->addTag('workflow_scheduled_transition');
     if ($limit) {
@@ -63,7 +69,8 @@ class WorkflowScheduledTransition extends WorkflowTransition {
 
   /**
    * Given a timeframe, get all scheduled transitions.
-   * @deprecated: workflow_get_workflow_scheduled_transition_by_between() --> WorkflowScheduledTransition::loadBetween()
+   *
+   * deprecated: workflow_get_workflow_scheduled_transition_by_between() --> WorkflowScheduledTransition::loadBetween()
    */
   public static function loadBetween($start = 0, $end = 0) {
     $query = db_select('workflow_scheduled_transition', 'wst');
@@ -92,7 +99,7 @@ class WorkflowScheduledTransition extends WorkflowTransition {
       $this->entityType = 'WorkflowTransition';
       $this->setUp();
 
-      return parent::save();
+      return parent::save(); // <--- exit !!
     }
 
     // Since we do not have an entity_id here, we cannot use entity_delete.
@@ -106,16 +113,17 @@ class WorkflowScheduledTransition extends WorkflowTransition {
     drupal_write_record('workflow_scheduled_transition', $this);
 
     // Create user message.
-    if ($state = workflow_state_load_single($this->new_sid)) {
+    if ($state = $this->getNewState()) {
+      $entity_type = $this->entity_type;
       $entity = $this->getEntity();
-      $message = '@entity_title scheduled for state change to %state_name on %scheduled_date';
+      $message = '%entity_title scheduled for state change to %state_name on %scheduled_date';
       $args = array(
-        '@entity_type' => $this->entity_type,
-        '@entity_title' => $entity->title,
-        '%state_name' => $state->label(),
+        '@entity_type' => $entity_type,
+        '%entity_title' => entity_label($entity_type, $entity),
+        '%state_name' => entity_label('WorkflowState', $state),
         '%scheduled_date' => format_date($this->scheduled),
       );
-      $uri = entity_uri($this->entity_type, $entity);
+      $uri = entity_uri($entity_type, $entity);
       watchdog('workflow', $message, $args, WATCHDOG_NOTICE, l('view', $uri['path'] . '/workflow'));
       drupal_set_message(t($message, $args));
     }
@@ -123,30 +131,17 @@ class WorkflowScheduledTransition extends WorkflowTransition {
 
   /**
    * Given a node, delete transitions for it.
-   * @deprecated: workflow_delete_workflow_scheduled_transition_by_nid() --> WorkflowScheduledTransition::delete()
+   *
+   * deprecated: workflow_delete_workflow_scheduled_transition_by_nid() --> WorkflowScheduledTransition::delete()
    */
   public function delete() {
-    $result = $this->deleteById($this->entity_type, $this->entity_id);
-    return $result;
-  }
-
-  public static function deleteMultiple(array $conditions, $table = 'dummy') {
-    // The $table argument is to adhere to the parent::deleteMultiple interface. It must not be changeable.
-    $result = parent::deleteMultiple($conditions, $table = 'workflow_scheduled_transition');
-    return $result;
-  }
-
-  /**
-   * Given an Entity, delete transitions for it.
-   * @todo: add support for Field.
-   */
-  public static function deleteById($entity_type, $entity_id) {
-    $conditions = array(
-      'entity_type' => $entity_type,
-      'nid' => $entity_id,
-    );
-    $result = self::deleteMultiple($conditions);
-    return $result;
+    // Support translated Workflow Field workflows by including the language.
+    db_delete($this->entityInfo['base table'])
+        ->condition('entity_type', $this->entity_type)
+        ->condition('nid', $this->entity_id)
+        ->condition('field_name', $this->field_name)
+        ->condition('language', $this->language)
+        ->execute();
   }
 
   /**
@@ -158,6 +153,13 @@ class WorkflowScheduledTransition extends WorkflowTransition {
    */
   public function addDefaultComment() {
     $this->comment = t('Scheduled by user @uid.', array('@uid' => $this->uid));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTimestamp() {
+    return $this->scheduled;
   }
 
 }

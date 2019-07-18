@@ -267,7 +267,7 @@ Issue #2019345 by johnv: Changed interface of workfow_execute_transition() while
 Issue #2115199 by johnv: Moved workflow_admin_ui type_map page to own file, (since it is only valid for Node API) and fixed PAReview errors.
 Issue #2019345 by johnv: Moved code to WorkflowState::create() to hide State specific details.
 Issue #2019345 by johnv: Removed dependency on workflow.node.inc in common code.
-Issue #2102405 by johnv: Changed interface of workflow_tab_access, workflow_tab_page to be $entity_type resistent.
+Issue #2102405 by johnv: Changed interface of workflow_tab_access, workflow_tab_page to be $entity_type resistant.
 Issue #2019345 by johnv: Moved some code in workflow.module.
 Issue #2019345 by johnv: Fixed workflow_revert now supports all entity types and field names.
 Issue #2019345 by johnv: Changed theme_workflow_history_table to add proper 'Operations column' to history table.
@@ -416,7 +416,7 @@ Issue #2202405 by johnv: Added Rules action 'Set a workflow field state' to work
 Issue #2196587 by johnv: Fixed earlier introduced error in workflow.tokens.inc.
 Issue #2196587 by johnv: Fixed Notice: Undefined property: stdClass::$workflow in workflow_tokens().
 Issue #2200089 by johnv: Fixed PDOException: SQLSTATE[42S22] upon 'transition delete' when workflow_actions enabled.
-Issue #2200089 by johnv: Fixed backwards compatiblity with workflow_actions.
+Issue #2200089 by johnv: Fixed backwards compatibility with workflow_actions.
 Issue #2205707 by johnv: Moved some views handlers from workflow_extensions to workflow_views.
 Issue #2205707 by johnv: Moved workflow_comment_edit_link field handler from workflow_extensions to workflow_views.
 Issue #2208675 by johnv: Fixed Unnecessary db-calls upon node_load in workflow_node.
@@ -444,3 +444,266 @@ Issue #2216685 by johnv: Further cleanup for workflow_vbo.
 Issue #2168197 by johnv: Separated workflow_vbo actions into own files, for less footprint and better maintainability.
 Issue #2218303 by johnv: Fixed error if you try to assign a state to a non-relevant node type (e.g. in workflow_vbo action).
 
+Since 7.x-2.2
+Fixed some problems with WorkflowConfigTransition.
+Fixed breadcrumbs on workflow add page.
+Issue #2218303 by zihong0: Fixed type in workflow_node_previous_state.
+Issue #2226781 by johnv: Changed Admin UI to use Entity UI.
+Issue #2226781 by johnv: Added message when saving states.
+Issue #2226451 by johnv: Streamlined code around $state->showWidget().
+Issue #2226451 by johnv: Removed showing workflow widget when creating a node, and only 1 state allowed.
+Issue #2228317 by johnv: Moved hook_user_role_insert() since it was not called when Admin UI disabled.
+Issue #2220065 by zihong0, johnv: Fixed workflow_access_node_access_records() is not called from node_save().
+Issue #2228317 by johnv: Fixed hook_user_role_insert is not called when Admin UI disabled.
+Issue #2228457 by johnv: Do NOT enable all roles for Transitions, upon enabling Workflow UI module.
+Issue #2228457 by johnv: Fixed some help texts.
+Issue #2228457 by johnv: Fixed menu_build should not be called in admin_ui install, and is not needed since update_7001 exists.
+Issue #2226781 by johnv: Removed Workfow Add form, in favour of Workflow Edit form.
+Issue #2128423 by johnv: Fixed small theming thingy in workflow_cleanup.pages.inc.
+Issue #2187321 by johnv: Added Workflow as an Exportable entity (not complete yet, but allows cloning).
+Issue #2226451 by johnv: Fixed workflow widget when creating a node, and only 1 state allowed: should move node to first state.
+Issue #2226781 by johnv: Changed Workflow Access page to use Entity UI.
+Issue #2226781 by johnv: Changed Workflow Clean up page to use Entity UI.
+Issue #2220065 by zihong0, johnv: Fixed workflow_access_node_access_records() is not called from node_save().
+Issue #2220065 by johnv: Fixed better filters WorkflowTransition->execute().
+Issue #2209359 by johnv: Fixed submitting workflow access settings, does not trigger access rebuild for workflow_field.
+Issue #2209359 by johnv: Fixed better UX for workflow_access pages, and removing a hook for better performance.
+Issue #2230833 by johnv: Fixed deleting/fetching ScheduledTransitions, when having multiple workflow_fields per node.
+Issue #2226781 by johnv: Fixed parameters of workflow_admin_ui_edit_form_validate().
+Issue #2230833 by johnv: Fixed showing ScheduledTransitions, when having multiple workflow_fields per node.
+Issue #2226781 by johnv: Fixed screen flow of workflow_admin_ui_edit_form().
+Issue #2209359 by johnv: Fixed workflow_access_node_access_records() in case of Access Rebuild of Workflow Fields.
+Issue #2209359 by johnv: Fixed error message in workflow_access.
+Issue #2019345 by johnv: Added parameter 'transition' to hook_workflow().
+Issue #2019345 by johnv: Added error message when setting state on non-relevant entity.
+Issue #2209359 by johnv: Fixed error in workflow_actions with workflow_field and workflow_access enabled.
+Issue #2229635 by johnv: Fixed Undefined index: entity_type in workflow_vbo_next_state_action().
+Issue #2231903 by johnv: Fixed usage of field_info_field_map() under D7.22.
+Issue #2168197 by johnv: Fixed support of VBO 'modify entity values' for workflow_field.
+Issue #2102409 by johnv: Removed $workflow->getWorkfowItem() c.s., which is not needed anymore.
+Issue #1649216 by johnv: Changed display of 'author' and 'creation' on admin pages, to avoid confusion when 'autor' role is defined.
+Issue #2019345 by johnv: Added error message when used workflow is deleted.
+Issue #2237125 by johnv: Added token 'workflow-state-age' from workflow_extensions.
+Issue #2237125 by johnv: Reordered functions in workflow.tokens.inc.
+Issue #0907442 by johnv: Fixed comment field can now be hidden, optional and (new!) required.
+Issue #2239189 by johnv: Fixed Anonymous author cannot set a state for new content.
+Issue #2019345 by johnv: Removed workflownode.inc into workflownode.module.
+Issue #2164081 by johnv: Some nervous code reshuffling regarding unpublished nodes.
+Issue #2237361 by johnv: Fixed SQL error in node_access when Anonymous Author has workflow_access rights.
+Issue #2240009 by johnv: Changed some code in workflow.tokens.inc, to prepare for multiple workflows per entity.
+Issue #2019345 by johnv: Changed WorkflowState to an Entity, too.
+Issue #2019345 by johnv: Added method getWorkflow() to WorkflowTransition class.
+Issue #2241577 by johnv: Fixed export/import Features after making WorkflowState an entity.
+Issue #2164081 by johnv: Removed code that hides Workflow Form on unpublished nodes.
+Issue #2241577 by johnv: Removed dependency on Features module. Now you can enable a workflow feature without!
+Issue #2217291: Added new view + view_mode 'history_tab', to create customizable tab, for multiple workflows.
+Issue #0443094: Fixed typo in workflow_admin_paths_alter().
+Issue #2241577 by preddy: Added check for existing workflow in WorkflowConfigTransition::save().
+Issue #2243569: Added inline documentation for usage of workflow_get_workflows_by_type with multiple workflows per node type.
+Issue #2243997: Added refreshed default views in workflow_views under /workflow/ path.
+Issue #2217291: Fixed workflow_views for installations with D7<7.22.
+Issue #2240009: Moved current tokens to submodule 'workflownode' to prepare for workflow_field tokens.
+Issue #2240009: Added better readable 'chained' tokens, re-using tokens of core objects.
+Issue #2237125: Removed token 'workflow-state-age' from workflow_extensions, since it is now available as a chained token.
+Issue #2240009: Removed dpm().
+Issue #2226781: Fixed error on type_map admin page for PHP5.4
+Issue #2226781: Fixed warnings for PHP5.4 using reset().
+Issue #2241577: Added machine_name to Workflow, influencing features.
+Issue #2240009: Removed dpm().
+Issue #2240009: Fixed 'chained' tokens now also workf when saving entities.
+Issue #2226781: Fixed new states add added at end of state list.
+Issue #0073412: Fixed a long-standing issue by adding a machine_name and label for Transitions! Many thanks to workflow_named_transitions.
+Issue #0073412: Removed hardcoded text on action buttons, since they can be set with Transition labels, now.
+Issue #2019345: Fixed constructor of WorkflowConfigTransition.
+Issue #0744272: Added new hook to allow freely definable transitions per state.
+
+Since 7.x-2.3
+Issue #0744272: Fixed sort order of states in Workflow Form was not according to states weight.
+Issue #2102409: Fixed some function (calls) did not support multiple field_names.
+Issue #2250403: Fixed typo in workflow_access function, leaving Admin UI only accessible for user 1.
+Issue #2256607 by chadhester: Added 'bundle' parameter to workflow_get_workflows_by_type().
+Issue #2257145 by chadhester: Fixed Empty $wid value in _workflow_get_workflow_creation_sid().
+Issue #2259893 by preddy: Fixed incorrectly hidden labels on Workflow Labels page.
+Issue #2260183: Fixed errors with Tokens.
+Issue #2261375: Fixed Workflow label was replaced by Workflow machine_name in version 2.3
+Issue #2260183: Fixed errors with Tokens with entities that existed before Workflow was added to Entity type.
+Issue #2265147: Fixed error in workflow_update_7011() during update.php.
+Issue #2266077: Added help text on workflow_cleanup page.
+Issue #2267115: Fixed No watchdog call when using Workflow Field.
+Issue #2270581: Added examples of hook_workflow_(BASE_FORM_ID_)alter() to workflow.api.php.
+Issue #2272121: Fixed 'Tokens' warning on page admin/reports/status.
+Issue #2269703: Added code to create a workflow programmatically.
+Issue #2272761: Fixed wsod in version 2.4-beta1, due to dpm() leftover in tokens.inc.
+Issue #2276149: Fixed 'wid' value in Views Export of filter 'Workflow current: Current state' in workflow_views_handler_filter_sid.
+Issue #2263561: Added Entity properties + tokens.
+Issue #2277751: Added Field Properties for workflow_field.
+Issue #2265615: Added Rules Action 'Set a workflow field state' for any entity.
+Issue #2277935: Fixed message 'Wrong call to constructor' when rebuilding permission with workflow_access enabled.
+Issue #2196247: Added machine_names for WorkflowStates.
+Issue #2217291: Removed warnings from workflow_views, when another module was rudely disabled.
+Issue #2279241: Fixed json_encode() error by making $workflow property protected.
+Issue #2279677: Fixed Notice 'Undefined property: $title in WorkflowScheduledTransition->save()'.
+Issue #2279967: Fixed Wrong default value for ScheduledTransition widget.
+Issue #2282969: Added help text on Workflows page, to tell user how to use Workflow Field.
+Issue #2285327: Fixed wrong function call in VBO action 'Set to next state'.
+Issue #2277751 by barami: Added $property['options list'] to Workflow Field.
+Issue #1511694 by joel_osc: Added integration of WorkflowNode with Panels.
+Issue #2187731 by boris sondagh: Added Panels access/selection rules based on workflow.
+Issue #2152435: Prepared WorkflowField Features export for better import when wid changed in target system.
+Issue #2287057: Fixed usage of actual $user instead of global $user for Transition.
+Issue #2287057: Fixed undefined variable $workflow_id in workflow.module.
+Issue #2283821: Fixed error in hook_update_7007() due to schema changes, when Upgrading from old D6/D7-version to 7.x-2.x.
+Issue #2283821: Fixed error in workflow_node, when Upgrading from old D6/D7-version to 7.x-2.x.
+Issue #2291411: Fixed broken link on Admin UI.
+Issue #2217855: Fixed fatal error in workflow_actions when ConfigTransition has invalid target_state.
+Issue #2187321: Fixed message when importing workflow.
+Issue #2296843: Added more properties and functions to entities.
+Issue #2296843: Added more properties and functions to entities - remove typo.
+Issue #2205707: Added permission for workflow_comment_edit_link field handler from workflow_extensions.
+Issue #2211145: Grouped workflow action buttons together with Drupal buttons ([Save], [Preview]).
+Issue #2283821: Fixed error in hook_update_7007() due to schema changes, when Upgrading from old D6/D7-version to 7.x-2.x.
+Fixed code style errors, as reported by pareview.sh and coder module.
+Issue #2299883: Fixed invalid WorkflowConfigTransitions created when cloning a Workflow.
+Issue #2299909: Removed 'delete'-link on Admin UI if Workflow is not deletable.
+Issue #2211145: Fixed message when only 1 Workflow Action Button avilable on form.
+Issue #2300497: Allow non-allowed transitions when $force is set.
+Issue #2296843: Added more properties and functions to entities - use them in rest of codebase.
+Issue #2211145: Added better performance when grouping workflow action buttons together with Drupal buttons ([Save], [Preview]).
+Added message on Admin pages when both WorkflowNode and WorflowField are enabled.
+
+Since 7.x-2.4
+Issue #2303925 by tucho: Fixed error due to typo in workflow_features_pipe_field_base_alter().
+Issue #2307303: Added IMPORT action to workflows, but this requires applying of patch #1967794 before it works.
+Issue #2249187: Fixed overwriting of State Name by machine name when importing a Workflow.
+Issue #2313549: Fixed workflows cannot be deleted in version 7.x-2.4
+Issue #2317243: Fixed notice: Undefined variable: new_sid in workflownode_tokens().
+Issue #2305617 by emil.virkki: Fixed Action buttons bypass Field validations.
+Issue #2326215 by sazcurrain: Fixed Views pagers with PostgreSQL DB.
+Issue #2323025: Deprecated Rules Action 'Set a Workflow Field State'.
+Issue #2314681: Fixed Notice: Trying to get property of non-object in _workflow_get_workflow_creation_sid()
+Issue #2312243: Fixed Notice: Trying to get property of non-object in _workflow_rules_workflow_get_options()
+Issue #2304365 by mgadrat: Fixed error in Rules 'Set workflow value' action when using Workflow Node.
+Issue #2323025: Reverted deprecation of Rules Action 'Set a Workflow Field State'.
+Issue #2323025: Updated Rules Action 'Set a Workflow Field State'.
+Issue #2317877: Fixed regression Fatal error: __clone method called on non-object in workflow.features.inc
+Issue #2331969 by LCM: Fixed available transitions for non-author in WorkflowState::getTransitions().
+Issue #1988990: Added translatability of Workflow Field.
+Issue #1988990: Added translatability of Workflow Field - execute scheduled transitions.
+Issue #2338547: Fixed revision_id is not set when executing a Scheduled Transitions.
+Issue #2323025: Fixed Rules Action 'Set a Workflow Field State' does not work.
+Issue #2274999: Fixing errors when creating an advanced action.
+Issue #2295625: Fixed Advanced Actions and VBO Actions.
+Issue #2072225: Added hook_help().
+Issue #2353955: Fixed caching in workflow_get_workflows_by_type().
+Issue #2354649: Reorganized submodules workflow_vbo and workflow_actions.
+Issue #2355085: Fixed Error "Workflow 0 cannot be loaded" when operating on node without Workflow.
+Issue #2355093: Fixed machine_name of '(creation)' should not be translated.
+Issue #2356605 by pianomansam: Fixed warnings when calling workflow_node_current_state()
+Issue #2371061: Fixed Notice: Undefined property: FieldCollectionItemEntity:: in WorkflowTransition->getEntity()
+Issue #2361051 by minorOffense: Fixed Call to undefined method EntityValueWrapper::getPropertyLanguage()
+Issue #2361051 by gstout: Call to undefined method EntityValueWrapper::getPropertyLanguage()
+Issue #2382377: Fatal error after disabling workflow_access: Call to undefined function workflow_access() in /entity/entity.module
+Issue #2369435: Fixed Notice: Undefined index: group in workflow_actions_trigger_info() (Line 162 of workflow_actions/workflow_actions.module)
+Issue #2260971: Updated documentation in workflow.api.php
+Issue #843568: Fixed undefined var when saving revisions.
+Issue #2304875: Fixed Status Report Tokens Warning when entity_token not enabled.
+Issue #2385439: Added Field setting to remove Workflow widget from entity edit forms.
+Issue #2228325: Moved documentation from Workflow_extensions module's README.txt to Workflow's README.txt
+Issue #2374587 by Karsa: Workflow node doesn't set the state of a newly created node
+Issue #2373103: Fixed Notice 'Undefined index' in list_field_formatter_view() when previewing a node.
+Issue #2308677: Fixed regression: 'Workflow current: Current state' is missing when creating a contextual filter
+Issue #2400211: Added Views support for non-node entity types
+
+Since 7.x-2.5
+Issue #2340011: Fixed Error "Workflow 0 cannot be loaded" when using Workflow Node and Workflow Rules
+Issue #2401481: Fixed error when creating a Transition, parameter values() is discarded
+Issue #2401493: Added $transition->getTimestamp()
+Issue #2401511: Renamed hook-functions in workflownode module
+Issue #2406175: Implemented a WorkflowTransitionForm form object
+Issue #1559680: Make Transitions fieldable entities -1-
+Issue #2406175: Uniformed creation of form_id
+Issue #2406175: Moved WorkfowTransitionEdit to th WorkflowTransitionForm form object
+Issue #2441821: Fixed wrong link
+Issue #2441821: Fixed error
+Issue #2441821: Better determination of field_name
+Issue #2421157: Added Block for viewing/changing a Workflow State
+Issue #2417193 by kaare: Added stub for undefined method WorkflowItem::delete()
+Issue #2430243: Fixed fragile check for entity edit mode in WorkflowTransitionForm::submitForm()
+Issue #2467103: State is lost when comment with Workflow Widget is submitted, and node has end-state
+Issue #2546152 by NancyDru: Added submodule workflow_notify.
+Issue #2532128 by wayaslij: EntityMetadataWrapper $property call should first check if method exists
+Issue #2413593 by kyoder: Fixed EntityMetadataWrapperException in workflow.tokens.inc
+Issue #2169859 by kyoder, BAHbKA: Problems with Workflow Access Features
+Issue #2373103 by chilic: Notice in Node Preview mode in list_field_formatter_view()
+Issue #2472501 by alan-io1: Use features_get_default in hook_features_rebuild
+Issue #2484325 by GuyPaddock: Error on Site installation: table Workflows doesn't exist
+Issue #2376557 by deetergp: Token 'comment' does not work
+Issue #2351299 by johnv: Prepare D8-Port: split class files
+Issue #2484297 by vasi, bartvig, GuyPaddock: Features import / revert broken in 2.5+
+Issue #2375261: Undo adding workflow to workflow_field features-export
+Issue #2569801 by joshf: Index {workflow_node_history}.nid
+Issue #2351299: Undo Prepare D8-Port: split class files
+Issue #2562475: Fixed Fatal PHP Error: Unsupported operand types in workflow....
+Issue #2506507: Workflow Node scheduled transition : PHP Fatal error when upd...
+Issue #2577687 by Kgaut: Fixed unclear enabling messages
+Issue #2372171: Database upgrade fails with Call to undefined function workfl...
+Issue #2587485: Fixed broken link in workflow.features.inc
+Issue #2571627: D8-port: D7-code improvements
+Issue #2600346: Enable roles for 'participate' by default on new Workflow
+Issue #2484431 by GuyPaddock: Do NOT automatically enable roles to participat...
+Issue #2502547 by djdevin, johnv: Add Entity Id to WorkflowScheduledTransition
+Issue #2600426: Fixed: Time of Scheduled Transition is not retrieved in Workf...
+Issue #2385439 by johnv: Fixed typo in code
+Issue #2514782 by johnv: Added Workflow field help text to Workflow widget
+Issue #2600808: Wrap workflow form in Fieldset
+Issue #2307303: Added dependency on entity module v7.x-1.6
+Issue #2555563 by NancyDru: Organic Groups strict access overrides Workflow A...
+Issue #2446811: Remove multiple workflows in workflow_access_node_access_reco...
+Issue #2600934 by najamfzl, johnv: Fixed PDOException: SQLSTATE[23000]: Integ...
+split form functions in own include file
+Issue #2601136: move scheduling info in own container (in WorkflowTransitionf...
+Issue #1559680: Make Transitions fieldable entities - add extra fields + fiel...
+Issue #2601240: Fixed Notice: Undefined index: id in WorkflowTransitionForm->...
+Issue #2601304: Fixed Error in Editing an existing WorkflowTransition
+Issue #2597307 by caminadaf, johnv: Fixed Workflow retrieving wrong SID on AJ...
+Issue #1511694 by joel_osc, bibishani, natew, dshields: Better integration of...
+Issue #2601304: Fixed Error in Editing an existing WorkflowTransition
+Issue #2581909: Change status via VBO
+Issue #2557905 by natanmoraes: PDOException when firing rule "Set a Workflow ...
+Issue #2601304: Error in Editing an existing WorkflowTransition
+Issue #2375261: Redo adding workflow to workflow_field features-export
+Issue #2578493: html_encode option values for workflow/state/transition
+Issue #2510958: Added css-classes to Workflow Transition Form
+Issue #2363521: Remove unnecessary action button in Node View page
+Issue #2599610 by plopesc: Schedule state change radio buttons generate confl...
+Issue #2545660: Make action buttons more unique
+Issue #2584883: [D8-port task] test all hooks
+Issue #2595247: Actions buttons: make code more local
+Issue #2600934: PDOException: SQLSTATE[23000]: Integrity constraint violation...
+Issue #2351299: Prepare D8-port: move forms in own file.
+Issue #2604914: Fatal error: Call to a member function getName() on a non-object
+Issue #2595247: Actions buttons: make code more local
+Issue #2604968: States help blocked by case switching in workflow_admin_ui_help
+Issue #2604246 by skek: Performance optimisation in Workflow::save()
+Issue #2605256 by bleedev: Unknown data property field_workflow error when de...
+Issue #2285983: Workflows Admin UI Broken on SQLite
+Issue #2581909: Change status via VBO
+Issue #2605822: Wrong default option when adding an entity with workflow
+Issue #2604048: Amend WorkflowTransition::dpm()
+Issue #2604246 by skek, danielmrichards: Performance optimisation for Workflo...
+Issue #2607150 by aronne: Workflow transitions don't respect configured permi...
+Issue #2607198 by heykarthikwithu: Add @return type and change @param values ...
+Issue #2363521: Fixed removed scheduled action button in Node View page
+Issue #2580543: Fixed warnings when displaying tokens
+Issue #318325: Add hook_widget_form_alter to workflow.api.php
+Issue #2607998: Warning: array_flip() appears when workflow_block is enabled
+Issue #2608128 by Murz: Function workflow_execute_transition() ignores timestamp of Workflow transition
+Issue #2608452 by mwidner: Fixed failing primary index in table
+Issue #2608996: Error when workflow_block on node page without workflow
+
+Since 7.x-2.6
+Issue #2612648: Implement WorkflowInterface
+Issue #2611514: Fixed Re-assigning WorkflowField when disabling state
+Issue #2612598: Fixed Warning: Missing argument n for workflow_notify_workflow()
+Issue #2613194: Show field_name in Workflow history tab
+Issue #2613204: Fixed WSOD when adding/editing a non-node entity with workflow_field

@@ -11,7 +11,7 @@
 class workflow_views_handler_field_state extends views_handler_field {
 
   function render($values) {
-    return t($values->{$this->field_alias});
+    return t('@alias', array('@alias' => $values->{$this->field_alias}));
   }
 
 }

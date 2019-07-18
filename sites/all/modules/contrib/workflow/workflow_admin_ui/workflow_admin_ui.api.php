@@ -7,16 +7,20 @@
 /**
  * Implements hook_workflow_operations().
  *
- * @param $op
+ * Menu callback; adds links on EntityWorkflowUIController::overviewForm.
+ *
+ * @param string $op
  *   'top_actions': Allow modules to insert their own front page action links.
  *   'operations': Allow modules to insert their own workflow operations.
  *   'state':  Allow modules to insert state operations.
- * @param $workflow
+ * @param Workflow $workflow
  *   The current workflow object.
- * @param $state
+ * @param WorkflowState $state
  *   The current state object.
+ *
+ * @return array
  */
-function hook_workflow_operations($op, object $workflow, object $state) {
+function hook_workflow_operations($op, Workflow $workflow, WorkflowState $state) {
   switch ($op) {
     case 'top_actions':
       $actions = array();

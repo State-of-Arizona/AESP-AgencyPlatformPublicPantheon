@@ -6,92 +6,216 @@
  * Contains workflow\includes\Entity\WorkflowController.
  */
 
-/**
- * Implements a controller class for Workflow.
- */
-class WorkflowController extends EntityAPIController {
+// Include file to avoid drush upgrade errors.
+include_once('WorkflowInterface.php');
 
-  // public function create(array $values = array()) { }
-  // public function load($ids = array(), $conditions = array()) { }
-
-  /**
-   * Overrides DrupalDefaultEntityController::cacheGet()
-   * 
-   * Override default function, due to Core issue #1572466.
-   */
-  protected function cacheGet($ids, $conditions = array()) {
-    // Load any available entities from the internal cache.
-    if ($ids === FALSE && !$conditions) {
-      return $this->entityCache;
-    }
-    return parent::cacheGet($ids, $conditions);
-  }
-
-  /**
-   * Overrides DrupalDefaultEntityController::cacheSet()
-   */
-  // protected function cacheSet($entities) { }
-  //   return parent::cacheSet($entities);
-  // }
-
-  /**
-   * Overrides DrupalDefaultEntityController::resetCache().
-   *
-   * Called by workflow_reset_cache, to
-   * Reset the Workflow when States, Transitions have been changed.
-   */
-  // public function resetCache(array $ids = NULL) {
-  //   parent::resetCache($ids);
-  // }
-
-  /**
-   * Overrides DrupalDefaultEntityController::attachLoad()
-   */
-  protected function attachLoad(&$queried_entities, $revision_id = FALSE) {
-    foreach ($queried_entities as $entity) {
-      // Load the states, so they are already present on the next (cached) load.
-      $entity->states = $entity->getStates($all = TRUE);
-    }
-
-    parent::attachLoad($queried_entities, $revision_id);
-  }
-}
- 
-class Workflow extends Entity {
+class Workflow extends Entity implements WorkflowInterface {
   public $wid = 0;
   public $name = '';
   public $tab_roles = array();
   public $options = array();
   protected $creation_sid = 0;
-  // Helper for workflow_get_workflows_by_type().
-  protected $item = NULL; // Helper to get/set the Item of a Workflow.
+
   // Attached States.
   public $states = NULL;
+  public $transitions = NULL;
 
   /**
    * CRUD functions.
    */
 
-  // public function __construct(array $values = array(), $entityType = NULL) { }
+  // public function __construct(array $values = array(), $entityType = NULL) {
+  //   return parent::__construct($values, $entityType);
+  // }
+
+  public function __clone() {
+    // Clone the arrays of States and Transitions.
+    foreach ($this->states as &$state) {
+      $state = clone $state;
+    }
+    foreach ($this->transitions as &$transition) {
+      $transition = clone $transition;
+    }
+  }
 
   /**
    * Given information, update or insert a new workflow.
    *
-   * @deprecated: workflow_update_workflows() --> Workflow->save()
+   * This also handles importing, rebuilding, reverting from Features,
+   * as defined in workflow.features.inc.
+   *
+   * When changing this function, test with the following situations:
+   * - maintain Workflow in Admin UI;
+   * - clone Workflow in Admin UI;
+   * - create/revert/rebuild Workflow with Features; @see workflow.features.inc
+   * - save Workflow programmatically;
    */
   public function save($create_creation_state = TRUE) {
+    // Are we saving a new Workflow?
     $is_new = !empty($this->is_new);
+    // Are we rebuilding, reverting a new Workflow? @see workflow.features.inc
+    $is_rebuild = !empty($this->is_rebuild) || !empty($this->is_reverted);
+
+    if ($is_rebuild) {
+      $this->is_rebuild = TRUE;
+      $this->preRebuild();
+    }
 
     $return = parent::save();
 
+    // On either clone or rebuild from features.
+    if ($is_new || $is_rebuild) {
+      $this->rebuildInternals();
+      if ($is_rebuild) {
+        // The above may have marked us overridden!
+        $this->status = ENTITY_IN_CODE;
+        parent::save();
+      }
+    }
+
+    // Make sure a Creation state exists.
     if ($is_new) {
       $state = $this->getCreationState();
-      $return2 = $state->save();
     }
 
     workflow_reset_cache($this->wid);
 
     return $return;
+  }
+
+  /**
+   * Rebuild things that get saved with this entity.
+   */
+  protected function preRebuild() {
+    // Remap roles. They can come from another system with shifted role IDs.
+    // See also https://drupal.org/node/1702626 .
+    $this->tab_roles = $this->rebuildRoles($this->tab_roles);
+
+    // After update.php or import feature, label might be empty. @todo: remove in D8.
+    if (empty($this->label)) {
+      $this->label = $this->name;
+    }
+  }
+
+  /**
+   * Rebuild internals that get saved separately.
+   */
+  protected function rebuildInternals() {
+    // Insert the type_map when building from Features.
+    if (isset($this->typeMap)) {
+      foreach ($this->typeMap as $node_type) {
+        workflow_insert_workflow_type_map($node_type, $this->wid);
+      }
+    }
+
+    // Index the existing states and transitions by name.
+    $db_name_map = WorkflowState::getStates($this->wid, TRUE); // sid -> state.
+    $db_states = array(); // name -> state.
+    foreach ($db_name_map as $state) {
+      $db_states[$state->getName()] = $state;
+    }
+    $db_transitions = array();
+    foreach (entity_load('WorkflowConfigTransition') as $transition) {
+      if ($transition->wid == $this->wid) {
+        $start_name = $db_name_map[$transition->sid]->getName();
+        $end_name = $db_name_map[$transition->target_sid]->getName();
+        $name = WorkflowConfigTransition::machineName($start_name, $end_name);
+        $db_transitions[$name] = $transition;
+      }
+    }
+
+    // Update/create states.
+    $states = isset($this->states) ? $this->states : array();
+    $saved_states = array(); // Saved states: key -> sid.
+    $saved_state_names = array();
+    foreach ($states as $key => $data) {
+      $data = (array)$data;
+
+      $name = $data['name'];
+      if (isset($db_states[$name])) {
+        $state = $db_states[$name];
+      }
+      else {
+        $state = $this->createState($name, FALSE);
+      }
+
+      $state->wid = $this->wid;
+      $state->state = $data['state'];
+      $state->weight = $data['weight'];
+      $state->sysid = $data['sysid'];
+      if (!$data['status']) {
+        $this->rebuildStateInactive($state);
+      }
+      $state->status = $data['status'];
+      $state->save();
+
+      unset($db_states[$name]);
+      $saved_states[$key] = $state;
+      $saved_state_names[$state->sid] = $key;
+    }
+
+    // Update/create transitions.
+    $transitions = isset($this->transitions) ? $this->transitions : array();
+    foreach ($transitions as $name => $data) {
+      $data = (array)$data;
+
+      if (is_numeric($name)) {
+        if (isset($saved_states[$data['sid']]) && isset($saved_states[$data['target_sid']])) {
+          $start_state = $saved_states[$data['sid']];      // #2876303
+          $end_state = $saved_states[$data['target_sid']]; // #2876303
+        }
+        else {
+          $start_state = $this->getState($data['sid']);
+          $end_state = $this->getState($data['target_sid']);
+        }
+      }
+      else {
+        $start_state = $saved_states[$data['start_state']];
+        $end_state = $saved_states[$data['end_state']];
+      }
+      $name = WorkflowConfigTransition::machineName($start_state->getName(), $end_state->getName());
+      if (isset($db_transitions[$name])) {
+        $transition = $db_transitions[$name];
+      }
+      else {
+        $transition = $this->createTransition($start_state->sid, $end_state->sid);
+      }
+
+      $transition->wid = $this->wid;
+      $transition->sid = $start_state->sid;
+      $transition->target_sid = $end_state->sid;
+      $transition->label = $data['label'];
+      $transition->roles = $this->rebuildRoles($data['roles']);
+      $transition->save();
+
+      unset($db_transitions[$name]);
+    }
+
+    // Any states/transitions left in $db_states/transitions need deletion.
+    foreach ($db_states as $state) {
+      $this->rebuildStateInactive($state);
+      $state->delete();
+    }
+    foreach ($db_transitions as $transition) {
+      $transition->delete();
+    }
+
+    // Clear the caches, and set $this->states and $this->transitions.
+    $this->states = $this->transitions = NULL;
+    $this->getStates(TRUE, TRUE);
+    $this->getTransitions(FALSE, array(), TRUE);
+  }
+
+  /**
+   * Handle a state becoming inactive during a rebuild.
+   */
+  protected function rebuildStateInactive($state) {
+    if (!$state->isActive()) {
+      return;
+    }
+
+    // TODO: What should we do in this case? Is this safe?
+    $state->deactivate(NULL);
   }
 
   /**
@@ -108,7 +232,7 @@ class Workflow extends Entity {
 
     // Delete associated state (also deletes any associated transitions).
     foreach ($this->getStates($all = TRUE) as $state) {
-      $state->deactivate($new_sid = 0);
+      $state->deactivate(0);
       $state->delete();
     }
 
@@ -126,15 +250,17 @@ class Workflow extends Entity {
    * @return bool
    *   $is_valid
    */
-  public function validate() {
+  public function isValid() {
     $is_valid = TRUE;
 
+    $workflow_name = $this->getName();
+    $wid = $this->getWorkflowId();
     // Don't allow workflows with no states. There should always be a creation state.
     $states = $this->getStates($all = FALSE);
     if (count($states) < 1) {
       // That's all, so let's remind them to create some states.
       $message = t('Workflow %workflow has no states defined, so it cannot be assigned to content yet.',
-        array('%workflow' => $this->getName()));
+        array('%workflow' => $workflow_name));
       drupal_set_message($message, 'warning');
 
       // Skip allowing this workflow.
@@ -146,7 +272,7 @@ class Workflow extends Entity {
     if (count($transitions) < 1) {
       // That's all, so let's remind them to create some transitions.
       $message = t('Workflow %workflow has no transitions defined, so it cannot be assigned to content yet.',
-        array('%workflow' => $this->getName()));
+        array('%workflow' => $workflow_name));
       drupal_set_message($message, 'warning');
 
       // Skip allowing this workflow.
@@ -154,12 +280,12 @@ class Workflow extends Entity {
     }
 
     // If the Workflow is mapped to a node type, check if workflow->options is set.
-    if ($type_map = $this->getTypeMap() && !count($this->options)) {
+    if ($this->getTypeMap() && !count($this->options)) {
       // That's all, so let's remind them to create some transitions.
       $message = t('Please maintain Workflow %workflow on its <a href="@url">settings</a> page.',
         array(
           '%workflow' => $this->getName(),
-          '@url' => url('admin/config/workflow/workflow/edit/' . $this->wid),
+          '@url' => url(WORKFLOW_ADMIN_UI_PATH . "/manage/$wid"),
         )
       );
       drupal_set_message($message, 'warning');
@@ -172,16 +298,76 @@ class Workflow extends Entity {
   }
 
   /**
+   * Returns if the Workflow may be deleted.
+   *
+   * @return bool $is_deletable
+   *   TRUE if a Workflow may safely be deleted.
+   */
+  public function isDeletable() {
+    $is_deletable = FALSE;
+
+    // May not be deleted if a TypeMap exists.
+    if ($this->getTypeMap()) {
+      return $is_deletable;
+    }
+
+    // May not be deleted if assigned to a Field.
+    foreach (_workflow_info_fields() as $field) {
+      if ($field['settings']['wid'] == $this->wid) {
+        return $is_deletable;
+      }
+    }
+
+    // May not be deleted if a State is assigned to a state.
+    foreach ($this->getStates(TRUE) as $state) {
+      if ($state->count()) {
+        return $is_deletable;
+      }
+    }
+    $is_deletable = TRUE;
+    return $is_deletable;
+  }
+
+  /**
    * Property functions.
    */
 
   /**
-   * Create a new state for this workflow.
+   * Returns the workflow id.
+   *
+   * @return int
+   *   $wid
    */
-  public function createState($name) {
-    $state = WorkflowState::create($this->wid, $name);
-    // Properly maintain the states list.
-    $this->states[] = $state;
+  public function getWorkflowId() {
+    return $this->wid;
+  }
+
+  /**
+   * Create a new state for this workflow.
+   *
+   * @param string $name
+   *   The untranslated human readable label of the state.
+   * @param bool $save
+   *   Indicator if the new state must be saved. Normally, the new State is
+   *   saved directly in the database. This is because you can use States only
+   *   with Transitions, and they rely on State IDs which are generated
+   *   magically when saving the State. But you may need a temporary state.
+   *
+   * @return WorkflowState
+   */
+  public function createState($name, $save = TRUE) {
+    $wid = $this->wid;
+    $state = workflow_state_load_by_name($name, $wid);
+    if (!$state) {
+      $state = entity_create('WorkflowState', array('name' => $name, 'state' => $name, 'wid' => $wid));
+      if ($save) {
+        $state->save();
+      }
+    }
+    $state->setWorkflow($this);
+    // Maintain the new object in the workflow.
+    $this->states[$state->sid] = $state;
+
     return $state;
   }
 
@@ -190,13 +376,7 @@ class Workflow extends Entity {
    */
   public function getCreationState() {
     $sid = $this->getCreationSid();
-
-    if ($sid) {
-      return $this->getState($sid);
-    }
-    else {
-      return $this->createState(WORKFLOW_CREATION_STATE_NAME);
-    }
+    return ($sid) ? $this->getState($sid) : $this->createState(WORKFLOW_CREATION_STATE_NAME);
   }
 
   /**
@@ -216,11 +396,12 @@ class Workflow extends Entity {
   /**
    * Gets the first valid state ID, after the creation state.
    *
-   * Use WorkflowState::getOptions(), because this does a access check.
+   * Uses WorkflowState::getOptions(), because this does a access check.
+   * The first State ID is user-dependent!
    */
-  public function getFirstSid($entity_type, $entity) {
+  public function getFirstSid($entity_type, $entity, $field_name, $user, $force) {
     $creation_state = $this->getCreationState();
-    $options = $creation_state->getOptions($entity_type, $entity);
+    $options = $creation_state->getOptions($entity_type, $entity, $field_name, $user, $force);
     if ($options) {
       $keys = array_keys($options);
       $sid = $keys[0];
@@ -231,6 +412,42 @@ class Workflow extends Entity {
       $sid = 0;
     }
     return $sid;
+  }
+
+  /**
+   * Returns the next state for the current state.
+   *
+   * @param string $entity_type
+   *   The type of the entity at hand.
+   * @param object $entity
+   *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   * @param $field_name
+   * @param $user
+   * @param bool $force
+   *
+   * @return int $sid
+   *   A state ID.
+   */
+  public function getNextSid($entity_type, $entity, $field_name, $user, $force = FALSE) {
+    $new_sid = workflow_node_current_state($entity, $entity_type, $field_name);
+
+    if ($new_sid && $new_state = workflow_state_load_single($new_sid)) {
+      /* @var $current_state WorkflowState */
+      $options = $new_state->getOptions($entity_type, $entity, $field_name, $user, $force);
+      // Loop over every option. To find the next one.
+      $flag = $new_state->isCreationState();
+      foreach ($options as $sid => $name) {
+        if ($flag) {
+          $new_sid = $sid;
+          break;
+        }
+        if ($sid == $new_state->sid) {
+          $flag = TRUE;
+        }
+      }
+    }
+
+    return $new_sid;
   }
 
   /**
@@ -245,23 +462,21 @@ class Workflow extends Entity {
    * @return array
    *   An array of WorkflowState objects.
    */
-  public function getStates($all = FALSE) {
-    if ($this->states === NULL) {
-      $this->states = $this->wid ? WorkflowState::getStates($this->wid) : array();
+  public function getStates($all = FALSE, $reset = FALSE) {
+    if ($this->states === NULL || $reset) {
+      $this->states = $this->wid ? WorkflowState::getStates($this->wid, $reset) : array();
     }
-
-    $states = $this->states;
-    if ($all !== TRUE) {
-      foreach ($states as $state) {
-        if (($all == FALSE) && $state->isCreationState()) {
-          unset($states[$state->sid]);
-        }
-        elseif (($all === FALSE) && !$state->isActive()) {
-          unset($states[$state->sid]);
-        }
-        elseif (($all == 'CREATION') && !$state->isActive()) {
-          unset($states[$state->sid]);
-        }
+    // Do not unset, but add to array - you'll remove global objects otherwise.
+    $states = array();
+    foreach ($this->states as $state) {
+      if ($all === TRUE) {
+        $states[$state->sid] = $state;
+      }
+      elseif (($all === FALSE) && ($state->isActive() && !$state->isCreationState())) {
+        $states[$state->sid] = $state;
+      }
+      elseif (($all == 'CREATION') && ($state->isActive() || $state->isCreationState())) {
+        $states[$state->sid] = $state;
       }
     }
     return $states;
@@ -270,7 +485,7 @@ class Workflow extends Entity {
   /**
    * Gets a state for a given workflow.
    *
-   * @param $key
+   * @param mixed $key
    *   A state ID or state Name.
    *
    * @return WorkflowState
@@ -289,12 +504,12 @@ class Workflow extends Entity {
    * Creates a Transition for this workflow.
    */
   public function createTransition($sid, $target_sid, $values = array()) {
+    $workflow = $this;
     if (is_numeric($sid) && is_numeric($target_sid)) {
       $values['sid'] = $sid;
       $values['target_sid'] = $target_sid;
     }
     else {
-      $workflow = $this;
       $state = $workflow->getState($sid);
       $target_state = $workflow->getState($target_sid);
       $values['sid'] = $state->sid;
@@ -306,51 +521,78 @@ class Workflow extends Entity {
       $transition = reset($transitions);
     }
     else {
-      $values['wid'] = $this->wid;
-      $transition = new WorkflowConfigTransition($values);
+      $values['wid'] = $workflow->wid;
+      $transition = entity_create('WorkflowConfigTransition', $values);
+      $transition->save();
     }
-    $transition->wid = $this->wid;
+    $transition->setWorkflow($this);
+    // Maintain the new object in the workflow.
+    $this->transitions[$transition->tid] = $transition;
 
     return $transition;
   }
 
   /**
-   * Loads all allowed Transition for this workflow.
+   * Sorts all Transitions for this workflow, according to State weight.
    *
-   * @param array $tids
-   *  Array of Transitions IDs. If FALSE, show all transitions.
-   * @param array $conditions
-   *  $conditions['sid'] : if provided, a 'from' State ID.
-   *  $conditions['target_sid'] : if provided, a 'to' state ID.
-   *  $conditions['roles'] : if provided, an array of roles, or 'ALL'.
+   * This is only needed for the Admin UI.
    */
-  public function getTransitions($tids = FALSE, $conditions = array(), $reset = FALSE) {
-    $transitions = array();
-    $states = $this->getStates('CREATION'); // Get valid + creation states.
+  public function sortTransitions() {
+    // Sort the transitions on state weight.
+    usort($this->transitions, '_workflow_transitions_sort_by_weight');
+  }
 
-    // Filter on 'from' states, 'to' states, roles.
+  /**
+   * @inheritdoc
+   */
+  public function getTransitions($tids = FALSE, array $conditions = array(), $reset = FALSE) {
+    $config_transitions = array();
+
+    // Get valid + creation states.
+    $states = $this->getStates('CREATION');
+
+    // Get filters on 'from' states, 'to' states, roles.
     $sid = isset($conditions['sid']) ? $conditions['sid'] : FALSE;
     $target_sid = isset($conditions['target_sid']) ? $conditions['target_sid'] : FALSE;
     $roles = isset($conditions['roles']) ? $conditions['roles'] : 'ALL';
 
-    // Get all transitions. (Even from other workflows. :-( )
-    $config_transitions = entity_load('WorkflowConfigTransition', $tids, array(), $reset);
-    foreach ($config_transitions as $transition) {
-      if (!isset($states[$transition->sid])) {
+    // Cache all transitions in the workflow.
+    // We may have 0 transitions....
+    if ($this->transitions === NULL) {
+      $this->transitions = array();
+      // Get all transitions. (Even from other workflows. :-( )
+      $config_transitions = entity_load('WorkflowConfigTransition', $tids, array(), $reset);
+      foreach ($config_transitions as &$config_transition) {
+        if (isset($states[$config_transition->sid])) {
+          $config_transition->setWorkflow($this);
+          $this->transitions[$config_transition->tid] = $config_transition;
+        }
+      }
+      $this->sortTransitions();
+    }
+
+    $config_transitions = array();
+    foreach ($this->transitions as &$config_transition) {
+      if (!isset($states[$config_transition->sid])) {
         // Not a valid transition for this workflow.
       }
-      elseif ($sid && $sid != $transition->sid) {
+      elseif ($sid && $sid != $config_transition->sid) {
         // Not the requested 'from' state.
       }
-      elseif ($target_sid && $target_sid != $transition->target_sid) {
+      elseif ($target_sid && $target_sid != $config_transition->target_sid) {
         // Not the requested 'to' state.
       }
-      elseif ($transition->isAllowed($roles)) {
+      elseif ($roles == 'ALL' || $config_transition->isAllowed($roles)) {
         // Transition is allowed, permitted. Add to list.
-        $transitions[$transition->tid] = clone $transition;
+        $config_transition->setWorkflow($this);
+        $config_transitions[$config_transition->tid] = $config_transition;
+      }
+      else {
+        // Transition is otherwise not allowed.
       }
     }
-    return $transitions;
+
+    return $config_transitions;
   }
 
   public function getTransitionsByTid($tid, $roles = '', $reset = FALSE) {
@@ -376,7 +618,7 @@ class Workflow extends Entity {
     return $this->getTransitions(FALSE, $conditions, $reset);
   }
 
-  /*
+  /**
    * Get a specific transition. Therefore, use $roles = 'ALL'.
    */
   public function getTransitionsBySidTargetSid($sid, $target_sid, $roles = 'ALL', $reset = FALSE) {
@@ -391,15 +633,21 @@ class Workflow extends Entity {
   /**
    * Gets a the type map for a given workflow.
    *
-   * @param $sid
+   * @param int $sid
    *   A state ID.
    *
    * @return array
    *   An array of typemaps.
    */
   public function getTypeMap() {
-    $type_map = module_exists('workflownode') ? workflow_get_workflow_type_map_by_wid($this->wid) : array(); 
-    return $type_map;
+    $result = array();
+
+    $type_maps = module_exists('workflownode') ? workflow_get_workflow_type_map_by_wid($this->wid) : array();
+    foreach ($type_maps as $map) {
+      $result[] = $map->type;
+    }
+
+    return $result;
   }
 
   /**
@@ -427,52 +675,130 @@ class Workflow extends Entity {
   }
 
   /**
-   * Helper function for workflow_get_workflows_by_type().
-   *
-   * Get/set the Item of a particular Workflow.
-   * It loads the Workflow object with the particular Field Instance data.
-   * @todo 1: this is not robust: 1 Item has 1 Workflow; 1 Workflow may have N Items (fields)
-   * @todo 2: find other solution.
-   */
-  public function getWorkflowItem(WorkflowItem $item = NULL, $entity_type = '', $entity_bundle = '', $field_name = '') {
-    if ($item) {
-      $this->item = $item;
-    }
-    if (empty($this->item)) {
-      // This is for Workflow Node. Emulate a Field API interface.
-      // @todo D8: Remove, after converting workflow node to workflow field.
-      $workflow = &$this;
-
-      // Call field_info_field().
-      // Generates pseudo data for workflow_node to re-use Field API.
-      $field = _workflow_info_field($field_name, $workflow);
-      $instance = array();
-
-      $this->item = new WorkflowItem($field, $instance);
-    }
-
-    return $this->item;
-  }
-
-  /**
    * Mimics Entity API functions.
    */
-  public function label($langcode = NULL) {
-    return t($this->name, $args = array(), $options = array('langcode' => $langcode));
-  }
   public function getName() {
     return $this->name;
   }
-  public function value() {
-    return $this->wid;
-  }
 
   protected function defaultLabel() {
-    return $this->name;
+    return isset($this->label) ? t('@label', array('@label' => $this->label)) : '';
   }
 
-//  protected function defaultUri() {
-//    return array('path' => 'admin/config/workflow/workflow/' . $this->wid);
-//  }
+  protected function defaultUri() {
+    $wid = $this->wid;
+    return array('path' => WORKFLOW_ADMIN_UI_PATH . "/manage/$wid");
+  }
 
+  protected function rebuildRoles(array $roles) {
+    $new_roles = array();
+
+    // @todo: importing Roles is incomplete when user language is not English.
+    // function user_roles() translates DRUPAL_ANONYMOUS_RID, DRUPAL_AUTHENTICATED_RID
+    $role_map = workflow_get_roles(NULL);
+
+    // See also https://drupal.org/node/1702626 .
+    foreach ($roles as $key => $rid) {
+      if ($rid == WORKFLOW_ROLE_AUTHOR_RID) {
+        $new_roles[$rid] = $rid;
+      }
+      else {
+        if ($role = user_role_load_by_name($role_map[$rid])) {
+          $new_roles[$role->rid] = (int)($role->rid);
+        }
+      }
+    }
+    return $new_roles;
+  }
+
+}
+
+/**
+ * Helper function to sort the transitions.
+ *
+ * @param WorkflowConfigTransition $a
+ * @param WorkflowConfigTransition $b
+ *
+ * @return int
+ */
+function _workflow_transitions_sort_by_weight($a, $b) {
+  // First sort on From-State.
+  $old_state_a = $a->getOldState();
+  $old_state_b = $b->getOldState();
+  if ($old_state_a->weight < $old_state_b->weight) return -1;
+  if ($old_state_a->weight > $old_state_b->weight) return +1;
+
+  // Then sort on To-State.
+  $new_state_a = $a->getNewState();
+  $new_state_b = $b->getNewState();
+  if ($new_state_a->weight < $new_state_b->weight) return -1;
+  if ($new_state_a->weight > $new_state_b->weight) return +1;
+  return 0;
+}
+
+
+/**
+ * Implements a controller class for Workflow.
+ */
+class WorkflowController extends EntityAPIControllerExportable {
+
+  // public function create(array $values = array()) {    return parent::create($values);  }
+  // public function load($ids = array(), $conditions = array()) { }
+
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    // @todo: replace WorkflowController::delete() with parent.
+    // @todo: throw error if not workflow->isDeletable().
+    foreach ($ids as $wid) {
+      if ($workflow = workflow_load($wid)) {
+        $workflow->delete();
+      }
+    }
+    $this->resetCache();
+  }
+
+  /**
+   * Overrides DrupalDefaultEntityController::cacheGet().
+   *
+   * Override default function, due to Core issue #1572466.
+   */
+  protected function cacheGet($ids, $conditions = array()) {
+    // Load any available entities from the internal cache.
+    if ($ids === FALSE && !$conditions) {
+      return $this->entityCache;
+    }
+    return parent::cacheGet($ids, $conditions);
+  }
+
+  /**
+   * Overrides DrupalDefaultEntityController::cacheSet().
+   */
+  /*
+    // protected function cacheSet($entities) { }
+    //   return parent::cacheSet($entities);
+    // }
+   */
+
+  /**
+   * Overrides DrupalDefaultEntityController::resetCache().
+   *
+   * Called by workflow_reset_cache, to
+   * Reset the Workflow when States, Transitions have been changed.
+   */
+  // public function resetCache(array $ids = NULL) {
+  //   parent::resetCache($ids);
+  // }
+
+  /**
+   * Overrides DrupalDefaultEntityController::attachLoad().
+   */
+  protected function attachLoad(&$queried_entities, $revision_id = FALSE) {
+    foreach ($queried_entities as $entity) {
+      // Load the states, so they are already present on the next (cached) load.
+      $entity->states = $entity->getStates($all = TRUE);
+      $entity->transitions = $entity->getTransitions(FALSE);
+      $entity->typeMap = $entity->getTypeMap();
+    }
+
+    parent::attachLoad($queried_entities, $revision_id);
+  }
 }

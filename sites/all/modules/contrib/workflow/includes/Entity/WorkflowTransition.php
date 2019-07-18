@@ -9,57 +9,6 @@
  */
 
 /**
- * Implements a controller class for WorkflowTransition.
- *
- * The 'true' controller class is 'Workflow'.
- */
-class WorkflowTransitionController extends EntityAPIController {
-
-  /**
-   * Overrides DrupalDefaultEntityController::cacheGet()
-   * 
-   * Override default function, due to core issue #1572466.
-   */
-  protected function cacheGet($ids, $conditions = array()) {
-    // Load any available entities from the internal cache.
-    if ($ids === FALSE && !$conditions) {
-      return $this->entityCache;
-    }
-    return parent::cacheGet($ids, $conditions);
-  }
-
-  /**
-   * Insert (no update) a transition.
-   *
-   * @deprecated workflow_insert_workflow_node_history() --> WorkflowTransition::save()
-   */
-  public function save($entity, DatabaseTransaction $transaction = NULL) {
-    // Check for no transition.
-    if ($entity->old_sid == $entity->new_sid) {
-      if (!$entity->comment) {
-        // Write comment into history though.
-        return;
-      }
-    }
-
-    // Make sure we haven't already inserted history for this update.
-    $last_history = workflow_transition_load_single($entity->entity_type, $entity->entity_id, $entity->field_name, $limit = 1);
-    if ($last_history &&
-        $last_history->stamp == REQUEST_TIME &&
-        $last_history->new_sid == $entity->new_sid) {
-      return;
-    }
-
-    unset($entity->hid);
-    $entity->stamp = REQUEST_TIME;
-
-    return parent::save($entity, $transaction);
-  }
-
-}
-
-
-/**
  * Implements an actual Transition.
  *
  * If a transition is executed, the new state is saved in the Field or {workflow_node}.
@@ -73,16 +22,21 @@ class WorkflowTransition extends Entity {
   public $delta = 0;
   // Entity data.
   public $revision_id;
-  public $entity_id;
+  public $entity_id; // Use WorkflowTransition->getEntity() to fetch this.
   public $nid; // @todo D8: remove $nid, use $entity_id. (requires conversion of Views displays.)
-  protected $entity; // This is dynamically loaded. Use WorkflowTransition->getEntity() to fetch this.
   // Transition data.
+  // public $hid = 0;
+  public $wid = 0;
   public $old_sid = 0;
   public $new_sid = 0;
   public $sid = 0; // @todo D8: remove $sid, use $new_sid. (requires conversion of Views displays.)
-  public $uid = 0;
+  public $uid = 0; // Use WorkflowTransition->getUser() to fetch this.
   public $stamp;
   public $comment = '';
+  // Cached data, from $this->entity_id and $this->uid.
+  protected $entity = NULL; // Use WorkflowTransition->getEntity() to fetch this.
+  protected $user = NULL; // Use WorkflowTransition->getUser() to fetch this.
+  // Extra data.
   protected $is_scheduled = NULL;
   protected $is_executed = NULL;
   protected $force = NULL;
@@ -94,46 +48,63 @@ class WorkflowTransition extends Entity {
   /**
    * Creates a new entity.
    *
-   * @see entity_create()
+   * @param array $values
+   *   The initial values.
+   * @param string $entityType
+   *   The entity type of this Entity subclass.
    *
-   * @param $entity_type
-   *  The entity type of the attached $entity.
-   * @param $entityType
-   *  The entity type of this Entity subclass.
+   * @see entity_create()
    *
    * No arguments passed, when loading from DB.
    * All arguments must be passed, when creating an object programmatically.
    * One argument $entity may be passed, only to directly call delete() afterwards.
    */
   public function __construct(array $values = array(), $entityType = 'WorkflowTransition') {
-    parent::__construct($values = array(), $entityType);
+    // Please be aware that $entity_type and $entityType are different things!
+    parent::__construct($values, $entityType);
 
-    // This transition is not scheduled, 
-    $this->is_scheduled = FALSE; // This transition is not scheduled, 
-    $this->is_executed = NULL;   // But we do not know if it is executed, yet.
+    $this->hid = isset($this->hid) ? $this->hid : 0;
+    // This transition is not scheduled
+    $this->is_scheduled = FALSE;
+    // This transition is not executed, if it has no hid, yet, upon load.
+    $this->is_executed = ($this->hid > 0);
 
     // Fill the 'new' fields correctly. @todo D8: rename these fields in db table.
     $this->entity_id = $this->nid;
     $this->new_sid = $this->sid;
+    // Initialize wid, if not set.
+    if ($this->old_sid && !$this->wid) {
+      $this->getWorkflow();
+    }
   }
 
-  /*
+  /**
    * Helper function for __construct. Used for all children of WorkflowTransition (aka WorkflowScheduledTransition)
+   *
+   * @param $entity_type
+   * @param $entity
+   * @param $field_name
+   * @param $old_sid
+   * @param $new_sid
+   * @param null $uid
+   * @param int $stamp
+   * @param string $comment
    */
-  public function setValues($entity_type, $entity, $field_name, $old_sid, $new_sid, $uid, $stamp, $comment) {
-
+  public function setValues($entity_type, $entity, $field_name, $old_sid, $new_sid, $uid = NULL, $stamp = REQUEST_TIME, $comment = '') {
     // Normally, the values are passed in an array, and set in parent::__construct, but we do it ourselves.
-    // (But there is no objection to do it there.) 
+    // (But there is no objection to do it there.)
+
+    global $user;
 
     $this->entity_type = (!$entity_type) ? $this->entity_type : $entity_type;
     $this->field_name = (!$field_name) ? $this->field_name : $field_name;
-    $this->language = ($this->language) ? $this->language : LANGUAGE_NONE;
+    $uid = ($uid === NULL) ? $user->uid : $uid;
 
     // If constructor is called with new() and arguments.
     // Load the supplied entity.
     if ($entity && !$entity_type) {
       // Not all parameters are passed programmatically.
-      drupal_set_message('Wrong call to new Workflow*Transition()', 'error');
+      drupal_set_message(t('Wrong call to new Workflow*Transition()'), 'error');
     }
     elseif ($entity) {
       $this->setEntity($entity_type, $entity);
@@ -151,6 +122,9 @@ class WorkflowTransition extends Entity {
       $this->uid = $uid;
       $this->stamp = $stamp;
       $this->comment = $comment;
+
+      // Set language. Multi-language is not supported for Workflow Node.
+      $this->language = _workflow_metadata_workflow_get_properties($entity, array(), 'langcode', $entity_type, $field_name);
     }
     elseif (!$old_sid) {
       // Not all parameters are passed programmatically.
@@ -162,22 +136,22 @@ class WorkflowTransition extends Entity {
     // Fill the 'new' fields correctly. @todo D8: rename these fields in db table.
     $this->entity_id = $this->nid;
     $this->new_sid = $this->sid;
+    // Initialize wid, if not set.
+    if ($this->old_sid && !$this->wid) {
+      $this->getWorkflow();
+    }
   }
 
   /**
-   * Permanently deletes the entity.
+   * {@inheritdoc}
    */
-//  public function delete() {
-//    return parent::delete();
-//  }
-
-
   protected function defaultLabel() {
-    return ''; // $this->title;
+    // @todo; Should return title of WorkflowConfigTransition. Make it a superclass??
+    return t('Workflow transition !hid', array('!hid' =>3));
   }
 
 //  protected function defaultUri() {
-//    return array('path' => 'admin/config/workflow/workflow/transitions/' . $this->wid);
+//    return array('path' => 'workflow_transition/' . $this->hid);
 //  }
 
   /**
@@ -189,15 +163,17 @@ class WorkflowTransition extends Entity {
    *
    * Since this may return a lot of data, a limit is included to allow for only one result.
    *
-   * @param $entity_type
-   * @param $entity_id
-   * @param $field_name
+   * @param string $entity_type
+   * @param array $entity_ids
+   * @param string $field_name
    *   Optional. Can be NULL, if you want to load any field.
+   * @param null $limit
+   * @param string $langcode
    *
    * @return array
    *   An array of WorkflowTransitions.
    */
-  public static function loadMultiple($entity_type, array $entity_ids, $field_name = '', $limit = NULL) {
+  public static function loadMultiple($entity_type, array $entity_ids, $field_name = '', $limit = NULL, $langcode = '') {
     $query = db_select('workflow_node_history', 'h');
     $query->condition('h.entity_type', $entity_type);
     if ($entity_ids) {
@@ -208,6 +184,14 @@ class WorkflowTransition extends Entity {
       // E.g., in workflow.tokens.
       $query->condition('h.field_name', $field_name);
     }
+    // Add selection on language.
+    // Workflow Node: only has 'und'.
+    // Workflow Field: untranslated field have 'und'.
+    // Workflow Field: translated fields may be specified.
+    if ($langcode) {
+      $query->condition('h.language', $langcode);
+    }
+
     $query->fields('h');
     // The timestamp is only granular to the second; on a busy site, we need the id.
     // $query->orderBy('h.stamp', 'DESC');
@@ -221,88 +205,44 @@ class WorkflowTransition extends Entity {
   }
 
   /**
-   * Given a Condition, delete transitions for it.
-   * @todo: find a way to make $table automatically set for this class and its subclasses,
-   *  so we do not need to override it.
-   */
-  public static function deleteMultiple(array $conditions, $table = 'workflow_node_history') {
-    if (count($conditions) == 0) {
-      return 0;
-    }
-    $query = db_delete($table);
-    foreach ($conditions as $field_name => $value) {
-      $query->condition($field_name, $value);
-    }
-    return $query->execute();
-  }
-
-  /**
-   * Given an Entity, delete transitions for it.
-   *
-   * @todo: With Field API, having multiple workflow_fields, both are deleted :-( .
-   */
-  public static function deleteById($entity_type, $entity_id) {
-    $conditions = array(
-      'entity_type' => $entity_type,
-      'nid' => $entity_id,
-    );
-    return self::deleteMultiple($conditions);
-  }
-
-  /**
    * Property functions.
    */
 
   /**
    * Verifies if the given transition is allowed.
    *
-   * - in settings
-   * - in permissions
-   * - by permission hooks, implemented by other modules.
+   * - In settings;
+   * - In permissions;
+   * - By permission hooks, implemented by other modules.
    *
-   * @return bool
-   *  TRUE if OK, else FALSE.
+   * @param $roles
+   * @param $user
+   * @param $force
+   *
+   * @return bool TRUE if OK, else FALSE.
+   *   TRUE if OK, else FALSE.
+   *
+   * Having both $roles AND $user seems redundant, but $roles have been
+   * tampered with, even though they belong to the $user.
+   * @see WorkflowConfigTransition::isAllowed()
    */
-  public function isAllowed($roles, $force) {
-    global $user;
-
-    $old_sid = $this->old_sid;
-    $new_sid = $this->new_sid;
-    $old_state = workflow_state_load_single($old_sid);
-    $entity_type = $this->entity_type;
-    $entity = $this->getEntity(); // Entity may not be loaded, yet.
-
-    $t_args = array(
-      '%old_sid' => $old_sid,
-      '%new_sid' => $new_sid,
-    );
+  protected function isAllowed($roles, $user, $force) {
+    if ($force || ($user->uid == 1)) {
+      return TRUE;
+    }
 
     // Check allow-ability of state change if user is not superuser (might be cron).
-    if (($user->uid != 1) && !$force) {
-      // Get the WorkflowConfigTransition.
-      // @todo: some day, config_transition can be a parent of entity_transition.
-      $workflow = $old_state->getWorkflow();
-      $config_transitions = $workflow->getTransitionsBySidTargetSid($old_sid, $new_sid);
-      $config_transition = reset($config_transitions);
-      if ($config_transition) {
-        if (!$config_transition->isAllowed($roles)) {
-          return FALSE;
-        }
-      }
-      else {
-        watchdog('workflow', 'Attempt to go to nonexistent transition (from %old_sid to %new_sid)', $t_args, WATCHDOG_ERROR);
-        return $old_sid;
-      }
-    }
-
-    // Get all states from the Workflow, or only the valid transitions for this state.
-    // WorkflowState::getOptions() will consider all permissions, etc.
-    $options = array();
-    if ($old_state) {
-      $options = $old_state->getOptions($entity_type, $entity, $force);
-    }
-    if (!array_key_exists($new_sid, $options)) {
-      drupal_set_message(t('The transition from %old_sid to %new_sid is not allowed.', $t_args), 'error');
+    // Get the WorkflowConfigTransition.
+    // @todo: some day, WorkflowConfigTransition can be a parent of WorkflowTransition.
+    $workflow = $this->getWorkflow();
+    $config_transitions = $workflow->getTransitionsBySidTargetSid($this->old_sid, $this->new_sid);
+    $config_transition = reset($config_transitions);
+    if (!$config_transition || !$config_transition->isAllowed($roles)) {
+      $t_args = array(
+        '%old_sid' => $this->old_sid,
+        '%new_sid' => $this->new_sid,
+      );
+      watchdog('workflow', 'Attempt to go to nonexistent transition (from %old_sid to %new_sid)', $t_args, WATCHDOG_ERROR);
       return FALSE;
     }
 
@@ -311,97 +251,134 @@ class WorkflowTransition extends Entity {
 
   /**
    * Execute a transition (change state of a node).
-   * @deprecated: workflow_execute_transition() --> WorkflowTransition::execute().
    *
    * @param bool $force
    *   If set to TRUE, workflow permissions will be ignored.
    *
    * @return int
-   *  new state ID. If execution failed, old state ID is returned,
+   *   New state ID. If execution failed, old state ID is returned,
+   *
+   * deprecated workflow_execute_transition() --> WorkflowTransition::execute().
    */
   public function execute($force = FALSE) {
-    global $user;
-
+    $user = $this->getUser();
     $old_sid = $this->old_sid;
     $new_sid = $this->new_sid;
+
+    // Load the entity, if not already loaded.
+    // This also sets the (empty) $revision_id in Scheduled Transitions.
+    $entity = $this->getEntity();
+    // Only after getEntity(), the following are surely set.
     $entity_type = $this->entity_type;
     $entity_id = $this->entity_id;
-    $entity = $this->getEntity(); // Entity may not be loaded, yet.
     $field_name = $this->field_name;
 
-    // Store the transition, so it can be easily fetched later on.
-    // Store in an array, to prepare for multiple workflow_fields per entity.
-    // This is a.o. used in hook_entity_update to trigger 'transition post'.
-    $entity->workflow_transitions[$field_name] = $this;
+    // Make sure $force is set in the transition, too.
+    if ($force) {
+      $this->force($force);
+    }
+    $force = $this->isForced();
 
+    // Prepare an array of arguments for error messages.
     $args = array(
       '%user' => isset($user->name) ? $user->name : '',
       '%old' => $old_sid,
       '%new' => $new_sid,
     );
 
-    $old_state = workflow_state_load_single($old_sid);
-    $workflow = $old_state->getWorkflow();
+    if (!$this->getOldState()) {
+      drupal_set_message($message = t('You tried to set a Workflow State, but
+        the entity is not relevant. Please contact your system administrator.'),
+        'error');
+      $message = 'Setting a non-relevant Entity from state %old to %new';
+      $uri = entity_uri($entity_type, $entity);
+      watchdog('workflow', $message, $args, WATCHDOG_ERROR, l('view', $uri['path']));
+      return $old_sid;
+    }
 
-    // Check if the state has changed. If not, we only record the comment.
+    // Check if the state has changed.
     $state_changed = ($old_sid != $new_sid);
+
+    // If so, check the permissions.
     if ($state_changed) {
       // State has changed. Do some checks upfront.
 
-      $roles = array_keys($user->roles);
-      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
-      if (!$this->isAllowed($roles, $force)) {
-        watchdog('workflow', 'User %user not allowed to go from state %old to %new', $args, WATCHDOG_NOTICE);
-        // If incorrect, quit.
-        return $old_sid;
+      if (!$force) {
+        // Make sure this transition is allowed by workflow module Admin UI.
+        $roles = array_keys($user->roles);
+        $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+        if (!$this->isAllowed($roles, $user, $force)) {
+          watchdog('workflow', 'User %user not allowed to go from state %old to %new', $args, WATCHDOG_NOTICE);
+          // If incorrect, quit.
+          return $old_sid;
+        }
       }
 
       if (!$force) {
-        // Make sure this transition is allowed.
-        $permitted = module_invoke_all('workflow', 'transition permitted', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name);
+        // Make sure this transition is allowed by custom module.
+        // @todo D8: remove, or replace by 'transition pre'. See WorkflowState::getOptions().
+        // @todo D8: replace all parameters that are included in $transition.
+        $permitted = module_invoke_all('workflow', 'transition permitted', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name, $this, $user);
         // Stop if a module says so.
         if (in_array(FALSE, $permitted, TRUE)) {
           watchdog('workflow', 'Transition vetoed by module.');
           return $old_sid;
         }
       }
-    }
 
-    // Let other modules modify the comment.
-    // @todo D8: remove all but last items from $context.
-    $context = array(
-      'node' => $entity,
-      'sid' => $new_sid,
-      'old_sid' => $old_sid,
-      'uid' => $this->uid,
-      'transition' => $this,
-    );
-    drupal_alter('workflow_comment', $this->comment, $context);
-
-    // Make sure this transition is valid and allowed for the current user.
-    if ($state_changed) {
+      // Make sure this transition is valid and allowed for the current user.
       // Invoke a callback indicating a transition is about to occur.
       // Modules may veto the transition by returning FALSE.
-      $permitted = module_invoke_all('workflow', 'transition pre', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name);
+      // (Even if $force is TRUE, but they shouldn't do that.)
+      $permitted = module_invoke_all('workflow', 'transition pre', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name, $this);
       // Stop if a module says so.
       if (in_array(FALSE, $permitted, TRUE)) {
         watchdog('workflow', 'Transition vetoed by module.');
         return $old_sid;
       }
+
     }
     elseif ($this->comment) {
       // No need to ask permission for adding comments.
       // Since you should not add actions to a 'transition pre' event, there is
       // no need to invoke the event.
     }
+    else {
+      // There is no state change, and no comment.
+      // We may need to clean up something.
+    }
+
+    if ($state_changed || $this->comment) {
+      // Store the transition, so it can be easily fetched later on.
+      // Store in an array, to prepare for multiple workflow_fields per entity.
+      // This is a.o. used in hook_entity_update to trigger 'transition post'.
+      // Only add the Transition once! or you will encounter endless loops in
+      // hook_entity_update() in workflow_actions_entity_update et all.
+      if (!isset($entity->workflow_transitions[$field_name])) {
+        $entity->workflow_transitions[$field_name] = &$this;
+      }
+
+      // The transition is allowed. Let other modules modify the comment.
+      // @todo D8: remove all but last items from $context.
+      $context = array(
+        'node' => $entity,
+        'sid' => $new_sid,
+        'old_sid' => $old_sid,
+        'uid' => $user->uid,
+        'transition' => $this,
+      );
+      drupal_alter('workflow_comment', $this->comment, $context);
+    }
+
+    // Now, change the database.
 
     // Log the new state in {workflow_node}.
     if (!$field_name) {
-      if ($state_changed) {
+      if ($state_changed || $this->comment) {
         // If the node does not have an existing 'workflow' property,
         // save the $old_sid there, so it can be logged.
-        if (!isset($entity->workflow)) {
-          $entity->workflow = $old_sid;
+        if (!isset($entity->workflow)) { // This is a workflow_node sid.
+          $entity->workflow = $old_sid;  // This is a workflow_node sid.
         }
 
         // Change the state for {workflow_node}.
@@ -414,61 +391,95 @@ class WorkflowTransition extends Entity {
         );
         workflow_update_workflow_node($data);
 
-        $entity->workflow = $new_sid;
-      }
-      elseif ($this->comment) {
-        // If no state change, but comment, update node stamp.
-        $entity->workflow_stamp = REQUEST_TIME;
-        workflow_update_workflow_node_stamp($this->entity_id, REQUEST_TIME);
+        $entity->workflow = $new_sid;  // This is a workflow_node sid.
       }
     }
+    else {
+      // This is a Workflow Field.
+      // Until now, adding code here (instead of in workflow_execute_transition() )
+      // doesn't work, creating an endless loop.
+      // Update 10-dec-2016: the following line, added above, may have resolved that.
+      //     if (!isset($entity->workflow_transitions[$field_name]))
+/*
+      if ($state_changed || $this->comment) {
+        // Do a separate update to update the field (Workflow Field API)
+        // This will call hook_field_update() and WorkflowFieldDefaultWidget::submit().
+        // $entity->{$field_name}[$this->language] = array();
+        // $entity->{$field_name}[$this->language][0]['workflow']['workflow_sid'] = $new_sid;
+        // $entity->{$field_name}[$this->language][0]['workflow']['workflow_comment'] = $this->comment;
+        $entity->{$field_name}[$this->language][0]['transition'] = $this;
 
-    // Log the transition in {workflow_node_history}.
+        // Save the entity, but not through entity_save(),
+        // since this will check permissions again and trigger rules.
+        // @TODO: replace below by a workflow_field setter callback.
+        // The transition was successfully executed, or else a message was raised.
+//        entity_save($entity_type, $entity);
+        // or
+//        field_attach_update($entity_type, $entity);
+
+        // Reset the entity cache after update.
+        entity_get_controller($entity_type)->resetCache(array($entity_id));
+
+        $new_sid = workflow_node_current_state($entity, $entity_type, $field_name);
+      }
+ */
+    }
+
     $this->is_executed = TRUE;
-    $this->save();
 
-    // Register state change with watchdog.
-    if ($state_changed && $state = workflow_state_load_single($new_sid)) {
-      if (!empty($workflow->options['watchdog_log'])) {
-        $entity_type_info = entity_get_info($entity_type);
-        $message = ($this->isScheduled()) ? 'Scheduled state change of @type %label to %state_name executed' : 'State of @type %label set to %state_name';
-        $args = array(
-          '@type' => $entity_type_info['label'],
-          '%label' => entity_label($entity_type, $entity),
-          '%state_name' => $state->label(),
-        );
-        $uri = entity_uri($entity_type, $entity);
-        watchdog('workflow', $message, $args, WATCHDOG_NOTICE, l('view', $uri['path']));
-      }
-    }
-
-    // Remove any scheduled state transitions.
-    foreach (WorkflowScheduledTransition::load($entity_type, $entity_id, $field_name) as $scheduled_transition) {
-      $scheduled_transition->delete();
-    }
-
-    // Notify modules that transition has occurred.
-    // Action triggers should take place in response to this callback, not the 'transaction pre'.
     if ($state_changed || $this->comment) {
+
+      // Log the transition in {workflow_node_history}.
+      $this->save();
+
+      // Register state change with watchdog.
+      if ($state_changed) {
+        $workflow = $this->getWorkflow();
+        // Get the workflow_settings, unified for workflow_node and workflow_field.
+        // @todo D8: move settings back to Workflow (like workflownode currently is).
+        // @todo D8: to move settings back, grep for "workflow->options" and "field['settings']".
+        $field = _workflow_info_field($field_name, $workflow);
+
+        if (($new_state = $this->getNewState()) && !empty($field['settings']['watchdog_log'])) {
+          $entity_type_info = entity_get_info($entity_type);
+          $message = ($this->isScheduled()) ? 'Scheduled state change of @type %label to %state_name executed' : 'State of @type %label set to %state_name';
+          $args = array(
+            '@type' => $entity_type_info['label'],
+            '%label' => entity_label($entity_type, $entity),
+            '%state_name' => $new_state->label(),
+          );
+          $uri = entity_uri($entity_type, $entity);
+          watchdog('workflow', $message, $args, WATCHDOG_NOTICE, l('view', $uri['path']));
+        }
+      }
+
+      // Remove any scheduled state transitions.
+      foreach (WorkflowScheduledTransition::load($entity_type, $entity_id, $field_name) as $scheduled_transition) {
+        /* @var $scheduled_transition WorkflowScheduledTransition */
+        $scheduled_transition->delete();
+      }
+
+      // Notify modules that transition has occurred.
+      // Action triggers should take place in response to this callback, not the 'transaction pre'.
       if (!$field_name) {
         // Now that workflow data is saved, reset stuff to avoid problems
         // when Rules etc want to resave the data.
         // Remember, this is only for nodes, and node_save() is not necessarily performed.
         unset($entity->workflow_comment);
-        module_invoke_all('workflow', 'transition post', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name);
+        module_invoke_all('workflow', 'transition post', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name, $this);
         entity_get_controller('node')->resetCache(array($entity->nid)); // from entity_load(), node_save();
       }
       else {
-        // module_invoke_all('workflow', 'transition post', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name);
+        // module_invoke_all('workflow', 'transition post', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name, $this);
         // We have a problem here with Rules, Trigger, etc. when invoking
         // 'transition post': the entity has not been saved, yet. we are still
         // IN the transition, not AFTER. Alternatives:
-        // 1. Save the field here explicitely, using field_attach_save;
+        // 1. Save the field here explicitly, using field_attach_save;
         // 2. Move the invoke to another place: hook_entity_insert(), hook_entity_update();
         // 3. Rely on the entity hooks. This works for Rules, not for Trigger.
-        // --> We choose option 2.
-        //  - first, $entity->workflow_fields[] is set for easy re-fetching.
-        //  - then, post_execute() is invoked via workflowfield_entity_insert(), _update().
+        // --> We choose option 2:
+        // - First, $entity->workflow_transitions[] is set for easy re-fetching.
+        // - Then, post_execute() is invoked via workflowfield_entity_insert(), _update().
       }
     }
 
@@ -476,20 +487,41 @@ class WorkflowTransition extends Entity {
   }
 
   /**
-   * Invokes 'transition post''.
+   * Invokes 'transition post'.
+   *
+   * Add the possibility to invoke the hook from elsewhere.
    */
   public function post_execute($force = FALSE) {
     $old_sid = $this->old_sid;
     $new_sid = $this->new_sid;
-    $entity_type = $this->entity_type;
-    $entity_id = $this->entity_id;
     $entity = $this->getEntity(); // Entity may not be loaded, yet.
+    $entity_type = $this->entity_type;
+    // $entity_id = $this->entity_id;
     $field_name = $this->field_name;
 
     $state_changed = ($old_sid != $new_sid);
     if ($state_changed || $this->comment) {
-      module_invoke_all('workflow', 'transition post', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name);
+      module_invoke_all('workflow', 'transition post', $old_sid, $new_sid, $entity, $force, $entity_type, $field_name, $this);
     }
+  }
+
+
+  /**
+   * Get the Transitions $workflow.
+   *
+   * @return Workflow|NULL
+   *   The workflow for this Transition.
+   */
+  public function getWorkflow() {
+    $workflow = NULL;
+    if (!$this->wid) {
+      $state = workflow_state_load_single($this->new_sid ? $this->new_sid : $this->old_sid);
+      $this->wid = (int) $state->wid;
+    }
+    if ($this->wid) {
+      $workflow = workflow_load($this->wid);
+    }
+    return $workflow;
   }
 
   /**
@@ -499,25 +531,35 @@ class WorkflowTransition extends Entity {
    *   The entity, that is added to the Transition.
    */
   public function getEntity() {
-    // A correct call, return the $entity.
-    if (empty($this->entity)) {
+    if (empty($this->entity) && $this->entity_type) {
       $entity_type = $this->entity_type;
       $entity_id = $this->entity_id;
-      $this->entity = entity_load_single($entity_type, $entity_id);
+      $entity = entity_load_single($entity_type, $entity_id);
+
+      // Set the entity cache.
+      $this->entity = $entity;
+
+      // Make sure the vid of Entity and Transition are equal.
+      // Especially for Scheduled Transition, that do not have this set, yet,
+      // or may have an outdated revision ID.
+      $info = entity_get_info($entity_type);
+      $revision_key = $info['entity keys']['revision'];
+      $this->revision_id = (isset($entity->{$revision_key})) ? $entity->{$revision_key} : NULL;
     }
+
     return $this->entity;
   }
 
   /**
    * Set the Transitions $entity.
    *
-   * @param $entity_type
-   *  the entity type of the entity.
-   * @param $entity
-   *  the Entity ID or the Entity object, to add to the Transition.
+   * @param string $entity_type
+   *   The entity type of the entity.
+   * @param mixed $entity
+   *   The Entity ID or the Entity object, to add to the Transition.
    *
    * @return object $entity
-   *  the entity, that is added to the Transition.
+   *   The Entity, that is added to the Transition.
    */
   public function setEntity($entity_type, $entity) {
     if (!is_object($entity)) {
@@ -527,16 +569,69 @@ class WorkflowTransition extends Entity {
     }
     $this->entity = $entity;
     $this->entity_type = $entity_type;
-    list($this->entity_id, $this->revision_id, ) = entity_extract_ids($entity_type, $entity);
+    list($this->entity_id, $this->revision_id,) = entity_extract_ids($entity_type, $entity);
 
-    $this->nid = $this->entity_id; // backwards compatibility.
+    // For backwards compatibility, set nid.
+    $this->nid = $this->entity_id;
 
     return $this->entity;
+  }
+
+  public function getUser() {
+    if (!isset($this->user) || ($this->user->uid != $this->uid)) {
+      $this->user = user_load($this->uid);
+    }
+    return $this->user;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFieldName() {
+    return $this->field_name;
   }
 
   /**
    * Functions, common to the WorkflowTransitions.
    */
+  public function getOldState() {
+    return workflow_state_load_single($this->old_sid);
+  }
+  public function getNewState() {
+    return workflow_state_load_single($this->new_sid);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getComment() {
+    return $this->comment;
+  }
+
+  /**
+   * Returns the time on which the transitions was or will be executed.
+   *
+   * @return mixed
+   */
+  public function getTimestamp() {
+    return $this->stamp;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTimestampFormatted() {
+    $timestamp = $this->stamp;
+    return format_date($timestamp);;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTimestamp($value) {
+    $this->stamp = $value;
+    return $this;
+  }
 
   /**
    * Returns if this is a Scheduled Transition.
@@ -562,4 +657,81 @@ class WorkflowTransition extends Entity {
     return $this->force = $force;
   }
 
+  /**
+   * Helper debugging function to easily show the contents fo a transition.
+   */
+  public function dpm($function = '') {
+    $transition = $this;
+    $entity = $transition->getEntity();
+    $entity_type = $transition->entity_type;
+    list($entity_id, , $entity_bundle) = ($entity) ? entity_extract_ids($entity_type, $entity) : array('', '', '');
+    $time = $transition->getTimestampFormatted();
+    // Do this extensive $user_name lines, for some troubles with Action.
+    $user = $transition->getUser();
+    $user_name = ($user) ? $user->name : 'unknown username';
+    $t_string = get_class($this) . ' ' . (isset($this->hid) ? $this->hid : '') . ' ' . ($function ? ("in function '$function'") : '');
+    $output[] = 'Entity  = ' . ((!$entity) ? 'NULL' : ($entity_type . '/' . $entity_bundle . '/' . $entity_id));
+    $output[] = 'Field   = ' . $transition->getFieldName();
+    $output[] = 'From/To = ' . $transition->old_sid . ' > ' . $transition->new_sid . ' @ ' . $time;
+    $output[] = 'Comment = ' . $user_name . ' says: ' . $transition->getComment();
+    $output[] = 'Forced  = ' . ($transition->isForced() ? 'yes' : 'no');
+    if (function_exists('dpm')) { dpm($output, $t_string); }
+  }
+
+}
+
+/**
+ * Implements a controller class for WorkflowTransition.
+ *
+ * The 'true' controller class is 'Workflow'.
+ */
+class WorkflowTransitionController extends EntityAPIController {
+
+  /**
+   * Overrides DrupalDefaultEntityController::cacheGet().
+   *
+   * Override default function, due to core issue #1572466.
+   */
+  protected function cacheGet($ids, $conditions = array()) {
+    // Load any available entities from the internal cache.
+    if ($ids === FALSE && !$conditions) {
+      return $this->entityCache;
+    }
+    return parent::cacheGet($ids, $conditions);
+  }
+
+  /**
+   * Insert (no update) a transition.
+   *
+   * deprecated workflow_insert_workflow_node_history() --> WorkflowTransition::save()
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    // Check for no transition.
+    if ($entity->old_sid == $entity->new_sid) {
+      if (!$entity->comment) {
+        // Write comment into history though.
+        return;
+      }
+    }
+
+    if (empty($entity->hid)) {
+      // Insert the transition. Make sure it hasn't already been inserted.
+      $last_history = workflow_transition_load_single($entity->entity_type, $entity->entity_id, $entity->field_name, $entity->language);
+      if ($last_history &&
+          $last_history->stamp == REQUEST_TIME &&
+          $last_history->new_sid == $entity->new_sid) {
+        return;
+      }
+      else {
+        unset($entity->hid);
+        $entity->stamp = isset($entity->stamp) ? $entity->stamp : REQUEST_TIME;
+
+        return parent::save($entity, $transaction);
+      }
+    }
+    else {
+      // Update the transition.
+      return parent::save($entity, $transaction);
+    }
+  }
 }

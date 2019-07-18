@@ -8,7 +8,7 @@
 /**
  * Implements hook_workflow().
  */
-function workflownode_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name = '') {
+function workflownode_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name = '', $transition = NULL) {
   switch ($op) {
     case 'transition permitted':
       return TRUE;
@@ -36,11 +36,3 @@ function workflownode_workflow($op, $id, $new_sid, $entity, $force, $entity_type
       break;
   }
 }
-
-/**
- * Implements hook_workflow_history_alter().
- */
-// function workflownode_workflow_history_alter(array &$variables) {
-  // The Workflow module does nothing with this hook.
-  // For an example implementation, see the Workflow Revert add-on.
-// }

@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ */
+function feature_az_antispam_uninstall() {
+	//Delete values
+	variable_del('access_denied');
+	variable_del('path_get_ip');//test this as created as array
+	variable_del('save_watchdog');
+	variable_del('save_all_watchdog');
+	variable_del('notify_admin');
+	variable_del('admin_email');
+}

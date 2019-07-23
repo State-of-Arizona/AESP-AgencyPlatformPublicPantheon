@@ -30,7 +30,7 @@ jQuery(function($) {
 
     $(window).bind("load", function () {
         var sliverDiv = document.createElement('div');
-        sliverDiv.classList.add('sliver-container');
+        sliverDiv.className = "sliver-container";
         sliverDiv.innerHTML = '<ul class="sliver-ul">'
             /* Agency Directory */
             + '<li class="sliver-li-left"><a href="https://az.gov/agency-directory" title="Search a Directory of All State Agencies" target="_blank">'

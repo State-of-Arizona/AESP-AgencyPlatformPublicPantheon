@@ -9,6 +9,13 @@ _gaq.push(['_trackPageview']);
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
 
+//Site improve
+(function() {
+    var sz = document.createElement('script'); sz.type = 'text/javascript'; sz.async = true;
+    sz.src = '//siteimproveanalytics.com/js/siteanalyze_6428.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sz, s);
+})();
+
 
 jQuery(function($) {
 
@@ -18,6 +25,8 @@ jQuery(function($) {
     sliverLink.media = 'all';
     sliverLink.rel = 'stylesheet'
     document.body.appendChild(sliverLink);
+
+
 
     $(window).bind("load", function () {
         var sliverDiv = document.createElement('div');
@@ -46,7 +55,12 @@ jQuery(function($) {
             + '<img id="sliver-logo" src="https://static.az.gov/sliver/images/logo-small.png" title="AZ.Gov" alt="Magnifying glass symbolizing search az.gov" /></a></li> '
             + '</ul>';
         + '</div>';
+        var children = document.body.childNodes;
+        if (!document.getElementById("skip-link")) {
+            document.body.insertBefore(sliverDiv, document.body.firstChild);
+        }else{
+            document.body.insertBefore(sliverDiv, children[2]);
+        }
 
-        document.body.insertBefore(sliverDiv, document.body.firstChild);
     });
 });

@@ -1,0 +1,111 @@
+<?php
+/**
+ * Implements hook_cron().
+ */
+function encrypt_update_cron() {
+//  //check default method
+//  $method = encrypt_get_default_config();
+//  $default_config = variable_get('encrypt_default_config', NULL);
+//  if($method['name'] == 'open_ssl'){
+//    // Find legacy data that needs encrypting.
+//    $data = db_query('SELECT nid, sid, cid, data FROM {webform_submitted_data} WHERE data LIKE :data LIMIT 0, 1000', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();
+//    if (!empty($data)) {
+//      $components = array();
+//      $results = db_query('SELECT nid, cid, extra FROM {webform_component}')->fetchAll();
+//      foreach ($results as $row) {
+//        $components[$row->nid . ':' . $row->cid] = unserialize($row->extra);
+//      }
+//
+//      foreach ($data as $row) {
+//        $key = $row->nid . ':' . $row->cid;
+//        if (!empty($components[$key]['encrypt']) && is_array(@unserialize($row->data))) {
+//          db_update('webform_submitted_data')
+//            ->fields(array(
+//              'data' => encrypt(decrypt($row->data, array('base64' => TRUE)), array('base64' => TRUE)),
+//            ))
+//            ->condition('nid', $row->nid)
+//            ->condition('sid', $row->sid)
+//            ->condition('cid', $row->cid)
+//            ->execute();
+//        }
+//      }
+//    }
+//    $encrypted_variables =  db_query('SELECT name, value FROM {variable} WHERE value LIKE :value LIMIT 0, 1000', array(':value' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();
+//    if (!empty($encrypted_variables)) {
+//      foreach ($encrypted_variables as $variable) {
+//        $decrypted = decrypt(variable_get($variable->name));
+//        variable_set($variable->name, encrypt($decrypted));
+//      }
+//    }
+//  }else{
+//    $fields = array('name' => 'open_ssl',
+//      'label' => 'Open SSL',
+//      'description' => 'Uses AES-128-CBC via OpenSSL along with HMAC-SHA256.',
+//      'method' => 'phpseclib',
+//      'method_settings' => '',
+//      'provider' => 'drupal_variable',
+//      'provider_settings' => Array ( 'method' => 'base64_decode' ),
+//      'enabled' => '1');
+//    encrypt_save_config($fields,TRUE);
+//    variable_set('encrypt_default_config', 'open_ssl');
+//  }
+
+  //Email status
+  if (defined('PANTHEON_ENVIRONMENT')) {
+    $environment = PANTHEON_ENVIRONMENT;
+  }else{
+    $environment = 'local';
+  }
+  $rows_remaining = db_query('SELECT count(*) FROM {webform_submitted_data} WHERE data LIKE :data', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchField();
+  If($rows_remaining > 0) {
+    $message = 'There are ' . $rows_remaining . ' values left to update.';
+    // Send the email.
+    $params = array(
+      'subject' => t(variable_get('site_name') .' - '.  $environment . ' - Encrypt Update ' ),
+      'body' => check_markup(
+        t($message),
+        'plain_text'
+      ),
+    );
+    drupal_mail('encrypt_update', 'status', 'twilliams@eaglecrk.com', language_default(), $params, 'encryptupdate@adoa.gov', TRUE);
+  }
+}
+
+
+/**
+ * Implements hook_requirements().
+ */
+function encrypt_update_requirements($phase) {
+  $requirements = array();
+
+
+  if ($phase == 'runtime') {
+    $rows_remaining = db_query('SELECT count(*) FROM {webform_submitted_data} WHERE data LIKE :data', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchField();
+    if ($rows_remaining > 0) {
+      $requirements['webform_reencrypt'] = array(
+        'title' => t('Webform data re-encryption'),
+        'value' => format_plural($rows_remaining, '1 row remaining to re-encrypt.', '@count rows remaining to re-encrypt.'),
+        'severity' => REQUIREMENT_INFO,
+        'description' => t('Encrypt module has been upgraded and configured but older webform data has not been fully re-encrypted.<br>Re-encryption will happen on cron. We will need this process to complete before moving to PHP 7.2. See <a href="https://www.drupal.org/project/encrypt/issues/2942898" target="_blank">#2942898</a> for further information.'),
+      );
+    }else{
+      $requirements['webform_reencrypt'] = array(
+        'title' => t('Webform data re-encryption'),
+        'value' => 're-encryption complete',
+        'severity' => REQUIREMENT_INFO,
+        'description' => t('Encrypt module has been upgraded and configured and older webform data has been fully re-encrypted.'),
+      );
+    }
+  }
+
+  return $requirements;
+}
+
+function encrypt_update_mail($key, &$message, $params){
+  switch ($key) {
+    case 'status':
+      $message['subject'] = $params['subject'];
+      $message['body'][] = $params['body'];
+      break;
+  }
+}

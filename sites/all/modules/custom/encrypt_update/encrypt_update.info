@@ -1,0 +1,5 @@
+name = Encrypt Update
+core = 7.x
+package = Custom
+version = 7.x-0.1
+

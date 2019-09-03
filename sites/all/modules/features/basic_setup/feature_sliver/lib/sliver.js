@@ -30,6 +30,8 @@ jQuery(function($) {
 
     $(window).bind("load", function () {
         var sliverDiv = document.createElement('div');
+        sliverDiv.setAttribute('role', 'navigation');
+        sliverDiv.setAttribute('aria-label', 'State of Arizona Sliver');
         sliverDiv.className = "sliver-container";
         sliverDiv.innerHTML = '<ul class="sliver-ul">'
             /* Agency Directory */

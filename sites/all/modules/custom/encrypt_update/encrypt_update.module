@@ -4,69 +4,70 @@
  */
 function encrypt_update_cron() {
   //check default method
-  $method = encrypt_get_default_config();
-  if($method['name'] == 'open_ssl'){
-    // Find legacy data that needs encrypting.
-    $data = db_query('SELECT nid, sid, cid, data FROM {webform_submitted_data} WHERE data LIKE :data LIMIT 0, 1000', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();
-    if (!empty($data)) {
-      $components = array();
-      $results = db_query('SELECT nid, cid, extra FROM {webform_component}')->fetchAll();
-      foreach ($results as $row) {
-        $components[$row->nid . ':' . $row->cid] = unserialize($row->extra);
-      }
+  if(module_exists('encrypt')) {
+    $method = encrypt_get_default_config();
+    if ($method['name'] == 'open_ssl') {
+      // Find legacy data that needs encrypting.
+      $data = db_query('SELECT nid, sid, cid, data FROM {webform_submitted_data} WHERE data LIKE :data LIMIT 0, 1000', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();
+      if (!empty($data)) {
+        $components = array();
+        $results = db_query('SELECT nid, cid, extra FROM {webform_component}')->fetchAll();
+        foreach ($results as $row) {
+          $components[$row->nid . ':' . $row->cid] = unserialize($row->extra);
+        }
 
-      foreach ($data as $row) {
-        $key = $row->nid . ':' . $row->cid;
-        if (!empty($components[$key]['encrypt']) && is_array(@unserialize($row->data))) {
-          db_update('webform_submitted_data')
-            ->fields(array(
-              'data' => encrypt(decrypt($row->data, array('base64' => TRUE)), array('base64' => TRUE)),
-            ))
-            ->condition('nid', $row->nid)
-            ->condition('sid', $row->sid)
-            ->condition('cid', $row->cid)
-            ->execute();
+        foreach ($data as $row) {
+          $key = $row->nid . ':' . $row->cid;
+          if (!empty($components[$key]['encrypt']) && is_array(@unserialize($row->data))) {
+            db_update('webform_submitted_data')
+              ->fields(array(
+                'data' => encrypt(decrypt($row->data, array('base64' => TRUE)), array('base64' => TRUE)),
+              ))
+              ->condition('nid', $row->nid)
+              ->condition('sid', $row->sid)
+              ->condition('cid', $row->cid)
+              ->execute();
+          }
         }
       }
-    }
-    $encrypted_variables =  db_query('SELECT name, value FROM {variable} WHERE value LIKE :value LIMIT 0, 1000', array(':value' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();
-    if (!empty($encrypted_variables)) {
-      foreach ($encrypted_variables as $variable) {
-        $decrypted = decrypt(variable_get($variable->name));
-        variable_set($variable->name, encrypt($decrypted));
+      $encrypted_variables = db_query('SELECT name, value FROM {variable} WHERE value LIKE :value LIMIT 0, 1000', array(':value' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();
+      if (!empty($encrypted_variables)) {
+        foreach ($encrypted_variables as $variable) {
+          $decrypted = decrypt(variable_get($variable->name));
+          variable_set($variable->name, encrypt($decrypted));
+        }
       }
+    } else {
+      $fields = array('name' => 'open_ssl',
+        'label' => 'Open SSL',
+        'description' => 'Uses AES-128-CBC via OpenSSL along with HMAC-SHA256.',
+        'method' => 'phpseclib',
+        'method_settings' => '',
+        'provider' => 'drupal_variable',
+        'provider_settings' => Array('method' => 'base64_decode'),
+        'enabled' => '1');
+      encrypt_save_config($fields, TRUE);
+      variable_set('encrypt_default_config', 'open_ssl');
     }
-  }else{
-    $fields = array('name' => 'open_ssl',
-      'label' => 'Open SSL',
-      'description' => 'Uses AES-128-CBC via OpenSSL along with HMAC-SHA256.',
-      'method' => 'phpseclib',
-      'method_settings' => '',
-      'provider' => 'drupal_variable',
-      'provider_settings' => Array ( 'method' => 'base64_decode' ),
-      'enabled' => '1');
-    encrypt_save_config($fields,TRUE);
-    variable_set('encrypt_default_config', 'open_ssl');
-  }
-
-  //Email status
-  if (defined('PANTHEON_ENVIRONMENT')) {
-    $environment = PANTHEON_ENVIRONMENT;
-  }else{
-    $environment = 'local';
-  }
-  $rows_remaining = db_query('SELECT count(*) FROM {webform_submitted_data} WHERE data LIKE :data', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchField();
-  If($rows_remaining > 0) {
-    $message = 'There are ' . $rows_remaining . ' values left to update.';
-    // Send the email.
-    $params = array(
-      'subject' => t(variable_get('site_name') .' - '.  $environment . ' - Encrypt Update ' ),
-      'body' => check_markup(
-        t($message),
-        'plain_text'
-      ),
-    );
-    drupal_mail('encrypt_update', 'status', 'twilliams@eaglecrk.com', language_default(), $params, 'encryptupdate@adoa.gov', TRUE);
+    //Email status
+    if (defined('PANTHEON_ENVIRONMENT')) {
+      $environment = PANTHEON_ENVIRONMENT;
+    }else{
+      $environment = 'local';
+    }
+    $rows_remaining = db_query('SELECT count(*) FROM {webform_submitted_data} WHERE data LIKE :data', array(':data' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchField();
+    If($rows_remaining > 0) {
+      $message = 'There are ' . $rows_remaining . ' values left to update.';
+      // Send the email.
+      $params = array(
+        'subject' => t(variable_get('site_name') .' - '.  $environment . ' - Encrypt Update ' ),
+        'body' => check_markup(
+          t($message),
+          'plain_text'
+        ),
+      );
+      drupal_mail('encrypt_update', 'status', 'twilliams@eaglecrk.com', language_default(), $params, 'encryptupdate@adoa.gov', TRUE);
+    }
   }
 }
 

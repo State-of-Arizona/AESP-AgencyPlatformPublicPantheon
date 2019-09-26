@@ -28,6 +28,16 @@ function encrypt_update_cron() {
               ->condition('cid', $row->cid)
               ->execute();
           }
+          elseif ($components[$key]['encrypt'] == 0 && is_array(@unserialize($row->data))){
+            db_update('webform_submitted_data')
+              ->fields(array(
+                'data' => decrypt($row->data, array('base64' => TRUE)),
+              ))
+              ->condition('nid', $row->nid)
+              ->condition('sid', $row->sid)
+              ->condition('cid', $row->cid)
+              ->execute();
+          }
         }
       }
       $encrypted_variables = db_query('SELECT name, value FROM {variable} WHERE value LIKE :value LIMIT 0, 1000', array(':value' => '%' . db_like('s:6:"method";s:14:"mcrypt') . '%'))->fetchAll();

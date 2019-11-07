@@ -12,11 +12,12 @@ function field_slideshow_field_formatter_info() {
   $formatters = array(
     'slideshow' => array(
       'label'       => t('Slideshow'),
-      'field types' => array('image', 'imagefield_crop', 'media', 'field_collection'),
+      'field types' => array('image', 'file', 'imagefield_crop', 'media', 'field_collection'),
       'settings'    => array(
         'slideshow_content_type'              => 'image',
         'slideshow_view_mode'                 => 'full',
         'slideshow_image_style'               => '',
+        'slideshow_file_style'                => '',
         'slideshow_link'                      => '',
         'slideshow_colorbox_image_style'      => '',
         'slideshow_colorbox_slideshow'        => '',
@@ -60,21 +61,21 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
   $settings = $display['settings'];
   $states = array();
   if ($field['type'] == 'field_collection') {
-    $name_prefix = 'fields['.$field['field_name'].'][settings_edit_form][settings]';
+    $name_prefix = 'fields[' . $field['field_name'] . '][settings_edit_form][settings]';
     $states = array(
-      'required' => array(
-        ':input[name="'.$name_prefix.'[slideshow_content_type]"]' => array('value' => 'image'),
-      ),
-      'visible' => array(
-        ':input[name="'.$name_prefix.'[slideshow_content_type]"]' => array('value' => 'image'),
-      )
+        'required' => array(
+            ':input[name="' . $name_prefix . '[slideshow_content_type]"]' => array('value' => 'image'),
+        ),
+        'visible' => array(
+            ':input[name="' . $name_prefix . '[slideshow_content_type]"]' => array('value' => 'image'),
+        )
     );
     $element['slideshow_content_type'] = array(
-      '#title'          => t('Type of content'),
-      '#type'           => 'select',
-      '#default_value'  => $settings['slideshow_content_type'],
-      '#options'        => array('image' => t('Image'), 'rendered_entity' => t('Rendered entity')),
-      '#required'       => TRUE,
+        '#title' => t('Type of content'),
+        '#type' => 'select',
+        '#default_value' => $settings['slideshow_content_type'],
+        '#options' => array('image' => t('Image'), 'rendered_entity' => t('Rendered entity')),
+        '#required' => TRUE,
     );
     $entity_info = entity_get_info('field_collection_item');
     $options = array();
@@ -82,20 +83,19 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
       $options[$key] = $value['label'];
     }
     $element['slideshow_view_mode'] = array(
-      '#title'          => t('View mode'),
-      '#type'           => 'select',
-      '#default_value'  => $settings['slideshow_view_mode'],
-      '#options'        => $options,
-      '#states'         => array(
-        'required' => array(
-          ':input[name="'.$name_prefix.'[slideshow_content_type]"]' => array('value' => 'rendered_entity'),
+        '#title' => t('View mode'),
+        '#type' => 'select',
+        '#default_value' => $settings['slideshow_view_mode'],
+        '#options' => $options,
+        '#states' => array(
+            'required' => array(
+                ':input[name="' . $name_prefix . '[slideshow_content_type]"]' => array('value' => 'rendered_entity'),
+            ),
+            'visible' => array(
+                ':input[name="' . $name_prefix . '[slideshow_content_type]"]' => array('value' => 'rendered_entity'),
+            ),
         ),
-        'visible' => array(
-          ':input[name="'.$name_prefix.'[slideshow_content_type]"]' => array('value' => 'rendered_entity'),
-        ),
-      ),
     );
-
     $element['slideshow_field_collection_image'] = array(
       '#title'          => t('Image field'),
       '#type'           => 'select',
@@ -106,14 +106,25 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
     );
   }
 
-  $element['slideshow_image_style'] = array(
-    '#title'          => t('Image style'),
-    '#type'           => 'select',
-    '#default_value'  => $settings['slideshow_image_style'],
-    '#empty_option'   => t('None (original image)'),
-    '#options'        => image_style_options(FALSE),
-    '#states'         => $states,
-  );
+  if ($field['type'] != 'file') {
+    $element['slideshow_image_style'] = array(
+      '#title'          => t('Image style'),
+      '#type'           => 'select',
+      '#default_value'  => $settings['slideshow_image_style'],
+      '#empty_option'   => t('None (original image)'),
+      '#options'        => image_style_options(FALSE),
+      '#states'         => $states,
+    );
+  } else {
+    $element['slideshow_file_style'] = array(
+      '#title'          => t('File style'),
+      '#type'           => 'select',
+      '#default_value'  => $settings['slideshow_file_style'],
+      '#empty_option'   => t('small'),
+      '#options'        => _file_style_options(FALSE),
+      '#states'         => $states,
+    );
+  }
 
   $links = array(
     'content' => t('Content'),
@@ -200,8 +211,8 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
     );
   }
 
-  if ($field['type'] == 'media' || $field['type'] == 'field_collection')
-    $captions = _field_slideshow_get_fields(array('text', 'text_long', 'text_with_summary'), $field['type'], $field['field_name']);
+  if ($field['type'] == 'media' || $field['type'] == 'file' || $field['type'] == 'field_collection')
+    $captions = _field_slideshow_get_fields(array('text'), $field['type'], $field['field_name']);
   else $captions = array(
     'title'   => t('Title text'),
     'alt'     => t('Alt text'),
@@ -419,13 +430,15 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
   );
 
   $skin_options = array();
-  if ($jcarousel_path = libraries_get_path('jquery.jcarousel')) {
-    $path = $jcarousel_path . '/skins';
-    $dirnames = scandir($path);
-    foreach ($dirnames as $dirname) {
-      $dirname = check_plain($dirname);
-      if (is_dir($path . '/' . $dirname) && file_exists($path . '/' . $dirname . '/skin.css')) {
-        $skin_options[$dirname] = $dirname;
+  if (($library = libraries_load('jquery.carousel')) && !empty($library['loaded'])) {
+    $path = libraries_get_path('jquery.jcarousel') . '/skins';
+    if (is_dir($path)) {
+      $dirnames = scandir($path);
+      foreach ($dirnames as $dirname) {
+        $dirname = check_plain($dirname);
+        if (is_dir($path . '/' . $dirname) && file_exists($path . '/' . $dirname . '/skin.css')) {
+          $skin_options[$dirname] = $dirname;
+        }
       }
     }
   }
@@ -509,14 +522,15 @@ function field_slideshow_field_formatter_settings_summary($field, $instance, $vi
   if ($settings['slideshow_content_type'] == 'image') {
     if (isset($image_styles[$settings['slideshow_image_style']])) {
       $summary[] = t('Image style: @style', array('@style' => $image_styles[$settings['slideshow_image_style']]));
-    }
-    else $summary[] = t('Original image');
+    } elseif (isset($settings['slideshow_file_style'])) {
+      $summary[] = t('File style: @style', array('@style' => $settings['slideshow_file_style']));
+    } else $summary[] = t('Original image');
   }
   else {
     $entity_info = entity_get_info('field_collection_item');
     $view_mode = (empty($settings['slideshow_view_mode']) ? 'full' : $settings['slideshow_view_mode']);
     $summary[] = t('Rendered entity: @viewmode', array('@viewmode' => $entity_info['view modes'][$view_mode]['label']));
-   }
+  }
 
   $link_types = array(
     'content'   => t('content'),
@@ -546,7 +560,7 @@ function field_slideshow_field_formatter_settings_summary($field, $instance, $vi
     $summary[] = $link_type_message;
   }
 
-  if ($field['type'] == 'media' || $field['type'] == 'field_collection')
+  if ($field['type'] == 'media' || $field['type'] == 'file' || $field['type'] == 'field_collection')
     $caption_types = _field_slideshow_get_fields(array('text'), $field['type'], $field['field_name']);
   else $caption_types = array(
     'title' => t('Title text'),
@@ -657,21 +671,31 @@ function field_slideshow_field_formatter_view($entity_type, $entity, $field, $in
 
   $element = array();
 
+  if ($field['type'] == 'image') {
+    foreach ($items as $delta => $item) {
+      $items[$delta]['type'] = 'image';
+    }
+  }
   // Media field support
   if ($field['type'] == 'media') {
     foreach ($items as $delta => $item) {
       $items[$delta] = (array) $item;
       $items[$delta]['uri'] = $item['file']->uri;
+      $items[$delta]['type'] = 'media';
     }
   }
   // Field Collection support
   elseif ($field['type'] == 'field_collection') {
     foreach ($items as $delta => $item) {
       $items[$delta] = (array) field_collection_field_get_entity($item);
+      $items[$delta]['type'] = 'field_collection_item';
       if ($settings['slideshow_content_type'] == 'image') {
-        $items[$delta]['uri'] = $items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['uri'];
-        $items[$delta]['title'] = $items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['title'];
-        $items[$delta]['alt'] = $items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['alt'];
+        if (!empty($items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['uri'])) {
+          $items[$delta]['uri'] = $items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['uri'];
+          $items[$delta]['title'] = $items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['title'];
+          $items[$delta]['alt'] = $items[$delta][$settings['slideshow_field_collection_image']][$langcode][0]['alt'];
+          $items[$delta]['type'] = 'image';
+        }
       }
       else {
         $items[$delta]['view_mode'] = (empty($settings['slideshow_view_mode']) ? 'full' : $settings['slideshow_view_mode']);
@@ -807,6 +831,7 @@ function field_slideshow_field_formatter_view($entity_type, $entity, $field, $in
       '#theme'                => 'field_slideshow',
       '#items'                => $items,
       '#image_style'          => $settings['slideshow_image_style'],
+      '#file_style'           => $settings['slideshow_file_style'],
       '#order'                => $settings['slideshow_order'],
       '#controls'             => ($settings['slideshow_controls'] === 1 ? $controls : array()),
       '#controls_position'    => $settings['slideshow_controls_position'],
@@ -846,6 +871,8 @@ function field_slideshow_theme() {
       'variables'     => array(
         'items'                 => NULL,
         'image_style'           => NULL,
+        'file_style'            => NULL,
+        'height'                => NULL,
         'order'                 => NULL,
         'controls'              => NULL,
         'controls_pause'        => NULL,
@@ -922,8 +949,14 @@ function template_preprocess_field_slideshow(&$variables) {
 
   // Change order if needed
   if (isset($variables['order'])) {
-    if ($variables['order'] == 'reverse') $variables['items'] = array_reverse($variables['items']);
-    elseif ($variables['order'] == 'random') shuffle($variables['items']);
+    if ($variables['order'] == 'reverse') {
+      $variables['items'] = array_reverse($variables['items']);
+      $variables['pager']['#items'] = $variables['items'];
+    }
+    elseif ($variables['order'] == 'random') {
+      shuffle($variables['items']);
+      $variables['pager']['#items'] = $variables['items'];
+    }
   }
 
   // Generate slides
@@ -948,32 +981,39 @@ function template_preprocess_field_slideshow(&$variables) {
       // Generate the image html
       $image = array();
       $image['path'] = $item['uri'];
-      $image['attributes']['class'] = array('field-slideshow-image', 'field-slideshow-image-' . (1+$num));
+      $image['attributes']['class'] = array('field-slideshow-image', 'field-slideshow-image-' . (1 + $num));
       $image['alt'] = isset($item['alt']) ? $item['alt'] : '';
       if (isset($item['width']) && isset($item['height'])) {
         $image['width'] = $item['width'];
         $image['height'] = $item['height'];
-      }
-      else {
+      } elseif ($item["type"] == 'image') {
         $image_dims = getimagesize($image['path']);
         $image['width'] = $image_dims[0];
         $image['height'] = $image_dims[1];
+      } else {
+        $image = array(
+            'width' => 0,
+            'height' => 0
+        );
       }
       if (isset($item['title']) && drupal_strlen($item['title']) > 0) $image['title'] = $item['title'];
       if (isset($variables['image_style']) && $variables['image_style'] != '') {
         $image['style_name'] = $variables['image_style'];
         $image['breakpoints'] = $variables['breakpoints'];
-        $variables['items'][$num]['image'] = theme($slide_theme, $image);
-      }
-      else {
-        $variables['items'][$num]['image'] = theme('image', $image);
+        $variables['items'][$num]['image'] = "<div class='inner-slide'>" . theme($slide_theme, $image) . "</div>";
+      } elseif (isset($variables['file_style']) && $variables['file_style'] != '') {
+        $media = file_view((object)$variables['items'][$num], $variables['file_style']);
+        $variables['items'][$num]['image'] = "<div class='inner-slide'>" . render($media) . "</div>";
+      } else {
+        $variables['items'][$num]['image'] = "<div class='inner-slide'>" . theme('image', $image) . "</div>";
       }
 
       // Get image sizes and keeps the bigger ones, so height is correctly calculated by Cycle
       $dimensions = array(
-        'width' => $image['width'],
-        'height' => $image['height'],
+          'width' => $image['width'],
+          'height' => $image['height'],
       );
+
       if (isset($variables['image_style']) && $variables['image_style'] != '') {
         if (function_exists('image_style_transform_dimensions')) {
           image_style_transform_dimensions($image['style_name'], $dimensions);
@@ -987,14 +1027,13 @@ function template_preprocess_field_slideshow(&$variables) {
           }
           $thumbnail_dims = getimagesize($thumbnail_path);
           $dimensions = array(
-            'width' => $thumbnail_dims[0],
-            'height' => $thumbnail_dims[1],
+              'width' => $thumbnail_dims[0],
+              'height' => $thumbnail_dims[1],
           );
         }
       }
-
       // If the theme function hasn't added width and height attributes to the image, add them
-      if (strpos($variables['items'][$num]['image'], 'width=') === FALSE) {
+      if ($item["type"] == 'image' && strpos($variables['items'][$num]['image'], 'width=') === FALSE) {
         $variables['items'][$num]['image'] = drupal_substr($variables['items'][$num]['image'], 0, -2) . "width=\"$dimensions[width]\" height=\"$dimensions[height]\" />";
       }
 
@@ -1021,8 +1060,8 @@ function template_preprocess_field_slideshow(&$variables) {
     }
   }
 
-  // Don't add controls if there's only one image
-  if (count($variables['items']) == 1) {
+  // Don't add controls if there is less than or equal to 1 image.
+  if (count($variables['items']) <= 1) {
     $variables['controls'] = '';
     $variables['pager'] = '';
   }
@@ -1066,6 +1105,11 @@ function template_preprocess_field_slideshow_pager(&$variables) {
           $thumbnail['style_name'] = $thumbnail_style;
           $thumbnail_output = theme('image_style', $thumbnail);
         }
+        elseif (isset($variables['file_style']) && $variables['file_style'] != '') {
+          $media = file_view((object) $variables['items'][$num], $variables['file_style']);
+          $image['height'] = $variables['height'];
+          $variables['items'][$num]['image'] = render($media);
+        }
         else {
           $thumbnail_output = theme('image', $thumbnail);
         }
@@ -1095,6 +1139,11 @@ function _field_slideshow_get_fields($field_types, $entity_type, $field_name = '
       $bundle_instance = 'image';
       $entity_label = t('Media field:');
     break;
+    case 'file':
+      $bundle = 'file';
+      $bundle_instance = 'file';
+      $entity_label = t('File field:');
+    break;
     case 'field_collection':
       $bundle = 'field_collection_item';
       $bundle_instance = $field_name;
@@ -1110,4 +1159,14 @@ function _field_slideshow_get_fields($field_types, $entity_type, $field_name = '
   }
 
   return $links;
+}
+
+function _file_style_options($field) {
+  $entity_info = entity_get_info('file');
+  $options = array('default' => t('Default'));
+  foreach ($entity_info['view modes'] as $file_view_mode => $file_view_mode_info) {
+    $options[$file_view_mode] = $file_view_mode_info['label'];
+  }
+
+  return $options;
 }

@@ -377,6 +377,8 @@ function custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs = array()) {
  * @codingStandardsIgnoreStart
  */
 function _custom_breadcrumbs_get_breadcrumb($breadcrumb, $objs, &$locations) {
+  global $language;
+
   // @codingStandardsIgnoreEnd
   // Assure locations is an array.
   if (!is_array($locations)) {
@@ -423,10 +425,10 @@ function _custom_breadcrumbs_get_breadcrumb($breadcrumb, $objs, &$locations) {
   $types = custom_breadcrumbs_token_types($objs);
   // Mourning the loss of token_replace_multiple().
   foreach ($titles as $index => $value) {
-    $titles[$index] = token_replace($value, $types, array('clear' => TRUE));
+    $titles[$index] = token_replace($value, $types, array('clear' => TRUE, 'language' => $language));
   }
   foreach ($paths as $index => $value) {
-    $paths[$index] = token_replace($value, $types, array('clear' => TRUE));
+    $paths[$index] = token_replace($value, $types, array('clear' => TRUE, 'language' => $language));
   }
 
   // Optionally append the page title.

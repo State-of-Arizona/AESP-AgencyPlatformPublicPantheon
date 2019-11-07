@@ -160,7 +160,7 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
     $sortdir[$key] = ($sort == 'asc') ? 1 : -1;
   }
   if ($bc1->$first == $bc2->$first) {
-    if ($bc1->$options[0] == $bc2->$options[0]) {
+    if (!empty($bc1->$options[0]) && !empty($bc2->$options[0]) && $bc1->$options[0] == $bc2->$options[0]) {
       if ($bc1->$options[1] == $bc2->$options[1]) {
         return 0;
       }

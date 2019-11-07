@@ -333,6 +333,66 @@ For example: <pathauto>|[ogname-raw]
 
 Note that not all identifiers require the use of |path.
 
+SUPPORT SCHEMA.ORG
+------------------
+
+Add code bellow to your theme into the file template.php and edit the name for the function "YOUR_THEME_NAME_breadcrumb".
+Clean cache on the site. Structure for breadcrumbs will become like here http://schema.org/BreadcrumbList.
+You can check structure here https://search.google.com/structured-data/testing-tool/u/0/
+
+/**
+ * Return a themed breadcrumb trail.
+ *
+ * @param $variables
+ *   - title: An optional string to be used as a navigational heading to give
+ *     context for breadcrumb links to screen-reader users.
+ *   - title_attributes_array: Array of HTML attributes for the title. It is
+ *     flattened into a string within the theme function.
+ *   - breadcrumb: An array containing the breadcrumb links.
+ * @return
+ *   A string containing the breadcrumb output.
+ */
+function YOUR_THEME_NAME_breadcrumb($variables) {
+  $breadcrumb = $variables['breadcrumb'];
+  $output = '';
+  $output = '<nav class="breadcrumb">';
+  $output .= '<ol itemscope itemtype="http://schema.org/BreadcrumbList">';
+  $count = 0;
+  // We need to show url for each breadcrumb.
+  $domain_path = !empty($GLOBALS['_domain']['path']) ? substr($GLOBALS['_domain']['path'], 0, -1) : $GLOBALS['base_url'];
+  // add microdata to breadcrumb
+  // @see http://schema.org/BreadcrumbList
+  foreach ($breadcrumb as $key => $item) {
+    $count++;
+
+    preg_match('/<a.*?>(.*)<\/a>/', $item, $matches_name);
+    $name = $matches_name[1] ?: '';
+
+    if ($key < count($breadcrumb) - 1) {
+      preg_match('/".*?(.*)"/', $item, $path_bc);
+      $path = $path_bc[1] ?: '';
+      $item = '<a itemprop="item" href="' . $domain_path . $path . '"><span itemprop="name">' . $name . '</span></a><meta itemprop="position" content=' . $count . ' />';
+    }
+    // For last item in breadcrumbs we need add info about it too.
+    if ($key == count($breadcrumb) - 1) {
+      $item = '<a itemprop="item" href="' . $domain_path . '/' . request_path() . '"><span itemprop="name">' . $item . '</span></a><meta itemprop="position" content=' . $count . ' />';
+    }
+    $output .= '<li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">';
+    $output .= $item;
+    if (count($breadcrumb) > $key + 1) {
+      // Adds breadcrumbs separator.
+      $output .= '>';
+    }
+    $output .= '</li>';
+  }
+  // Adds trailing separator.
+  $output .= '';
+  $output .= '</ol>';
+  $output .= '</nav>';
+
+  return $output;
+}
+
 
 REQUIREMENTS
 ------------

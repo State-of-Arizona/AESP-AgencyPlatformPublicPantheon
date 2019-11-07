@@ -520,6 +520,24 @@ class SmtpMailSystem implements MailSystemInterface {
         $mailer->SMTPSecure = '';
     }
 
+    // Set SSL stream context options
+    if (variable_get('smtp_protocol', 'standard') != 'standard') {
+      $smtp_allow_self_signed = array('allow_self_signed' => variable_get('smtp_allow_self_signed', FALSE));
+
+      if (version_compare(phpversion(), '5.6.0', '>=')) {
+        $smtp_verify_peer = array('verify_peer' => variable_get('smtp_verify_peer', TRUE));
+        $smtp_verify_peer_name = array('verify_peer_name' => variable_get('smtp_verify_peer_name', TRUE));
+        $mailer->SMTPOptions = array(
+          'ssl' => array_merge($smtp_verify_peer, $smtp_verify_peer_name, $smtp_allow_self_signed),
+        );
+      }
+      else {
+        $smtp_verify_peer = array('verify_peer' => variable_get('smtp_verify_peer', FALSE));
+        $mailer->SMTPOptions = array(
+          'ssl' => array_merge($smtp_verify_peer, $smtp_allow_self_signed),
+        );
+      }
+    }
 
     // Set other connection settings.
     $mailer->Host = variable_get('smtp_host', '') . ';' . variable_get('smtp_hostbackup', '');

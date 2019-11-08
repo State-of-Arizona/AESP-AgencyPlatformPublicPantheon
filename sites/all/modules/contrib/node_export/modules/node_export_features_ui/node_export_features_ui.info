@@ -1,0 +1,14 @@
+name = Node Export Features UI
+description = Supply some common filter options to define node available to be exported.
+core = 7.x
+package = "Node export"
+configure = admin/config/content/node_export/features
+
+dependencies[] = node_export_features
+
+
+; Information added by Drupal.org packaging script on 2019-04-01
+version = "7.x-3.1+7-dev"
+core = "7.x"
+project = "node_export"
+datestamp = "1554127089"

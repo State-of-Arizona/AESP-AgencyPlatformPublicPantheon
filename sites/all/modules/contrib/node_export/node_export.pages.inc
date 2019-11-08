@@ -268,7 +268,7 @@ function node_export_settings($form, &$form_state) {
     '#title' => t('Supported file field types'),
     '#default_value' => variable_get('node_export_file_supported_fields', 'file, image'),
     '#maxlength' => 512,
-    '#description' => t('Comma seperated list of file field types to detect for export/import.'),
+    '#description' => t('Comma separated list of file field types to detect for export/import.'),
   );
 
   return system_settings_form($form);
@@ -570,9 +570,6 @@ function node_export_import_form_submit($form, &$form_state) {
     foreach ($result['output'] as $output) {
       drupal_set_message($output, ($result['success'] ? 'status' : 'error'));
     }
-    // We need to send this user somewhere, and we know they have permission
-    // for this page:
-    drupal_goto('node/add/node_export');
   }
 
 }

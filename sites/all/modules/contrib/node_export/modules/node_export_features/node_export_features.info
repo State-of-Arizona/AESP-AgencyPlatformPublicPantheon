@@ -5,9 +5,8 @@ dependencies[] = uuid
 dependencies[] = features
 core = 7.x
 package = "Node export"
-; Information added by drupal.org packaging script on 2012-08-20
-version = "7.x-3.0"
+; Information added by Drupal.org packaging script on 2019-04-01
+version = "7.x-3.1+7-dev"
 core = "7.x"
 project = "node_export"
-datestamp = "1345435979"
-
+datestamp = "1554127089"

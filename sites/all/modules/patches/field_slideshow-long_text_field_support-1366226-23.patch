@@ -1,16 +1,13 @@
 diff --git a/sites/all/modules/contrib/field_slideshow/field_slideshow.module b/sites/all/modules/contrib/field_slideshow/field_slideshow.module
-index fc42801..5b6029d 100644
+index 4dcfb2c05..cd8576df6 100644
 --- a/sites/all/modules/contrib/field_slideshow/field_slideshow.module
 +++ b/sites/all/modules/contrib/field_slideshow/field_slideshow.module
-@@ -201,7 +201,7 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
+@@ -212,7 +212,7 @@ function field_slideshow_field_formatter_settings_form($field, $instance, $view_
    }
 
-   if ($field['type'] == 'media' || $field['type'] == 'field_collection')
+   if ($field['type'] == 'media' || $field['type'] == 'file' || $field['type'] == 'field_collection')
 -    $captions = _field_slideshow_get_fields(array('text'), $field['type'], $field['field_name']);
 +    $captions = _field_slideshow_get_fields(array('text', 'text_long', 'text_with_summary'), $field['type'], $field['field_name']);
    else $captions = array(
      'title'   => t('Title text'),
      'alt'     => t('Alt text'),
--- 
-1.8.0
-

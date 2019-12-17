@@ -7,8 +7,8 @@ dependencies[] = image
 dependencies[] = libraries
 
 files[] = field_slideshow.module
-; Information added by Drupal.org packaging script on 2019-03-08
-version = "7.x-2.0-beta1+5-dev"
+; Information added by Drupal.org packaging script on 2019-12-11
+version = "7.x-2.0-beta2"
 core = "7.x"
 project = "field_slideshow"
-datestamp = "1552060091"
+datestamp = "1576071485"

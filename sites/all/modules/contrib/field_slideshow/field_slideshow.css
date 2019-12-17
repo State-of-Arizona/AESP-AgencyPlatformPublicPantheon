@@ -15,7 +15,7 @@
 }
 
 .field-slideshow-slide .inner-slide{
-  overflow: inherit;
+  overflow: hidden;
 }
 
 .region-content ul.field-slideshow-pager {

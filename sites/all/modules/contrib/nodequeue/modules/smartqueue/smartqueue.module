@@ -6,8 +6,114 @@
 function smartqueue_nodequeue_info() {
   return array('smartqueue_taxonomy' => array(
     'title' => t('Taxonomy queue'),
-    'description' => t('Each particular grouping of taxonomy terms from the selected vocabularies have their own unique subqueue. You can place nodes into any of these subqueues based on which terms that node has been tagged with. Using this with large or too many taxonomies may degrade performance.'),
-    ));
+    'description' => t('Each combination of taxonomy terms from the selected vocabularies will have their own unique subqueue. You can place nodes into any of these subqueues based on which terms that node has been tagged with. Using subqueues with very large, or too many taxonomies may degrade performance.'),
+  ));
+}
+
+/**
+ * Implements hook_menu().
+ */
+function smartqueue_menu() {
+
+  // Term paths.
+  $items['taxonomy/term/%taxonomy_term/queue'] = array(
+    'title' => 'Queues',
+    'page callback' => 'smartqueue_term_tab',
+    'page arguments' => array(2),
+    'access callback' => 'smartqueue_term_tab_access',
+    'access arguments' => array(2),
+    'file' => 'smartqueue.admin.inc',
+    'weight' => 15,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function smartqueue_admin_paths() {
+  $paths = array(
+    'taxonomy/term/*/queue' => TRUE,
+  );
+  return $paths;
+}
+
+/**
+ * Access callback for smartqueue_term_tab().
+ *
+ * @param $term
+ *   The fully loaded taxonomy term that will be loaded by the hook_menu.
+ *
+ * @return boolean
+ */
+function smartqueue_term_tab_access($term) {
+  if (!variable_get('smartqueue_use_tab', TRUE) || !user_access('manipulate queues')) {
+    // For performance reasons: If the menu tab is disabled or the user can't
+    // manipulate queues, there is no reason to run the rest of these queries.
+    return FALSE;
+  }
+
+  // Check that user has access.
+  if (_nodequeue_access_admin_or_manipulate()) {
+
+    // Check that there are queues.
+    $subqueues = smartqueue_get_subqueues_by_term($term);
+    if (empty($subqueues)) {
+      return FALSE;
+    }
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Fetches info about all subqueues for a term.
+ *
+ * @param $term
+ *   The fully loaded taxonomy term that will be loaded by the hook_menu.
+ *
+ * @return array
+ *   Array of all subqueues for this term keyed by Queue ID.
+ */
+function smartqueue_get_subqueues_by_term($term) {
+  // SELECT nq.reference AS reference, sq.reference AS sqref, sq.sqid as id FROM nodequeue_queue nq INNER JOIN nodequeue_subqueue sq ON nq.qid = sq.qid WHERE nq.owner = 'smartqueue_taxonomy' AND sq.reference = 717;
+  $result = db_query(
+    "SELECT
+      nq.title as title,
+      nq.qid as queue_id,
+      nq.reference AS field_name,
+      sq.reference AS subqueue_ref,
+      sq.sqid as subqueue_id
+    FROM {nodequeue_queue} nq
+    INNER JOIN {nodequeue_subqueue} sq ON nq.qid = sq.qid
+    WHERE nq.owner = 'smartqueue_taxonomy'
+    AND (sq.reference = :tid
+      OR sq.reference LIKE :like2
+      OR sq.reference LIKE :like3
+      OR sq.reference LIKE :like4)",
+    array(
+      ':tid' => $term->tid,
+      ':like2' => '%-' . $term->tid,
+      ':like3' => $term->tid . '-%',
+      ':like4' => '%-' . $term->tid . '-%',
+    )
+  )->fetchAll();
+
+  $subqueues = array();
+  foreach ($result as $row) {
+    $subqueues[$row->queue_id] = array(
+      'title' => $row->title,
+      'qid' => $row->queue_id,
+      'subqueue_id' => $row->subqueue_id,
+      'path' => 'admin/structure/nodequeue/' . $row->queue_id . '/view/' . $row->subqueue_id,
+    );
+  }
+
+  return $subqueues;
 }
 
 /**
@@ -16,17 +122,38 @@ function smartqueue_nodequeue_info() {
 function smartqueue_taxonomy_nodequeue_form($queue, &$form) {
   // Load data about taxonomy_term_reference fields.
   $options = array();
+  $labels = array();
   $fields = field_info_fields();
-  foreach ($fields as $field_name => $field) {
-    if ($field['type'] == 'taxonomy_term_reference') {
-      $options[$field_name] = t('Field %field-name, selecting terms from vocabulary %vocabulary.', array('%field-name' => $field_name, '%vocabulary' => $field['settings']['allowed_values'][0]['vocabulary']));
+  foreach ($fields as $field_name => $field_info) {
+    if ($field_info['type'] == 'taxonomy_term_reference') {
+      $vocabulary_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
+      $vocab = taxonomy_vocabulary_machine_name_load($vocabulary_name);
+      $vocabulary = $vocab->name;
+      foreach ($field_info['bundles'] as $entity_type => $bundles) {
+        foreach ($bundles as $bundle) {
+          $instance = field_info_instance($entity_type, $field_name, $bundle);
+          if (isset($labels[$instance['label']])) {
+            $count = $labels[$instance['label']];
+            $count++;
+          }
+          else {
+            $count = 1;
+          }
+          $labels[$field_name][$instance['label']] = $count;
+        }
+      }
+      asort($labels[$field_name]);
+      $labels_copy = $labels[$field_name];
+      $labels_inverted = array_flip($labels_copy);
+      $label = array_pop($labels_inverted);
+      $options[$field_name] = t('@label (%field-name), selecting terms from vocabulary: @vocabulary.', array('@label' => $label, '%field-name' => $field_name, '@vocabulary' => $vocabulary));
     }
   }
 
   $form['placeholder']['taxonomy_fields'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Taxonomy fields'),
-    '#description' => t('Select which taxonomy term reference fields to use; each unique combination of terms from all of these fields will have a subqueue.'),
+    '#title' => t('Taxonomy term reference fields'),
+    '#description' => t('Each unique combination of terms from all of these fields will have a subqueue.'),
     '#options' => $options,
   );
 
@@ -50,11 +177,10 @@ function smartqueue_taxonomy_nodequeue_form($queue, &$form) {
     '#default_value' => $queue->subqueue_title,
     '#size' => 50,
     '#maxlength' => 64,
-    '#description' => t('What to display for the subqueue title; use %subqueue to embed the actual subqueue title. This is used to distinguish multiple nodequeues with subqueues from each other, as internal subqueue title is filled automatically.'),
+    '#description' => t('Use <em>%subqueue</em> to embed the subqueue title. This is used to distinguish multiple nodequeues with subqueues from each other.'),
   );
 
-  // Fields can be selected just when creating new taxonomy smartqueue.
-  // Disable it after that.
+  // Change reference field into our saved format.
   if (!empty($queue->qid)) {
     $form['placeholder']['taxonomy_fields']['#disabled'] = TRUE;
     $form['placeholder']['taxonomy_fields']['#default_value'] = explode('-', $queue->reference);
@@ -65,15 +191,13 @@ function smartqueue_taxonomy_nodequeue_form($queue, &$form) {
  * Implements hook_nodequeue_form_validate().
  */
 function smartqueue_taxonomy_nodequeue_form_validate($queue, &$form_state, &$form) {
-  if (!isset($queue->qid)) {
-    $field_names = array_keys(array_filter($form_state['values']['taxonomy_fields']));
-    if (empty($field_names)) {
-      form_error($form['placeholder']['taxonomy_fields'], t('You must select at least one field.'));
-    }
-
-    // Convert this to our reference.
-    form_set_value($form['reference'], implode('-', $field_names), $form_state);
+  $field_names = array_keys(array_filter($form_state['values']['taxonomy_fields']));
+  if (empty($field_names)) {
+    form_error($form['placeholder']['taxonomy_fields'], t('You must select at least one field.'));
   }
+
+  // Convert checkboxes to our reference data format.
+  form_set_value($form['reference'], implode('-', $field_names), $form_state);
 }
 
 /**
@@ -143,8 +267,7 @@ function smartqueue_taxonomy_nodequeue_subqueues(&$queue, $node) {
     }
   }
 
-  // Forbid NO terms being set, but allow
-  // various non-terms to be set.
+  // Forbid NO terms being set, but allow various non-terms to be set.
   $empty = TRUE;
   foreach ($field_names as $field_name => $tids) {
     if (!empty($tids)) {
@@ -242,6 +365,7 @@ function smartqueue_build_string($arrays) {
  */
 function smartqueue_taxonomy_nodequeue_subqueue_title($queue, $reference) {
   $tids = explode('-', $reference);
+  $titles = array();
   foreach ($tids as $tid) {
     // $tid can be 0, specifically meaning this term is unset.
     if ($tid) {
@@ -276,6 +400,7 @@ function smartqueue_taxonomy_term_update($term) {
   foreach ($result as $row) {
     // Note that $row already contains the needed $row->reference.
     $title = smartqueue_taxonomy_nodequeue_subqueue_title($row, $row->sqref);
+    // Change the title of the subqueue in the db.
     nodequeue_subqueue_update_title($row->sqid, $title);
   }
 }

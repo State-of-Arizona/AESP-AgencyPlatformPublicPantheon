@@ -34,6 +34,7 @@ function nodequeue_service_get_nodequeues() {
         $availablequeues[$queue->qid]['show_in_links'] = $queue->show_in_links;
         $availablequeues[$queue->qid]['reference'] = $queue->reference;
         $availablequeues[$queue->qid]['reverse'] = $queue->reverse;
+        $availablequeues[$queue->qid]['unique_entries'] = $queue->unique_entries;
         $availablequeues[$queue->qid]['subqueues'] = $queue->subqueues;
         $availablequeues[$queue->qid]['types'] = $queue->types;
         $availablequeues[$queue->qid]['roles'] = $queue->roles;

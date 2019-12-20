@@ -91,6 +91,12 @@ function nodequeue_schema() {
         'size' => 'tiny',
         'default' => 0,
       ),
+      'unique_entries' => array(
+        'description' => '',
+        'type' => 'int',
+        'size' => 'tiny',
+        'default' => 0,
+      ),
       'i18n' => array(
         'description' => '',
         'type' => 'int',
@@ -439,4 +445,17 @@ function nodequeue_update_7202() {
 function nodequeue_update_7203() {
   variable_set('menu_rebuild_needed', TRUE);
   drupal_set_message(t('The menus will now be rebuilt.'));
+}
+
+/**
+ * Add new field 'unique_entries'.
+ */
+function nodequeue_update_7204() {
+  $field = array(
+    'description' => '',
+    'type' => 'int',
+    'size' => 'tiny',
+    'default' => 0,
+  );
+  db_add_field('nodequeue_queue', 'unique_entries', $field);
 }

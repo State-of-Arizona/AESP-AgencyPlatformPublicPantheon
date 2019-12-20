@@ -75,6 +75,7 @@ class NodequeueWebTestCase extends DrupalWebTestCase {
     $queue->reference       = 0;
     $queue->owner           = $owner;
     $queue->new             = TRUE;
+    $queue->unique_entries  = FALSE;
     $queue->insert_at_front = 0;
     $queue->reverse         = 0;
 
@@ -297,7 +298,7 @@ class NodequeueAdministerTestCase extends NodequeueWebTestCase {
     $this->drupalGet('admin/structure/nodequeue');
     $this->assertText('Add simple queue', t('"Add simple queue" link is present.'), t('Nodequeue'));
     $this->assertText('Settings', t('"Settings" link is present.'), t('Nodequeue'));
-    $this->assertText('No nodequeues exist.', t('Nodequeue table is empty.'), t('Nodequeue'));
+    $this->assertText('No queues exist. ', t('Nodequeue table is empty.'), t('Nodequeue'));
 
     // create a nodequeue...
     $edit = array(
@@ -310,7 +311,7 @@ class NodequeueAdministerTestCase extends NodequeueWebTestCase {
       'types[article]' => 'article',
       'types[page]'  => 'page',
     );
-    $this->drupalPost('admin/structure/nodequeue/add/nodequeue', $edit, 'Submit');
+    $this->drupalPost('admin/structure/nodequeue/add/nodequeue', $edit, 'Save');
 
     // ...and make sure we can add a node to it
     $node = $this->drupalCreateNode(array('type' => 'article', 'promote' => 1));
@@ -327,7 +328,7 @@ class NodequeueAdministerTestCase extends NodequeueWebTestCase {
     $this->assertRaw('class="nodequeue-in-queue">1', t('Nodequeue table reports correct number of elements in queue.'), t('Nodequeue'));
 
     // try sorting by queue size
-    // TODO: This breaks on Drupal.org. We need to figure out why. 
+    // TODO: This breaks on Drupal.org. We need to figure out why.
 /*
     $this->drupalGet('admin/structure/nodequeue');
     $this->clickLink('Max nodes');
@@ -346,7 +347,7 @@ class NodequeueAdministerTestCase extends NodequeueWebTestCase {
     $this->drupalGet('admin/structure/nodequeue');
     $this->assertText('Add simple queue', t('"Add simple queue" link is present.'), t('Nodequeue'));
     $this->assertText('Settings', t('"Settings" link is present.'), t('Nodequeue'));
-    $this->assertText('No nodequeues exist.', t('Nodequeue table is empty.'), t('Nodequeue'));
+    $this->assertText('No queues exist. ', t('Nodequeue table is empty.'), t('Nodequeue'));
 
     // create a nodequeue with no title...
     $edit = array(
@@ -357,7 +358,7 @@ class NodequeueAdministerTestCase extends NodequeueWebTestCase {
       'types[article]' => 'article',
       'types[page]'  => 'page',
     );
-    $this->drupalPost('admin/structure/nodequeue/add/nodequeue', $edit, 'Submit');
+    $this->drupalPost('admin/structure/nodequeue/add/nodequeue', $edit, 'Save');
 
     $this->assertText('Title field is required.', t("We got an error because we didn't supply a title."), t('Nodequeue'));
     $this->assertText('Machine-readable name field is required.', t("We got an error because we didn't supply a machine name."), t('Nodequeue'));

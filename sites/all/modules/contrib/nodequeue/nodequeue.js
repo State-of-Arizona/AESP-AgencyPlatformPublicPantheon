@@ -394,9 +394,9 @@ Drupal.nodequeue.autoAttach = function() {
         if (data.status) {
           // Change label back
           $(a).attr('href', data.href);
-          $(a).html(data.label);
+          $(a).html(data.label.replace(/<[^>]*>?/gm, ''));
           if (data.sqid) {
-            $('#nodequeue-count-' + data.sqid).html(data.count);
+            $('#nodequeue-count-' + data.sqid).html(data.count.replace(/<[^>]*>?/gm, ''));
           }
           if (data.href.search('remove-node') > -1) {
             $(a).removeClass('toggle-add');

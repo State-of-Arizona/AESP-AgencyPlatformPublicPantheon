@@ -6,8 +6,9 @@
  */
 class nodequeue_handler_field_links extends views_handler_field_node_link {
   function render($values) {
-    if ((user_access('manipulate queues') || user_access('manipulate all queues')) && $node = $this->get_value($values)) {
-      return theme('links', array('links' => nodequeue_node_links($node)));
+    if (user_access('manipulate queues') || user_access('manipulate all queues')) {
+      $nid = (isset($this->aliases['nid']) ? $values->{$this->aliases['nid']} : $values->nid);
+      return theme('links', array('links' => nodequeue_node_links(node_load($nid))));
     }
   }
 }

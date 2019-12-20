@@ -241,11 +241,13 @@ function nodequeue_view_queues() {
   }
 
   if (empty($queues)) {
-    return $output . t('No nodequeues exist.');
+    return $output . t('No queues exist.');
   }
 
   $header = array(
+    array('data' => t('Queue ID'), 'field' => 'qid'),
     array('data' => t('Title'), 'field' => 'title', 'sort' => 'asc'),
+    array('data' => t('Queue ID'), 'field' => 'qid'),
     array('data' => t('Max nodes'), 'field' => 'size'),
     array('data' => t('Subqueues'), 'field' => 'subqueues'),
     array('data' => t('Operation')),
@@ -303,13 +305,13 @@ function nodequeue_view_queues() {
     $operations = array();
     $sub_text = $queue->subqueues;
 
-    // If this queue has only one subqueue.
+    // If only one subqueue link direclty to it.
     if ($sub_text == 1) {
       $sub_text .= " (" . nodequeue_subqueue_size_text($queue->size, $queue->subqueue->count) . ")";
       $operations['view'] = l(t('View'), "admin/structure/nodequeue/$queue->qid/view/" . $queue->subqueue->sqid);
     }
     else {
-      $operations['view'] = l(t('View'), "admin/structure/nodequeue/$queue->qid/view");
+      $operations['view'] = l(t('List Subqueues'), "admin/structure/nodequeue/$queue->qid/view");
     }
 
     if (user_access('administer nodequeue')) {
@@ -318,7 +320,9 @@ function nodequeue_view_queues() {
     }
 
     $rows[] = array(
+      array('class' => array('nodequeue-id'), 'data' => $queue->qid),
       array('class' => array('nodequeue-title'), 'data' => check_plain($queue->title)),
+      array('class' => array('nodequeue-id'), 'data' => $queue->qid),
       array('class' => array('nodequeue-max-nodes'), 'data' => $queue->size == 0 ? t('Infinite') : $queue->size),
       array('class' => array('nodequeue-subqueues'), 'data' => $sub_text),
       array('class' => array('nodequeue-operation'), 'data' => implode(' | ', $operations)),
@@ -338,21 +342,37 @@ function nodequeue_view_subqueues($queue) {
   // Fetch all of the subqueues.
   $subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
 
-  $header = array(t('Title'), t('In queue'), t('Operation'));
+  $header = array(t('Subqueue title'), t('Term references'), t('In queue'), t('Operation'));
 
   $rows = array();
   foreach ($subqueues as $subqueue) {
     if (nodequeue_api_subqueue_access($subqueue, NULL, $queue)) {
+      $title = nodequeue_title_substitute($queue->subqueue_title, $queue, $subqueue);
       $sub_text = nodequeue_subqueue_size_text($queue->size, $subqueue->count, FALSE);
+      if (is_string($subqueue->reference)) {
+        $subqueue->reference = array($subqueue->reference);
+      }
+      $references = array();
+      foreach ($subqueue->reference as $tid) {
+        $term = taxonomy_term_load($tid);
+        if ($term) {
+          $references[] = l($term->name, 'taxonomy/term/' . $term->tid);
+        }
+      }
       $rows[] = array(
-        array('class' => array('nodequeue-title'), 'data' => check_plain($subqueue->title)),
-        array('class' => array('nodequeue-subqueues'), 'data' => $sub_text),
+        array('class' => array('nodequeue-title'), 'data' => $title),
+        array('class' => array('nodequeue-subqueues'), 'data' => implode(',', $references)),
+        array('class' => array('nodequeue-refs'), 'data' => $sub_text),
         array('class' => array('nodequeue-operation'), 'data' => l(t('View'), "admin/structure/nodequeue/$queue->qid/view/$subqueue->sqid"))
       );
     }
   }
 
-  $output = '<p>' . t('Max nodes in queue: @size', array('@size' => $queue->size ? $queue->size : t("Infinite"))) . '</p>';
+  if (empty($rows)) {
+    $rows[] = array(array('data' => t('No subqueues. To create a subqueue, add an item to a queue through the links on that item.'), 'colspan' => 3));
+  }
+
+  $output = '<p>' . t('Max items in subqueues: @size', array('@size' => $queue->size ? $queue->size : t("Infinite"))) . '</p>';
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
   $output .= theme('pager', array('tags' => NULL));
 
@@ -392,7 +412,6 @@ function nodequeue_edit_queue_form($form, &$form_state, $queue) {
     '#size' => 50,
     '#required' => TRUE,
     '#maxlength' => 64,
-    '#description' => t('Enter the name of the queue'),
   );
 
   $form['name'] = array(
@@ -447,12 +466,19 @@ function nodequeue_edit_queue_form($form, &$form_state, $queue) {
     '#description' => t('Ordinarily items are added at the back of the queue, and excess nodes are removed from the front. If checked, this behaviour is reversed: nodes will be added at the front and removed from the back.'),
   );
 
+  $form['unique_entries'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enforce uniqueness.'),
+    '#default_value' => !empty($queue->unique_entries),
+    '#description' => t('Ensure that the same node can only exist once in a subqueue.'),
+  );
+
   $form['link'] = array(
     '#type' => 'textfield',
     '#title' => t('Link "add to queue" text'),
     '#default_value' => $queue->link,
-    '#size' => 40,
-    '#maxlength' => 40,
+    '#size' => 64,
+    '#maxlength' => 64,
     '#description' => t('If you want a link to add a node to a queue in the "links" section (next to "add new comment"), enter the text here. If left blank no link will be given; note that enabling this feature for any queue will cause an extra query to be run every time a node is loaded. "%subqueue" will be replaced with the subqueue title, if applicable.'),
   );
 
@@ -460,8 +486,8 @@ function nodequeue_edit_queue_form($form, &$form_state, $queue) {
     '#type' => 'textfield',
     '#title' => t('Link "remove from queue" text'),
     '#default_value' => $queue->link_remove,
-    '#size' => 40,
-    '#maxlength' => 40,
+    '#size' => 64,
+    '#maxlength' => 64,
     '#description' => t('Enter the text for the corresponding link to remove a node from a queue. This may be blank (in which case no link will appear) but a remove link will only appear if link, above, is set.'),
   );
 
@@ -472,7 +498,7 @@ function nodequeue_edit_queue_form($form, &$form_state, $queue) {
   if (!empty($roles)) {
     $form['roles'] = array(
       '#type' => 'checkboxes',
-      '#title' => t('Roles'),
+      '#title' => t('Roles that can add nodes to this queue'),
       '#default_value' => is_array($queue->roles) ? $queue->roles : array(),
       '#options' => $roles,
       '#description' => t('Check each role that can add nodes to the queue. Be sure that roles you want to appear here have "manipulate queues" access in the main access control panel.'),
@@ -504,10 +530,9 @@ function nodequeue_edit_queue_form($form, &$form_state, $queue) {
 
   $form['types'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Types'),
+    '#title' => t('Content types that can be added to this queue'),
     '#default_value' => $queue->types,
     '#options' => $nodes,
-    '#description' => t('Check each node type that can be added to this queue.'),
   );
 
   $form['i18n'] = array(
@@ -528,7 +553,10 @@ function nodequeue_edit_queue_form($form, &$form_state, $queue) {
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Submit'),
+    '#value' => t('Save'),
+    '#attributes' => array(
+      'class' => array('button-primary'),
+    ),
   );
 
   $form['owner'] = array(
@@ -622,6 +650,9 @@ function nodequeue_edit_queue_form_submit($formid, &$form_state) {
   // Modify show_in_links based on whether or not links are available.
   $queue->show_in_links = !empty($queue->link) || !empty($queue->link_remove);
 
+  // Store the unique_entries setting.
+  $queue->unique_entries = !empty($queue->unique_entries);
+
   nodequeue_api_queue_form_submit($queue, $form_state);
 
   $qid = nodequeue_save($queue); // sets $queue->qid if needed.
@@ -712,21 +743,50 @@ function nodequeue_admin_view($queue, $subqueue = array()) {
 }
 
 /**
+ * Title callback for nodequeue view pages.
+ *
+ * @param $queue
+ *   Fully loaded queue.
+ * @param array $subqueue
+ *   Fully loaded subqueue.
+ *
+ * @return stribg
+ *   Page title.
+ */
+function nodequeue_admin_view_title($queue, $subqueue = array()) {
+  if (is_object($subqueue) && $subqueue->sqid != NULL) {
+    $page_title = t("Manage subqueue '@title'", array('@title' => nodequeue_title_substitute($queue->subqueue_title, $queue, $subqueue)));
+  }
+  elseif (is_object($queue) && $queue->subqueues > 1 ) {
+    $page_title = t("Subqueues for '@title'", array('@title' => $queue->title));
+  }
+  elseif (is_object($queue) && $queue->subqueues == 1) {
+    $page_title = t("Manage queue '@title'", array('@title' => $queue->title));
+  }
+  else {
+    $page_title = 'Subqueues';
+  }
+
+  return $page_title;
+}
+
+/**
  * View the contents of a subqueue, with links to re-order the queue.
  */
 function nodequeue_arrange_subqueue($queue, $subqueue = NULL) {
   // set title and load subqueue if it's not provided
   drupal_set_title(t("Nodequeue '@title'", array('@title' => $queue->title)), PASS_THROUGH);
-  if (!$subqueue->sqid) {
+  if (empty($subqueue->sqid)) {
     if ($queue->subqueues == 1) {
       $subqueues = nodequeue_load_subqueues_by_queue($queue->qid);
       $subqueue = array_shift($subqueues);
     }
     else {
-      return drupal_not_found();
+      // display subqueue list page.
+      return nodequeue_view_subqueues($queue);
     }
   }
-  elseif ($subqueue->sqid) {
+  elseif (is_object($subqueue) && $subqueue->sqid) {
     if (!nodequeue_api_subqueue_access($subqueue, NULL, $queue)) {
       return drupal_not_found();
     }
@@ -743,37 +803,39 @@ function nodequeue_arrange_subqueue($queue, $subqueue = NULL) {
  * Return a list of nodes in a specific subqueue.
  */
 function _nodequeue_dragdrop_get_nodes($queue, $subqueue) {
-  $order = $queue->reverse ? 'DESC' : 'ASC';
+  if (is_object($subqueue) && $subqueue->sqid) {
+    $order = $queue->reverse ? 'DESC' : 'ASC';
 
-  // Get a list of all nodes in the subqueue, regardless of access restrictions.
-  $query = db_select('nodequeue_nodes', 'nq');
+    // Get a list of all nodes in the subqueue, regardless of access restrictions.
+    $query = db_select('nodequeue_nodes', 'nq');
 
-  $query->innerJoin('node', 'n', 'nq.nid = n.nid');
-  $query->fields('n', array('nid'))
-    ->fields('nq', array('position'))
-    ->condition('nq.sqid', $subqueue->sqid)
-    ->orderBy('nq.position', $order);
-  $result = $query->execute();
+    $query->innerJoin('node', 'n', 'nq.nid = n.nid');
+    $query->fields('n', array('nid'))
+      ->fields('nq', array('position'))
+      ->condition('nq.sqid', $subqueue->sqid)
+      ->orderBy('nq.position', $order);
+    $result = $query->execute();
 
-  $nids = array();
-  $sq_nodes = array();
-  $key = 0;
-  foreach ($result as $sq_node) {
-    $nids[] = $sq_node->nid;
-    // Save node position in a separate array so we can reference it later.
-    $sq_nodes[$key] = (array) $sq_node;
-    $key++;
+    $nids = array();
+    $sq_nodes = array();
+    $key = 0;
+    foreach ($result as $sq_node) {
+      $nids[] = $sq_node->nid;
+      // Save node position in a separate array so we can reference it later.
+      $sq_nodes[$key] = (array) $sq_node;
+      $key++;
+    }
+    $nodes = node_load_multiple($nids);
+
+    foreach ($sq_nodes as $key => $sq_node) {
+      $nid = $sq_node['nid'];
+      $sq_node += (array) $nodes[$nid];
+      $sq_node['visible'] = node_access('view', $nodes[$nid]) ? TRUE : FALSE;
+      $sq_nodes[$key] = (object) $sq_node;
+    }
+
+    return $sq_nodes;
   }
-  $nodes = node_load_multiple($nids);
-
-  foreach ($sq_nodes as $key => $sq_node) {
-    $nid = $sq_node['nid'];
-    $sq_node += (array) $nodes[$nid];
-    $sq_node['visible'] = node_access('view', $nodes[$nid]) ? TRUE : FALSE;
-    $sq_nodes[$key] = (object) $sq_node;
-  }
-
-  return $sq_nodes;
 }
 
 /**
@@ -807,7 +869,12 @@ function nodequeue_arrange_subqueue_form($form, $form_state, $queue, $nodes, $su
     }
 
     if (node_access('update', $node)) {
-      $form['nodes'][$key]['edit'] = array('#markup' => l(t('edit'), 'node/' . $node->nid . '/edit', array('attributes' => array('title' => t('Edit this node')))));
+      $options = array(
+        'query' => array('destination' => current_path()),
+        'attributes' => array('title' => t('Edit this node')),
+      );
+      $link = l(t('Edit content'), 'node/' . $node->nid . '/edit', $options);
+      $form['nodes'][$key]['edit'] = array('#markup' => $link);
     }
     $form['nodes'][$key]['position'] = array(
       '#type' => 'position',
@@ -827,7 +894,8 @@ function nodequeue_arrange_subqueue_form($form, $form_state, $queue, $nodes, $su
       ),
       'query' => nodequeue_get_query_string($node->nid, TRUE),
     );
-    $form['nodes'][$key]['remove'] = array('#markup' => l(t('remove'), 'nodequeue/' . $queue->qid . '/remove-node/' . $subqueue->sqid . '/' . $node->nid, $attr));
+
+    $form['nodes'][$key]['remove'] = array('#markup' => l(t('Remove'), 'nodequeue/' . $queue->qid . '/remove-node/' . $subqueue->sqid . '/' . $node->nid, $attr));
 
     $key++;
   }
@@ -871,6 +939,12 @@ function nodequeue_arrange_subqueue_form($form, $form_state, $queue, $nodes, $su
     '#type' => 'submit',
     '#value' => t('Clear'),
     '#submit' => array('nodequeue_arrange_subqueue_form_clear_submit'),
+  );
+
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => current_path(),
   );
 
   // Disable all buttons if the queue is empty.
@@ -1016,6 +1090,22 @@ function nodequeue_save_subqueue_order($nodes, $qid, $sqid) {
   foreach (module_implements('nodequeue_save_subqueue_order_alter') as $module) {
     $function = $module . '_nodequeue_save_subqueue_order_alter';
     $function($sqid, $nodes);
+  }
+
+  // If queue has been marked as only containing a single node once, we have to
+  // remove duplicate nodes from array. We favor first entry.
+  if (!empty($queue->unique_entries)) {
+    $filter_nodes = function($elem) {
+      static $nids = array();
+
+      if (in_array($elem['nid'], $nids)) {
+        return FALSE;
+      }
+
+      $nids[] = $elem['nid'];
+      return TRUE;
+    };
+    $nodes = array_filter($nodes, $filter_nodes);
   }
 
   // clear the queue and save the new positions

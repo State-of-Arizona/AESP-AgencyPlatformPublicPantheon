@@ -331,7 +331,7 @@ function scs_payment_payment_status_info() {
 }
 
 
-//Need to use this hook below to get the new payment method 
+//Need to use this hook below to get the new payment method
 
 function scs_payment_payment_method_controller_info() {
   return array(
@@ -808,10 +808,31 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
             ),
             '#weight' => -.6,
       );
+      $line_element['remove_line_item'] = array(
+        '#value' => t('Remove'),
+        '#type' => 'submit',
+        '#submit' => array('scs_payment_form_remove_line_item_callback'),
+        '#name' => $key,
+      );
     }
   }
   return $element;
 }
+
+/**
+ * callback for removing selected line item
+ */
+function scs_payment_form_remove_line_item_callback(&$form, &$form_state){
+  $key = $form_state['triggering_element']['#name'];
+  $id = str_replace('container_', '', $key);
+  $i = $id;
+  array_splice($form['extra']['line_items']['items'], $id,1);
+  array_splice($form_state['values']['extra']['line_items']['items'], $id, 1);
+  webform_component_update($form_state['values']);
+
+  return $form;
+}
+
 /**
  * Checking if the machine name has already been used.
  */
@@ -865,19 +886,19 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'textfield',
     );
   } elseif ($form_id == 'webform_component_edit_form' && $form['type']['#value']=='paymethod_select') {
-    
+
     // Load our default values
     $pay_limits = variable_get('payment_limits_' . $form['nid']['#value'], array());
-    
+
     // Attach css and js
     $form['#attached']['css'][] = drupal_get_path('module', 'scs_payment') . '/css/scs_payment_limits.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'scs_payment') . '/js/scs_payment_limits_admin.js';
-    
+
     $form['extra']['payment_limits'] = array(
       '#type' => 'fieldset',
       '#title' => t('Payment Availability Configuration'),
     );
-    
+
     // Credit Card Settings
     $form['extra']['payment_limits']['cc_limit_type'] = array(
       '#prefix' => '<div class="payment-limits-group"><div class="payment-limits-group-name">Credit Card</div>',
@@ -892,13 +913,13 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
        ),
       '#default_value' => isset($pay_limits['cc_limit_type']) ? $pay_limits['cc_limit_type'] : '4',
     );
-    
+
     // Credit Card Minimum
     $form['extra']['payment_limits']['cc_payment_limits_min'] = array(
       '#title' => t('Minimum'),
       '#type' => 'textfield',
-      '#default_value' => isset($pay_limits['cc_payment_limits_min']) 
-        ? scs_payment_limit_display($pay_limits['cc_payment_limits_min']) 
+      '#default_value' => isset($pay_limits['cc_payment_limits_min'])
+        ? scs_payment_limit_display($pay_limits['cc_payment_limits_min'])
         : '',
       '#size' => 20,
       '#prefix' => '<div class="limits-prefix limits-prefix-min"><span class="prefix">$</span>',
@@ -923,13 +944,13 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
       ),
       '#suffix' => '</div>',
     );
-    
+
     // Credit Card Maximum
     $form['extra']['payment_limits']['cc_payment_limits_max'] = array(
       '#title' => t('Maximum'),
       '#type' => 'textfield',
-      '#default_value' => isset($pay_limits['cc_payment_limits_max']) 
-        ? scs_payment_limit_display($pay_limits['cc_payment_limits_max']) 
+      '#default_value' => isset($pay_limits['cc_payment_limits_max'])
+        ? scs_payment_limit_display($pay_limits['cc_payment_limits_max'])
         : '',
       '#size' => 20,
       '#prefix' => '<div class="limits-prefix limits-prefix-max"><span class="prefix">$</span>',
@@ -954,7 +975,7 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
       ),
       '#suffix' => '</div></div>',
     );
-    
+
     // ACH Settings
     $form['extra']['payment_limits']['ach_limit_type'] = array(
       '#prefix' => '<div class="payment-limits-group"><div class="payment-limits-group-name">Automatic Clearing House (ACH)</div>',
@@ -969,13 +990,13 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
        ),
       '#default_value' => isset($pay_limits['ach_limit_type']) ? $pay_limits['ach_limit_type'] : '4',
     );
-    
+
     // ACH Minimum
     $form['extra']['payment_limits']['ach_payment_limits_min'] = array(
       '#title' => t('Minimum'),
       '#type' => 'textfield',
-      '#default_value' => isset($pay_limits['ach_payment_limits_min']) 
-        ? scs_payment_limit_display($pay_limits['ach_payment_limits_min']) 
+      '#default_value' => isset($pay_limits['ach_payment_limits_min'])
+        ? scs_payment_limit_display($pay_limits['ach_payment_limits_min'])
         : '',
       '#size' => 20,
       '#prefix' => '<div class="limits-prefix limits-prefix-min"><span class="prefix">$</span>',
@@ -1000,12 +1021,12 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
       ),
       '#suffix' => '</div>',
     );
-    
+
     // ACH Maximum
     $form['extra']['payment_limits']['ach_payment_limits_max'] = array(
       '#title' => t('Maximum'),
       '#type' => 'textfield',
-      '#default_value' => isset($pay_limits['ach_payment_limits_max']) 
+      '#default_value' => isset($pay_limits['ach_payment_limits_max'])
         ? scs_payment_limit_display($pay_limits['ach_payment_limits_max'])
         : '',
       '#size' => 20,
@@ -1031,14 +1052,14 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
       ),
       '#suffix' => '</div></div>',
     );
-  
+
     $form['extra']['payment_notes'] = array(
       '#title' => t('Payment Notes'),
       '#required' => TRUE,
       '#type' => 'textarea',
       '#default_value' => scs_payment_webform_payment_notes_load($form['nid']['#value']),
     );
-    
+
     // Add extra submit handler to save pay limit values in array
     $form['#submit'][] = "scs_payment_paymethod_select_extra_save_handler";
     array_unshift($form['#validate'],'scs_payment_webform_component_edit_form_validate' );
@@ -1054,12 +1075,12 @@ function scs_payment_webform_component_edit_form_validate(&$form, &$form_state) 
       form_set_error('Amount Component Required', 'If the amount component is selected, a valid field must be chosen from the webform.');
     }
   }
-  
+
   $limit_types = array(
     'cc_limit_type' => array(
       'abv' => 'cc',
       'name' => 'Credit Card'
-    ), 
+    ),
     'ach_limit_type' => array(
       'abv' => 'ach',
       'name' => 'ACH'
@@ -1078,7 +1099,7 @@ function scs_payment_webform_component_edit_form_validate(&$form, &$form_state) 
       if ($value === '1' && $pay_limits[$limit_types[$key]['abv'] . '_payment_limits_max'] == '') {
         form_set_error('extra][payment_limits][' . $limit_types[$key]['abv'] . '_payment_limits_max', $limit_types[$key]['name'] . ' Maximum Required.');
       }
-      
+
       // Minimum and Maximum
       if ($value === '2') {
         if ($pay_limits[$limit_types[$key]['abv'] . '_payment_limits_min'] == '') {
@@ -1098,7 +1119,7 @@ function scs_payment_webform_component_edit_form_validate(&$form, &$form_state) 
 
 /**
  * Validates that the limit is a number and that it is saved as a float.
- * 
+ *
  * @param $element
  * @param $form_state
  */
@@ -1125,7 +1146,7 @@ function scs_payment_validate_limit($element, &$form_state) {
 
 /**
  * Helper function to display the limit in the correct format.
- * 
+ *
  * @param $num
  * @return string
  */
@@ -1135,7 +1156,7 @@ function scs_payment_limit_display($num) {
 
 /**
  * Save handler for the payment compontent. Saves the payment limit configurations to a variable.
- * 
+ *
  * @param $form
  * @param $form_state
  */
@@ -1149,7 +1170,7 @@ function scs_payment_paymethod_select_extra_save_handler(&$form, &$form_state) {
 
 /**
  * Returns paymentType value to be sent in the XML.
- * 
+ *
  * @param $nid
  * @param $amount
  * @return string
@@ -1158,7 +1179,7 @@ function scs_payment_type_load($nid, $amount) {
   $pay_limits = variable_get('payment_limits_' . $nid, array());
   if (!empty($pay_limits)) {
     $cc = scs_payment_limit_allowed($pay_limits['cc_limit_type'], $pay_limits['cc_payment_limits_min'], $pay_limits['cc_payment_limits_max'], $amount);
-    $ach = scs_payment_limit_allowed($pay_limits['ach_limit_type'], $pay_limits['ach_payment_limits_min'], $pay_limits['ach_payment_limits_max'], $amount); 
+    $ach = scs_payment_limit_allowed($pay_limits['ach_limit_type'], $pay_limits['ach_payment_limits_min'], $pay_limits['ach_payment_limits_max'], $amount);
     if ($cc && $ach) {
       return 'ALL';
     }
@@ -1179,7 +1200,7 @@ function scs_payment_type_load($nid, $amount) {
 
 /**
  * Returns boolean whether the payment type is allowed based on the values passed in.
- * 
+ *
  * @param $type
  * @param $min
  * @param $max
@@ -1190,19 +1211,19 @@ function scs_payment_limit_allowed($type, $min, $max, $amount) {
   switch($type) {
     case '4': // Always Use
       return TRUE;
-      
+
     case '3': // Do Not Use
       return FALSE;
-      
+
     case '0': // Min Only
       return $amount < $min ?  FALSE :  TRUE;
-      
+
     case '1': // Max Only
       return $amount > $max ?  FALSE :  TRUE;
-    
+
     case '2': // Min and Max
       return $amount > $max ||  $amount < $min ?  FALSE :  TRUE;
-    
+
     default: // Just in case
       return TRUE;
   }

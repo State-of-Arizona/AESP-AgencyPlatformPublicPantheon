@@ -1,11 +1,11 @@
 <?php
-/** 
+/**
 * @file
 * The scs_payment.classes.inc provide a payment method which admin could use for credit card payment.
-* 
+*
 */
-  
-  
+
+
 /*
  * Payment Menthod Controller for the SCS payment gateway
  *
@@ -23,9 +23,9 @@ class PaymentMethodSCSController extends PaymentMethodController {
     'debug' => FALSE,
   );
 
-  public $payment_method_configuration_form_elements_callback = 'scs_payment_payment_method_configuration_form_elements';  
+  public $payment_method_configuration_form_elements_callback = 'scs_payment_payment_method_configuration_form_elements';
   public $payment_configuration_form_elements_callback = 'scs_payment_payment_configuration_form_elements';
-  
+
   // Setup private variables for our paths
   private $post_url;
   private $checkout_url;
@@ -33,7 +33,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
   function __construct() {
     $this->title = t('SCS Payment');
     $this->description = t('Send user to the SCS payment system.');
-  }  
+  }
 
   /*
    * Execute the request from the payment submission
@@ -54,22 +54,22 @@ class PaymentMethodSCSController extends PaymentMethodController {
    */
   function request(Payment $payment) {
     module_load_include('inc', 'webform', 'includes/webform.submissions');
-    //get the product codes and then add it to the payment object 
+    //get the product codes and then add it to the payment object
     $submission = webform_get_submission($payment->context_data['nid'], $payment->context_data['sid']);
     $node = node_load($payment->context_data['nid']);
     watchdog('scs_payment', print_r($node, 1));
     $product_code_value = '';
     foreach ($node->webform['cids'] as $key => $component) {
       if ($key == 'product_code') {
-        $product_code_cid = $node->webform['cids'][$key];   
+        $product_code_cid = $node->webform['cids'][$key];
         $product_code_value = $submission->data[$product_code_cid]['0'];
         if (!empty($product_code_value)) {
           $info = array_pad(explode("_", $product_code_value), 5, '');
-          list($product_code, $function, $product_revenue, $product_accounting_template, $product_department_revenue_source) = $info;
-          $payment->product_code = $product_code; 
+          list($product_code, $function, $product_revenue, $product_accounting_profile, $product_department_revenue_source) = $info;
+          $payment->product_code = $product_code;
           $payment->function = $function;
-          $payment->revenue_source = $product_revenue; 
-          $payment->product_accounting_template = $product_accounting_template;
+          $payment->revenue_source = $product_revenue;
+          $payment->product_accounting_profile = $product_accounting_profile;
           $payment->product_department_revenue_source = $product_department_revenue_source;
         }
       }
@@ -78,14 +78,14 @@ class PaymentMethodSCSController extends PaymentMethodController {
       drupal_set_message(t('Please provide Product Code, Function, and Revenue Source for the product.'), 'error');
       return;
     }
-    
+
     $options = array(
       'headers' => array('Content-Type' => 'text/xml'),
       'method' => 'POST',
       'data' => $this->generate_xml($payment)
       // 'data' => $this->xmlTest()
-    ); 
-    
+    );
+
     //do the debug log for the XML
     if ($payment->method->controller_data['debug'] == 1) {
       $message = $options['data'];
@@ -99,7 +99,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
       if ($payment->method->controller_data['debug'] == 1) {
         $message = 'Post XML server error: ' . $output->status_message . ' and status code ' . $output->code;
         watchdog('SCS Payment Post XML Respond', $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL);
-      } 
+      }
     }
 
     // Lets parse our output and fetch our URL.
@@ -110,27 +110,27 @@ class PaymentMethodSCSController extends PaymentMethodController {
 
     $message = '';
     if (isset ($checkout_url['query']['error'])) {
-      switch ($checkout_url['query']['error']) { 
+      switch ($checkout_url['query']['error']) {
         case 1:
           $message = 'The request xml document was invalid. (illformed)';
           watchdog('SCS_Payment', $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL);
         break;
         case 2:
           $message = 'The transaction data was invalid. This error will occur when required AFIS data is missing.';
-          watchdog('SCS_Payment', $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL); 
+          watchdog('SCS_Payment', $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL);
           break;
         case 3:
           $message = 'Internal server error which would prevent a transaction from processing.';
-          watchdog('SCS_Payment', $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL); 
+          watchdog('SCS_Payment', $message, $variables = array(), $severity = WATCHDOG_NOTICE, $link = NULL);
           break;
         default:
           $url = $checkout_url['path'] . '?' . http_build_query($checkout_url['query']);
           drupal_goto($url);
           break;
-      } 
+      }
     }
   }
-  
+
 
   /*
    * Takes a payment object from the payment module and builds the necessary
@@ -168,9 +168,9 @@ class PaymentMethodSCSController extends PaymentMethodController {
       'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
       'xsi:schemaLocation' => 'http://payment.az.gov GAOPaymentTransaction.xsd',
     );
-    
-    //use this order_number for return after payment paid with credit card 
-    $order_number = $payment->pid; 
+
+    //use this order_number for return after payment paid with credit card
+    $order_number = $payment->pid;
 
     // Create our XML string
     $xml = new SCSPaymentXML();
@@ -187,21 +187,21 @@ class PaymentMethodSCSController extends PaymentMethodController {
     //This might not be accurante, because the system autotmatically get quantity * amount
     //and use it for total and this "totalAmount" value got disregard
     $xml->element('totalAmount', ($payment->totalAmount(TRUE))*100);
-        
+
     // Include Test element in if the server is sandbox or Test Server. 1 => $this::URL_CHECKOUT_SANDBOX,
     if ($payment->method->controller_data['server'] == 1) {
       $xml->element('test', 'test');
     }
 
-    // return URL stuff based on drupal functions 
-    $link = $base_url . $base_path . 'scs_payment/return'; 
+    // return URL stuff based on drupal functions
+    $link = $base_url . $base_path . 'scs_payment/return';
     $xml->element('returnURL', $link);
- 
-    // This would be the Payment Description. other other one is the lineitem description would be 
+
+    // This would be the Payment Description. other other one is the lineitem description would be
     // use for each product.
     $xml->element('summaryDescription', utf8_encode(scs_payment_webform_payment_notes_load($payment->context_data['nid'])));
-    $xml->push('lineItemList'); 
-    // Start Foreach 
+    $xml->push('lineItemList');
+    // Start Foreach
     $total_amount = 0;
     foreach ($payment->line_items as $product) {
         if($product->quantity > 0) {
@@ -209,7 +209,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
             $xml->element('gaoProductCode', utf8_encode($product->product_code_id));
             $xml->element('function', utf8_encode($product->product_function));
             $xml->element('revenueSource', utf8_encode($product->product_revenue_source));
-            $xml->element('AccountingTemplate', utf8_encode((isset($product->product_accounting_template) ? $product->product_accounting_template : '')));
+            $xml->element('accountingProfile', utf8_encode((isset($product->product_accounting_profile) ? $product->product_accounting_profile : '')));
             $xml->element('departmentRevenueSource', utf8_encode((isset($product->product_department_revenue_source) ? $product->product_department_revenue_source : '')));
             $xml->element('gaoAgency', utf8_encode($payment->method->controller_data['gao_doc_no_agency']));
             $xml->element('gaoDescription', utf8_encode($product->description));
@@ -226,7 +226,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
     }
     // End Foreach
     $xml->pop();
-    
+
     // Set allowed payment types
     $xml->element('paymentType', utf8_encode(scs_payment_type_load($payment->context_data['nid'], $total_amount/100)));
 
@@ -247,7 +247,7 @@ class PaymentMethodSCSController extends PaymentMethodController {
       0 => variable_get('scs_prod_url', 'https://ptl.az.gov'),
       1 => variable_get('scs_test_url', 'https://az.stagingaz.gov'),
     );
-    
+
     if (isset($servers[$server])) {
       return $servers[$server];
     }
@@ -275,8 +275,8 @@ class PaymentMethodSCSController extends PaymentMethodController {
       <gaoAgency>LDA</gaoAgency>
       <function>37321</function>
       <revenueSource>4699</revenueSource>
-      <Department RevenueSource></Department RevenueSource> 
-      <AccountingTemplate></AccountingTemplate> 
+      <Department RevenueSource></Department RevenueSource>
+      <accountingProfile></accountingProfile>
       <gaoDescription>Testing Payment for SCS</gaoDescription>
       <amount>1500</amount>
       <quantity>1</quantity>

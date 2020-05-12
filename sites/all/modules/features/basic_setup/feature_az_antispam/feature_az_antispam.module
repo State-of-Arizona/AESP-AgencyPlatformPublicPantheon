@@ -63,7 +63,7 @@ function feature_az_antispam_page_build(&$page) {
     $path_value = "/" . $path_value;
 
     //Call our IP check function
-    if ( $path_value == $currentpath && ($user_country_code != 'US' && $user_country_code != '') ) {
+    if ( ($path_value == $currentpath) && ($user_country_code != 'US' && $user_country_code != '') ) {
 
       //Log the hit to watchdog, if configured
       $detected_ip = ip_address();
@@ -85,13 +85,16 @@ function feature_az_antispam_page_build(&$page) {
         _az_antispam_email_admin ($admin_email, $detected_ip);
       }
 
+      $default_denied = variable_get('site_403', '');
       //Check if access denied page isset
-      if (isset($access_denied_page)) {
+      if ($access_denied_page != '') {
         _az_antispam_redirect ($access_denied_page);
+      }elseif ($default_denied != ''){
+        watchdog('access denied', 'Feature AZ Anti Spam. Default 403.', NULL, WATCHDOG_WARNING);
+        drupal_goto($default_denied);
       }else {
         drupal_add_http_header('Status', '403 Forbidden');
-        drupal_set_title('Access Denied');
-        watchdog('access denied', 'Feature AZ Antispam', NULL, WATCHDOG_WARNING);
+        watchdog('access denied', 'Feature AZ Anti Spam.  No 403 page.', NULL, WATCHDOG_WARNING);
         drupal_goto('');
       }
     }

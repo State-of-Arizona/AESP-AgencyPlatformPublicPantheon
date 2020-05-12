@@ -4,14 +4,14 @@
  * Implements hook_form().
  * Display the AZ Anti-spam config editing form.
  */
-function _form_az_antispam_settings($form, &$form_state) {    
+function _form_az_antispam_settings($form, &$form_state) {
   //Assuming afterbuild functions for validation, if required.
   //BELOW FOR FORM STYLING
   $form['#attached']['css'] = array(
     drupal_get_path('module', 'feature_az_antispam') . '/css/antispam_config.css');
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'feature_az_antispam') . '/js/antispam_config.js' => array('type'=>'file','scope'=>'footer', 'weight'=>600)
-    );  
+    );
   $form['antispam'] = array(
     '#type' => 'fieldset',
     '#title' => t('AZ Anti-spam'),
@@ -25,7 +25,7 @@ function _form_az_antispam_settings($form, &$form_state) {
     '#type' => 'item',
     '#title' => t('Antispam Settings'),
   );
-  
+
   //First set - Dev
   $form['antispam']['0'] = array(
     '#type' => 'fieldset',
@@ -42,7 +42,7 @@ function _form_az_antispam_settings($form, &$form_state) {
     '#suffix' => '</div>',
     '#title' => t('Enter the internal URL/Path for the access denied page:<br><div>@baseurl/</div>', array('@baseurl' => $GLOBALS['base_url'])),
     //'#markup' => t('<div>@baseurl</div>', array('@baseurl' => $GLOBALS['base_url'])),
-    '#description' => t('Do not include the base URL.  Enter only the internal path or alias, for example, <i>content/access-denied</i>'),    
+    '#description' => t('Do not include the base URL.  Enter only the internal path or alias, for example, <i>content/access-denied</i>'),
     '#default_value' => variable_get('access_denied', ''),
   );
   $form['antispam']['0']['path_get_ip'][] = array(
@@ -51,14 +51,14 @@ function _form_az_antispam_settings($form, &$form_state) {
     '#suffix' => '</div>',
     '#title' => t('Enter a path to include in the foreign IP check'),
     //'#markup' => t('<div>@baseurl</div>', array('@baseurl' => $GLOBALS['base_url'])),
-    '#description' => t('Do not include the base URL.  Enter only the internal path or alias.'),    
+    '#description' => t('Do not include the base URL.  Enter only the internal path or alias.'),
     '#default_value' => variable_get('path_get_ip', ''),
   );
   $form['antispam']['0']['multi_paths'] = array(
     '#type' => 'textarea',
     '#title' => t('Enter the internal URL/Paths to block against foreign visitors:<br><div>@baseurl/</div>', array('@baseurl' => $GLOBALS['base_url'])),
     '#description' => t('<strong>Enter a comma separated list of paths to check against foreign IPs.</strong>'),
-    '#default_value' => variable_get('multi_paths', ''),
+    '#default_value' => variable_get('multi_paths', 'contact, contact-us'),
   );
   $form['antispam']['1'] = array(
     '#type' => 'fieldset',
@@ -69,29 +69,29 @@ function _form_az_antispam_settings($form, &$form_state) {
   $form['antispam']['1']['save_watchdog'] = array(
     '#type' => 'checkbox',
     '#title' => t('Create watchdog entries for foreign IPs detected.'),
-    //'#description' => t('Do not use spaces.  Only use lower case and underscores.  For example, "az_doa_okta".'),    
+    //'#description' => t('Do not use spaces.  Only use lower case and underscores.  For example, "az_doa_okta".'),
     '#default_value' => variable_get('save_watchdog', 1),
   );
   $form['antispam']['1']['save_all_watchdog'] = array(
     '#type' => 'checkbox',
     '#title' => t('Create watchdog entries for <strong>all</strong> traffic hitting designated paths.'),
-    //'#description' => t('Do not use spaces.  Only use lower case and underscores.  For example, "az_doa_okta".'),    
+    //'#description' => t('Do not use spaces.  Only use lower case and underscores.  For example, "az_doa_okta".'),
     '#default_value' => variable_get('save_all_watchdog', 0),
   );
   $form['antispam']['1']['notify_admin'] = array(
     '#type' => 'checkbox',
     '#title' => t('Notify the designated email recipient when foreign IP traffic attempts to access configured paths.'),
-    //'#description' => t('Do not use spaces.  Only use lower case and underscores.  For example, "az_doa_okta".'),    
+    //'#description' => t('Do not use spaces.  Only use lower case and underscores.  For example, "az_doa_okta".'),
     '#default_value' => variable_get('notify_admin', 0),
   );
   $form['antispam']['1']['admin_email'] = array(
     '#type' => 'textfield',
     '#title' => t('Enter the email to notify when foreign IPs are detected:'),
     //'#markup' => t('<div>@baseurl</div>', array('@baseurl' => $GLOBALS['base_url'])),
-    // '#description' => t('Do not include the base URL.  Enter only the internal path or alias.'),    
+    // '#description' => t('Do not include the base URL.  Enter only the internal path or alias.'),
     '#default_value' => variable_get('admin_email', ''),
   );
-  
+
   $form['antispam']['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save Configuration',

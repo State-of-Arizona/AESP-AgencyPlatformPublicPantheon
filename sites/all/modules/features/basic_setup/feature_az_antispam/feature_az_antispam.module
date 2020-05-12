@@ -17,7 +17,7 @@ function feature_az_antispam_permission() {
      'description' => t('Administer any configuration related to the AZ Anti-spam module/feature.'),
    ),
  );
-} 
+}
 
 /**
  * Implements hook_menu().
@@ -29,10 +29,10 @@ function feature_az_antispam_menu() {
        'title' => 'AZ Anti-spam Settings',
        'description' => 'Configure AZ Anti-spam settings',
        'page callback' => array('drupal_get_form'),
-       'page arguments' => array('_form_az_antispam_settings'),                                   
+       'page arguments' => array('_form_az_antispam_settings'),
        'access arguments' => array('administer site configuration'),
        'file' => 'inc/az_antispam_settings.inc',
- 	'file path' => drupal_get_path('module', 'feature_az_antispam'),
+       'file path' => drupal_get_path('module', 'feature_az_antispam'),
        //'type' => MENU_NORMAL_ITEM,
    );
    return $items;
@@ -54,7 +54,7 @@ function feature_az_antispam_page_build(&$page) {
   }
 
   //testing multi_paths values
-  $multi_paths = variable_get('multi_paths', '');
+  $multi_paths = variable_get('multi_paths', 'contact, contact-us');
   $paths_array = explode(', ', $multi_paths);
   $currentpath = $_SERVER['REQUEST_URI'];
   $user_country_code = _az_antispam_ip_info("Visitor", "Country Code", FALSE);
@@ -62,37 +62,40 @@ function feature_az_antispam_page_build(&$page) {
   foreach ($paths_array as $key => $path_value) {
     $path_value = "/" . $path_value;
 
-  //Call our IP check function
-  if ( $path_value == $currentpath && ($user_country_code != 'US' && $user_country_code != '') ) {
+    //Call our IP check function
+    if ( $path_value == $currentpath && ($user_country_code != 'US' && $user_country_code != '') ) {
 
-    //Log the hit to watchdog, if configured
-    $detected_ip = ip_address();
-    if (variable_get('save_watchdog', '') == 1) {
-      _az_antispam_watchdog_foreign ($detected_ip);
-    }
+      //Log the hit to watchdog, if configured
+      $detected_ip = ip_address();
+      if (variable_get('save_watchdog', '') == 1) {
+        _az_antispam_watchdog_foreign ($detected_ip);
+      }
 
-    //Below will be called ANY time a protected path is accessed, so it will not reside in the check for foreign IP.
-    if (variable_get('save_all_watchdog', '') == 1) {
-      _az_antispam_watchdog_all ($detected_ip);
-    }
+      //Below will be called ANY time a protected path is accessed, so it will not reside in the check for foreign IP.
+      if (variable_get('save_all_watchdog', '') == 1) {
+        _az_antispam_watchdog_all ($detected_ip);
+      }
 
-    //Email the admin
-    //testing email - so this will ONLY be called if a user IP is detected as foreign.
-    $admin_email = variable_get('admin_email', '');
-    $notify = variable_get('notify_admin', '');
-    //Check if the admin email isset or not null
-    if ($admin_email != '' && $notify == 1) {
-      _az_antispam_email_admin ($admin_email, $detected_ip);
-    }
+      //Email the admin
+      //testing email - so this will ONLY be called if a user IP is detected as foreign.
+      $admin_email = variable_get('admin_email', '');
+      $notify = variable_get('notify_admin', '');
+      //Check if the admin email isset or not null
+      if ($admin_email != '' && $notify == 1) {
+        _az_antispam_email_admin ($admin_email, $detected_ip);
+      }
 
-    //Check if access denied page isset
-    if (isset($access_denied_page)) {
-      _az_antispam_redirect ($access_denied_page);
+      //Check if access denied page isset
+      if (isset($access_denied_page)) {
+        _az_antispam_redirect ($access_denied_page);
+      }else {
+        drupal_add_http_header('Status', '403 Forbidden');
+        drupal_set_title('Access Denied');
+        watchdog('access denied', 'Feature AZ Antispam', NULL, WATCHDOG_WARNING);
+        drupal_goto('');
+      }
     }
-  } else {
-    //code if necessary
   }
-    }
 }
 
 //tesing purposes only
@@ -106,9 +109,9 @@ function feature_az_antispam_page_build(&$page) {
 //   //$country_test = _az_antispam_ip_info("50.251.161.125", "Country");
 //   $country_test = _az_antispam_ip_info($true_ip, "Country");
 //   $user_country = _az_antispam_ip_info("Visitor", "Country");
-//   $user_country_code = _az_antispam_ip_info("Visitor", "Country Code", FALSE); 
-//   $user_state = _az_antispam_ip_info("Visitor", "State"); 
-//   $user_city = _az_antispam_ip_info("Visitor", "City"); 
+//   $user_country_code = _az_antispam_ip_info("Visitor", "Country Code", FALSE);
+//   $user_state = _az_antispam_ip_info("Visitor", "State");
+//   $user_city = _az_antispam_ip_info("Visitor", "City");
 //   $user_address = _az_antispam_ip_info("Visitor", "Address");
 //   dsm($country_test, "Country test returns: ");
 //   dsm($user_country_code, "The country code returned is: ");
@@ -126,7 +129,7 @@ function feature_az_antispam_page_build(&$page) {
 
 /**
 * Utility Functions
-* 
+*
 **/
 function _az_antispam_ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
     $output = NULL;
@@ -211,16 +214,16 @@ function _az_antispam_email_admin ($email, $user_ip = NULL) {
   $to = "$email"; // to e-mail address
   $from = "test@example.com"; // from e-mail address
   $site_email = variable_get('site_mail', '');
-  $from = $site_email;   
+  $from = $site_email;
   $subject = "A protected path has been blocked from a foreign IP"; // subject of e-mail
-  $body = "A protected path has been blocked from a foreign IP.  The user IP is $user_ip."; //it might be any variable from the form eg. $form_state['values']['your_field']   
-   
-  //params is the array passed to hook_mail function 
+  $body = "A protected path has been blocked from a foreign IP.  The user IP is $user_ip."; //it might be any variable from the form eg. $form_state['values']['your_field']
+
+  //params is the array passed to hook_mail function
   $params = array(
       'subject' => $subject,
       'body' => $body,
       );
-   
+
   drupal_mail('_az_antispam', 'information', $to, language_default(), $params, $from);
 }
 

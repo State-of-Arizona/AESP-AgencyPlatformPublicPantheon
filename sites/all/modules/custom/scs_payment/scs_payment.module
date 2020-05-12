@@ -669,14 +669,14 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
         '#weight' => -11,
       );
 
-      // Added in accounting_profile and department_revenue_source base on client request.
-      $line_element['product_accounting_profile'] = array(
+      // Added in accounting_template and department_revenue_source base on client request.
+      $line_element['product_accounting_template'] = array(
         '#type' => 'textfield',
-        '#title' => t('Accounting Profile'),
+        '#title' => t('Accounting Template'),
         '#size' => '20',
-        '#maxlength' => '6',
+        '#maxlength' => '50',
         '#required' => FALSE,
-        '#default_value' => (isset($defaults->product_accounting_profile) ? $defaults->product_accounting_profile : ''),
+        '#default_value' => (isset($defaults->product_accounting_template) ? $defaults->product_accounting_template : ''),
         '#wrapper_attributes' => array(
           'class' => array('webform-paymethod-select-amount-option'),
         ),
@@ -820,7 +820,7 @@ function scs_payment_element_process_line_item(array $element, array &$form_stat
 }
 
 /**
- * ajax callback for removing selected line item
+ * callback for removing selected line item
  */
 function scs_payment_form_remove_line_item_callback(&$form, &$form_state){
   $key = $form_state['triggering_element']['#name'];
@@ -832,7 +832,6 @@ function scs_payment_form_remove_line_item_callback(&$form, &$form_state){
 
   return $form;
 }
-
 
 /**
  * Checking if the machine name has already been used.
@@ -887,10 +886,7 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'textfield',
     );
   } elseif ($form_id == 'webform_component_edit_form' && $form['type']['#value']=='paymethod_select') {
-    $form['wrapper'] = array(
-      '#type' => 'markup',
-      '#markup' => '<div id="scs-line-items" ></div>',
-    );
+
     // Load our default values
     $pay_limits = variable_get('payment_limits_' . $form['nid']['#value'], array());
 
@@ -1067,22 +1063,6 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
     // Add extra submit handler to save pay limit values in array
     $form['#submit'][] = "scs_payment_paymethod_select_extra_save_handler";
     array_unshift($form['#validate'],'scs_payment_webform_component_edit_form_validate' );
-  }elseif($form_id == 'payment_form_standalone'){
-    $payment = $form_state['payment'];
-    $status_options = payment_status_options();
-    unset($status_options['payment_status_new']);
-
-
-    $form['payment_status'] = array(
-      '#options' => $status_options,
-      '#access' => !payment_status_is_or_has_ancestor($payment->getStatus()->status, PAYMENT_STATUS_NEW),
-      '#type' => 'select',
-      '#title' => t('Status'),
-      '#default_value' => $payment->getStatus()->status,
-      '#required' => TRUE,
-      '#description' => t('Updating a payment status manually can disrupt automatic payment processing.') . (user_access('payment.payment_status.view') ? ' ' . l(t('Payment status overview.'), 'admin/config/services/payment/status') : ''),
-    );
-
   }
 }
 
@@ -1330,4 +1310,3 @@ function scs_payment_payment_delete($entity) {
         ->condition('pid', $entity->pid)
         ->execute();
 }
-

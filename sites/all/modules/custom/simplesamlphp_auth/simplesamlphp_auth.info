@@ -4,7 +4,6 @@ php = 5.1
 core = 7.x
 configure = admin/config/people/simplesamlphp_auth
 dependencies[] = drupal:system (>= 7.40)
-dependencies[] = az_okta:az_okta
 
 ; Information added by drupal.org packaging script on 2013-02-11
 version = "7.x-2.0-alpha2"

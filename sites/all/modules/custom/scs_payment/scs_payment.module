@@ -240,12 +240,13 @@ function scs_payment_return() {
     } else {
       $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
     }
-      $payment->finish();
-      // @TODO: code is commented in the Payment Method Select module to prevent header standard confirmation page.
-      // @TODO:  commented line at 132 of WebformPaymentContext.php
-      // Sends HTTP 200 Location response to the SCS Payment Server.
-      // Server retrieves that value, and then uses it to send them to this URL
-      header("Location: " . $base_url . $base_path . 'scs_payment/confirmation/' . $ordernumber . '/' . $md5_pid . '/' . $authorizationcode, TRUE, 200);
+    module_invoke_all('webform_submission_insert', $node, $submission);
+    $payment->finish();
+    // @TODO: code is commented in the Payment Method Select module to prevent header standard confirmation page.
+    // @TODO:  commented line at 132 of WebformPaymentContext.php
+    // Sends HTTP 200 Location response to the SCS Payment Server.
+    // Server retrieves that value, and then uses it to send them to this URL
+    header("Location: " . $base_url . $base_path . 'scs_payment/confirmation/' . $ordernumber . '/' . $md5_pid . '/' . $authorizationcode, TRUE, 200);
 
   } else {
     //Failed Payment - set status to failed and redirect to the failed page.

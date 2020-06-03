@@ -2,6 +2,12 @@
 
 namespace SimpleSAML\Module\expirycheck\Auth\Process;
 
+use SimpleSAML\Auth;
+use SimpleSAML\Logger;
+use SimpleSAML\Module;
+use SimpleSAML\Utils;
+use Webmozart\Assert\Assert;
+
 /**
  * Filter which show "about to expire" warning or deny access if netid is expired.
  *
@@ -46,7 +52,7 @@ class ExpiryDate extends \SimpleSAML\Auth\ProcessingFilter
     {
         parent::__construct($config, $reserved);
 
-        assert(is_array($config));
+        Assert::isArray($config);
 
         if (array_key_exists('warndaysbefore', $config)) {
             $this->warndaysbefore = $config['warndaysbefore'];
@@ -140,32 +146,32 @@ class ExpiryDate extends \SimpleSAML\Auth\ProcessingFilter
         $expireOnDate = strtotime($state['Attributes'][$this->expirydate_attr][0]);
 
         if ($this->shWarning($state, $expireOnDate, $this->warndaysbefore)) {
-            assert(is_array($state));
+            Assert::isArray($state);
             if (isset($state['isPassive']) && $state['isPassive'] === true) {
                 // We have a passive request. Skip the warning.
                 return;
             }
 
-            \SimpleSAML\Logger::warning('expirycheck: NetID '.$netId.' is about to expire!');
+            Logger::warning('expirycheck: NetID '.$netId.' is about to expire!');
 
             // Save state and redirect
             $state['expireOnDate'] = date($this->date_format, $expireOnDate);
             $state['netId'] = $netId;
-            $id = \SimpleSAML\Auth\State::saveState($state, 'expirywarning:about2expire');
-            $url = \SimpleSAML\Module::getModuleURL('expirycheck/about2expire.php');
-            \SimpleSAML\Utils\HTTP::redirectTrustedURL($url, ['StateId' => $id]);
+            $id = Auth\State::saveState($state, 'expirywarning:about2expire');
+            $url = Module::getModuleURL('expirycheck/about2expire.php');
+            Utils\HTTP::redirectTrustedURL($url, ['StateId' => $id]);
         }
 
         if (!$this->checkDate($expireOnDate)) {
-            \SimpleSAML\Logger::error('expirycheck: NetID '.$netId.
+            Logger::error('expirycheck: NetID '.$netId.
                 ' has expired ['.date($this->date_format, $expireOnDate).']. Access denied!');
 
             /* Save state and redirect. */
             $state['expireOnDate'] = date($this->date_format, $expireOnDate);
             $state['netId'] = $netId;
-            $id = \SimpleSAML\Auth\State::saveState($state, 'expirywarning:expired');
-            $url = \SimpleSAML\Module::getModuleURL('expirycheck/expired.php');
-            \SimpleSAML\Utils\HTTP::redirectTrustedURL($url, ['StateId' => $id]);
+            $id = Auth\State::saveState($state, 'expirywarning:expired');
+            $url = Module::getModuleURL('expirycheck/expired.php');
+            Utils\HTTP::redirectTrustedURL($url, ['StateId' => $id]);
         }
     }
 }

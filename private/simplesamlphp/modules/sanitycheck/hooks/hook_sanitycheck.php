@@ -1,7 +1,5 @@
 <?php
 
-use Webmozart\Assert\Assert;
-
 /**
  * Hook to add the modinfo module to the frontpage.
  *
@@ -10,9 +8,9 @@ use Webmozart\Assert\Assert;
  */
 function sanitycheck_hook_sanitycheck(&$hookinfo)
 {
-    Assert::isArray($hookinfo);
-    Assert::keyExists($hookinfo, 'errors');
-    Assert::keyExists($hookinfo, 'info');
+    assert(is_array($hookinfo));
+    assert(array_key_exists('errors', $hookinfo));
+    assert(array_key_exists('info', $hookinfo));
 
     $hookinfo['info'][] = '[sanitycheck] At least the sanity check itself is working :)';
 }

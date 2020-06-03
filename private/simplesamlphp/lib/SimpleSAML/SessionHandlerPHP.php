@@ -88,10 +88,6 @@ class SessionHandlerPHP extends SessionHandler
                     'samesite' => $params['samesite'],
                 ]);
             } else {
-                /* in older versions of PHP we need a nasty hack to set RFC6265bis SameSite attribute */
-                if ($params['samesite'] !== null and !preg_match('/;\s+samesite/i', $params['path'])) {
-                    $params['path'] .= '; SameSite=' . $params['samesite'];
-                }
                 session_set_cookie_params(
                     $params['lifetime'],
                     $params['path'],
@@ -162,22 +158,28 @@ class SessionHandlerPHP extends SessionHandler
      */
     public function newSessionId()
     {
-        // generate new (secure) session id
+        $sessionId = false;
         if (function_exists('session_create_id') && version_compare(PHP_VERSION, '7.2', '<')) {
+            // generate new (secure) session id
             $sid_length = (int) ini_get('session.sid_length');
             $sid_bits_per_char = (int) ini_get('session.sid_bits_per_character');
 
             if (($sid_length * $sid_bits_per_char) < 128) {
                 Logger::warning("Unsafe defaults used for sessionId generation!");
             }
+
             /**
              * This annotation may be removed as soon as we start using vimeo/psalm 3.x
              * @psalm-suppress TooFewArguments
              */
             $sessionId = session_create_id();
-        } else {
+        }
+
+        if (!$sessionId) {
+            Logger::warning("Secure session ID generation failed, falling back to custom ID generation.");
             $sessionId = bin2hex(openssl_random_pseudo_bytes(16));
         }
+
         Session::createSession($sessionId);
         return $sessionId;
     }
@@ -323,6 +325,13 @@ class SessionHandlerPHP extends SessionHandler
         }
 
         $ret['httponly'] = $config->getBoolean('session.phpsession.httponly', true);
+
+        if (version_compare(PHP_VERSION, '7.3.0', '<')) {
+            // in older versions of PHP we need a nasty hack to set RFC6265bis SameSite attribute
+            if ($ret['samesite'] !== null and !preg_match('/;\s+samesite/i', $ret['path'])) {
+                $ret['path'] .= '; SameSite=' . $ret['samesite'];
+            }
+        }
 
         return $ret;
     }

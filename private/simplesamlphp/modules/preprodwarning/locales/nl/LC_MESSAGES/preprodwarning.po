@@ -21,7 +21,7 @@ msgstr "Waarschuwing: dit is een pre-productiesysteem"
 msgid "{preprodwarning:warning:warning}"
 msgstr ""
 "Je gaat nu een pre-productiesysteem gebruiken. Deze authenticatie is "
-"uitsluitend opgezet voor testen en pre-productie-verfificatie. Als iemand"
+"uitsluitend opgezet voor testen en pre-productie-verificatie. Als iemand"
 " je een link hierheen stuurde, en je bent geen <i>tester</i>, dan is dit "
 "waarschijnlijk een vergissing en zou je <b>niet hier moeten zijn</b>."
 

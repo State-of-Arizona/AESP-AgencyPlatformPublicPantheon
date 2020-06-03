@@ -64,6 +64,7 @@ class EMail
     {
         $config = Configuration::getInstance();
         $address = $config->getString('technicalcontact_email', 'na@example.org');
+        $address = preg_replace('/^mailto:/i', '', $address);
         if ('na@example.org' === $address) {
             throw new \Exception('technicalcontact_email must be changed from the default value');
         }
@@ -255,7 +256,7 @@ class EMail
         $newui = $config->getBoolean('usenewui', false);
 
         if ($newui === false) {
-            return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+            $result = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
@@ -273,11 +274,17 @@ pre {
 	</style>
 </head>
 <body>
+<h1>' . htmlspecialchars($this->mail->Subject) . '</h1>
 <div class="container" style="background: #fafafa; border: 1px solid #eee; margin: 2em; padding: .6em;">
-' . htmlspecialchars($this->text) . '
-</div>
-</body>
-</html>';
+<blockquote>"' . htmlspecialchars($this->text) . '"</blockquote>
+</div>';
+            foreach ($this->data as $name => $values) {
+                $result .= '<h2>' . htmlspecialchars($name) . '</h2><ul>';
+                foreach ($values as $value) {
+                    $result .= '<li><pre>' . htmlspecialchars($value) . '</pre></li>';
+                }
+                $result .= '</ul>';
+            }
         } else {
             $t = new Template($config, $template);
             $twig = $t->getTwig();
@@ -292,7 +299,7 @@ pre {
                 'text' => $this->text,
                 'data' => $this->data
             ]);
-            return $result;
         }
+        return $result;
     }
 }

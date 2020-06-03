@@ -3,7 +3,7 @@
     "description": "Display a warning when using a pre-production environment",
     "type": "simplesamlphp-module",
     "keywords": ["simplesamlphp", "preprodwarning"],
-    "license": "LGPL-3.0-or-later",
+    "license": "LGPL-2.1-or-later",
     "authors": [
         {
             "name": "Andreas Åkre Solberg",

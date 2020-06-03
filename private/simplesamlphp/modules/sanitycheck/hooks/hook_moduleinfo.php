@@ -1,7 +1,5 @@
 <?php
 
-use Webmozart\Assert\Assert;
-
 /**
  * This hook lets the module describe itself.
  *
@@ -10,8 +8,8 @@ use Webmozart\Assert\Assert;
  */
 function sanitycheck_hook_moduleinfo(&$moduleinfo)
 {
-    Assert::isArray($moduleinfo);
-    Assert::keyExists($moduleinfo, 'info');
+    assert(is_array($moduleinfo));
+    assert(array_key_exists('info', $moduleinfo));
 
     $moduleinfo['info']['sanitycheck'] = [
         'name' => ['en' => 'Sanity check'],

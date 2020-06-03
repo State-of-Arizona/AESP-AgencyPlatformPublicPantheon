@@ -9,7 +9,7 @@ use SimpleSAML\Utils\EMail;
 /**
  * A base SSP test case that tests some simple e-mail related calls
  */
-class EMailTestCase extends ClearStateTestCase
+class EMailTest extends ClearStateTestCase
 {
     /**
      * @return void
@@ -127,5 +127,27 @@ class EMailTestCase extends ClearStateTestCase
         // to setting it via the configuration file.
         $this->expectException(\InvalidArgumentException::class);
         $email->setTransportMethod('smtp');
+    }
+
+    /**
+     * Test setting configuration.
+     *
+     * @return void
+     */
+    public function testGetDefaultMailAddress()
+    {
+        Configuration::loadFromArray([
+            'technicalcontact_email' => 'gamaarna@example.org',
+        ], '[ARRAY]', 'simplesaml');
+
+        $mail = new EMail('test', null, 'phpunit@simplesamlphp.org');
+        $this->assertEquals('gamaarna@example.org', $mail->getDefaultMailAddress());
+
+        Configuration::loadFromArray([
+            'technicalcontact_email' => 'mailto:gamaarna@example.org',
+        ], '[ARRAY]', 'simplesaml');
+
+        $mail = new EMail('test', null, 'phpunit@simplesamlphp.org');
+        $this->assertEquals('gamaarna@example.org', $mail->getDefaultMailAddress());
     }
 }

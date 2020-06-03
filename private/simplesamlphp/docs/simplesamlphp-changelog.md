@@ -6,6 +6,60 @@ SimpleSAMLphp changelog
 This document lists the changes between versions of SimpleSAMLphp.
 See the upgrade notes for specific information about upgrading.
 
+## Version 1.18.7
+
+Released 2020-05-12
+
+  * Fix spurious warnings when session_create_id() fails to create ID (#1291)
+  * Fix inconsistency in the way PATH_INFO is being used (#1227).
+  * Fix a potential security issue [CVE-2020-11022](https://nvd.nist.gov/vuln/detail/CVE-2020-11022) by updating jQuery. If any of your custom modules rely on jQuery,
+  *   make sure you read the following [update notes](https://jquery.com/upgrade-guide/3.5/), since jQuery has solved this in a non-BC way (#1321).
+  * Fix incorrect Polish translations (#1311).
+  * Fix a broken migration query in the LogoutStore (#1324).
+  * Fix an issue with the SameSite cookie parameter when running on PHP versions older than 7.3 (#1320).
+
+### adfs
+  * Fixed a broken link to one of the assets (v0.9.6).
+
+### ldap
+  * Handle binary attributes in a generic way (v0.9.5).
+
+### oauth
+  * Fix PHP 7.4 incompatibility (v0.9.2).
+
+### preprodwarning
+  * Fix Dutch translations (v0.9.2).
+
+### sanitycheck
+  * Fix broken HTML (v0.9.1).
+
+### saml
+  * Fix several issues in the saml:NameIDAttribute authproc filter (#1325).
+
+### saml2 library
+  * fixed a standards compliance issue regarding ContactPerson EMail addresses (v3.4.4).
+  * fixed an issue parsing very large metadata files (v3.4.3).
+
+## Version 1.18.6
+
+Released 2020-04-17
+
+  * Fix source code disclosure on case-insensitive file systems. See
+    [SSPSA 202004-01](https://simplesamlphp.org/security/202004-01).
+  * Fix spurious error in logs when using a custom theme (#1312).
+  * Fix broken metadata converter (#1305).
+
+## Version 1.18.5
+
+Released 2020-03-19
+
+  * Make the URLs for the cron module work again (#1248).
+  * Email error reports now include metadata again (#1269).
+  * Fix exampleauth module when using the legacy UI (#1275).
+  * Fix authorize module when using custom reject message.
+  * Documentation improvements.
+  * Fix connection persistence for deployments that switched to memcached.
+
 ## Version 1.18.4
 
 Released 2020-01-24
@@ -14,6 +68,9 @@ Released 2020-01-24
     [SSPSA 202001-01](https://simplesamlphp.org/security/202001-01).
   * Resolved a security issue with the logging system. See
     [SSPSA 202001-02](https://simplesamlphp.org/security/202001-02).
+  * Fixed SQL store index creation for PostgreSQL.
+  * Handle case where cookie 'domain' parameter was not set.
+  * Update versions of included JavaScript dependencies.
 
 ## Version 1.18.3
 
@@ -101,7 +158,7 @@ Released 2019-08-02
 Released 2019-07-11
 
   * Fix an issue introduced in 1.17.3 with `enable.http_post`.
-  
+
 ## Version 1.17.3
 
 Released 2019-07-10
@@ -564,7 +621,7 @@ Released 2017-04-27
   * Resolved a security issue with unauthenticated encryption in the SimpleSAML\Utils\Crypto class. See [SSPSA 201704-01](https://simplesamlphp.org/security/201704-01).
   * Added requirement for the Multibyte String PHP extension and the corresponding checks.
   * Set a default name for SimpleSAMLphp sessions in the configuration template for the PHP session handler.
-  
+
 ## Version 1.14.12
 
 Released 2017-03-30
@@ -955,7 +1012,7 @@ Released 2013-06-05.
   * Workaround for SSL SNI extension not being correctly set.
   * New language cookie and parameter config options.
   * Add 'module.enable' configuration option for enabling/disabling modules.
-  * Check for existence of memcache extension. 
+  * Check for existence of memcache extension.
   * Initial support for limiting redirects to trusted hosts.
   * Demo example now shows both friendly and canonical name of the attributes.
   * Other minor fixes for bugs and typos.
@@ -1747,8 +1804,8 @@ Updates to `config.php`. Please check for updates in your local modified configu
   * Documentation update. New authencation source API now default and documented.
   * New authentication source (new API):
     * LDAP
-    * LDAPMulti  
-	* YubiKey authentication source. (Separate module)  
+    * LDAPMulti
+	* YubiKey authentication source. (Separate module)
 	* Facebook authentication source. (Separate module)
   * New Authentication Processing Filter:
     * AttributeAlter
@@ -1771,7 +1828,7 @@ Updates to `config.php`. Please check for updates in your local modified configu
   * New module: Aggregator: Aggregates metadata. Used in Kalmar Union.
   * New module: Metarefresh, download, parses and consumes metadata.
   * New module: SanityCheck. Checks if things looks good and reports bad configuration etc.
-  * New module: Cron. Will perform tasks regularly. 
+  * New module: Cron. Will perform tasks regularly.
   * Module: SAML2.0. SAML 2.0 SP implemented as an module. Yet not documented how to use, but all SAML 2.0 SP functionality may be moved out to this module for better modularization.
   * New module: statistics. Parses STAT log files, and aggregates based on a generic rule system. Output is stored in aggregated text files, and a frontend is included to present statistics with tables and graphs. Used sanitycheck and cron.
   * Added support for IdP initiated SSO.
@@ -1797,7 +1854,7 @@ Updates to `config.php`. Please check for updates in your local modified configu
   * Added notes about how to aggregate and consume metadata. Just a start.
   * Large improvements to Configuration class, and config helper functions.
   * STAT logging is moved into separate authenticaion processing filter.
-  * Fix for NoPassive responses to Google Apps with alternative NameIDFormats.  
+  * Fix for NoPassive responses to Google Apps with alternative NameIDFormats.
   * LDAP module allows to search multiple searchbases.
   * All documentation is converted from docbook to markdown format.
   * Added headers to not allow google to index pages.
@@ -1811,7 +1868,7 @@ Updates to `config.php`. Please check for updates in your local modified configu
   * Improved UI on default theme
   * Fix for session duration in the Conditions element in the Assertion (SAML 2.0).
   * Updated with new Feide IdP metadata in metadata-templates
-  
+
 
 
 ## Version 1.3

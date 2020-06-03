@@ -303,16 +303,31 @@ class Memcache
      * creates a Memcache object from the servers in the group.
      *
      * @param array $group Array of servers which should be created as a group.
+     * @param string $index The index for this group. Specify if persistent connections are desired.
      *
      * @return \Memcache|\Memcached A Memcache object of the servers in the group
      *
      * @throws \Exception If the servers configuration is invalid.
      */
-    private static function loadMemcacheServerGroup(array $group)
+    private static function loadMemcacheServerGroup(array $group, $index = null)
     {
         if (class_exists(\Memcached::class)) {
-            $memcache = new \Memcached();
+            if (is_string($index)) {
+                $memcache = new \Memcached($index);
+            } else {
+                $memcache = new \Memcached();
+            }
+            if (array_key_exists('options', $group)) {
+                $memcache->setOptions($group['options']);
+                unset($group['options']);
+            }
             self::$extension = \Memcached::class;
+
+            $servers = $memcache->getServerList();
+            if (count($servers) === count($group) && !$memcache->isPristine()) {
+                return $memcache;
+            }
+            $memcache->resetServerList();
         } elseif (class_exists(\Memcache::class)) {
             $memcache = new \Memcache();
             self::$extension = \Memcache::class;
@@ -382,15 +397,6 @@ class Memcache
 
         // iterate over all the groups in the 'memcache_store.servers' configuration option
         foreach ($groups as $index => $group) {
-            // make sure that the group doesn't have an index. An index would be a sign of invalid configuration
-            if (!is_int($index)) {
-                throw new \Exception(
-                    "Invalid index on element in the 'memcache_store.servers'" .
-                    ' configuration option. Perhaps you have forgotten to add an array(...)' .
-                    ' around one of the server groups? The invalid index was: ' . $index
-                );
-            }
-
             /*
              * Make sure that the group is an array. Each group is an array of servers. Each server is
              * an array of name => value pairs for that server.
@@ -403,8 +409,13 @@ class Memcache
                 );
             }
 
+            // make sure that the group doesn't have an index. An index would be a sign of invalid configuration
+            if (is_int($index)) {
+                $index = null;
+            }
+
             // parse and add this group to the server group list
-            self::$serverGroups[] = self::loadMemcacheServerGroup($group);
+            self::$serverGroups[] = self::loadMemcacheServerGroup($group, $index);
         }
 
         return self::$serverGroups;

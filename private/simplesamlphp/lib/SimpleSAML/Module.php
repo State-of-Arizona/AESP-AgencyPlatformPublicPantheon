@@ -129,7 +129,7 @@ class Module
             $request = Request::createFromGlobals();
         }
 
-        if ($request->getPathInfo() === '/') {
+        if ($request->server->get('PATH_INFO') === '/') {
             throw new Error\NotFound('No PATH_INFO to module.php');
         }
 
@@ -173,12 +173,18 @@ class Module
         $translated_uri = $config->getBasePath() . 'module.php/' . $module . '/' . $url;
         $request->server->set('REQUEST_URI', $translated_uri);
         $request->server->set('SCRIPT_NAME', $config->getBasePath() . 'module.php');
+        $request_files = array_filter(
+            $request->files->all(),
+            function ($val) {
+                return !is_null($val);
+            }
+        );
         $request->initialize(
             $request->query->all(),
             $request->request->all(),
             $request->attributes->all(),
             $request->cookies->all(),
-            $request->files->all(),
+            $request_files,
             $request->server->all(),
             $request->getContent()
         );
@@ -238,7 +244,7 @@ class Module
             throw new Error\NotFound('The URL wasn\'t found in the module.');
         }
 
-        if (substr($path, -4) === '.php') {
+        if (mb_strtolower(substr($path, -4), 'UTF-8') === '.php') {
             // PHP file - attempt to run it
 
             /* In some environments, $_SERVER['SCRIPT_NAME'] is already set with $_SERVER['PATH_INFO']. Check for that
@@ -566,7 +572,7 @@ class Module
      */
     public static function removeTrailingSlash(Request $request)
     {
-        $pathInfo = $request->getPathInfo();
+        $pathInfo = $request->server->get('PATH_INFO');
         $url = str_replace($pathInfo, rtrim($pathInfo, ' /'), $request->getRequestUri());
         return new RedirectResponse($url, 308);
     }

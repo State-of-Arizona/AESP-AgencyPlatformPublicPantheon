@@ -27,7 +27,7 @@ Prerequisites
 -------------
 
  * A web server capable of executing PHP scripts.
- * PHP version >= 5.5.0.
+ * PHP version >= 5.6.0.
  * Support for the following PHP extensions:
    * Always required: `date`, `dom`, `hash`, `libxml`, `openssl`, `pcre`, `SPL`, `zlib`, `json`, `mbstring`
    * When automatically checking for latest versions, and used by some modules: `cURL`
@@ -371,7 +371,7 @@ in a separate document.
    + [Remote SP reference](simplesamlphp-reference-sp-remote)
    + [Setting up an IdP for G Suite (Google Apps)](simplesamlphp-googleapps)
    + [Advanced Topics](simplesamlphp-idp-more)
- - [Automated Metadata Management](./metarefresh:simplesamlphp-automated_metadata)
+ - [Automated Metadata Management](https://github.com/simplesamlphp/simplesamlphp-module-metarefresh/blob/master/docs/simplesamlphp-automated_metadata.md)
  - [Maintenance and configuration](simplesamlphp-maintenance)
 
 

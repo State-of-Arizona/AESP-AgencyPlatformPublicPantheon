@@ -24,6 +24,14 @@ function sendgrid_marketing_settings_form($form, &$form_state) {
       '#required' => FALSE,
       '#default_value' => $default,
   );
+  $form['sendgrid_marketing_new_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('New Marketing Campaigns API'),
+    '#maxlength' => 256,
+    '#description' => t('Check to enable the new marketing campaigns API.  Otherwise, the legacy API will be used.'),
+    '#required' => FALSE,
+    '#default_value' => variable_get('sendgrid_marketing_new_api', FALSE),
+  );
   $form['submit_button'] = array(
       '#type' => 'submit',
       '#value' => t('Submit'),
@@ -37,6 +45,11 @@ function sendgrid_marketing_settings_form($form, &$form_state) {
  *
  */
 function sendgrid_marketing_settings_form_submit($form, $form_state) {
-  variable_set('sendgrid_marketing_key', encrypt($form_state['values']['sendgrid_marketing_key']));
-  drupal_set_message('Your API key has been saved and encrypted.');
+  if($form_state['values']['sendgrid_marketing_key'] != 'Encrypted'){
+    variable_set('sendgrid_marketing_key', encrypt($form_state['values']['sendgrid_marketing_key']));
+    drupal_set_message('Your API key has been saved and encrypted.');
+
+  }
+
+  variable_set('sendgrid_marketing_new_api', $form_state['values']['sendgrid_marketing_new_api']);
 }

@@ -26,7 +26,8 @@ function _sendgrid_marketing_block_configure($delta = '') {
     drupal_set_message(t('Before creating Sendgrid blocks, you must enter an API key.'), 'error');
     drupal_goto('admin/config/services/sendgrid_marketing');
   }
-  $fields = _sendgrid_marketing_fetch_fields();
+  $custom_fields = _sendgrid_marketing_fetch_custom_fields();
+  $reserved_fields = _sendgrid_marketing_fetch_reserved_fields();
   // Create a pseudo form state.
   $form['sendgrid_marketing_newsletter'] = array(
     '#type' => 'checkboxes',
@@ -36,13 +37,21 @@ function _sendgrid_marketing_block_configure($delta = '') {
     '#default_value' => array_keys(variable_get("sendgrid_marketing_{$delta}_contact_lists", array())),
     '#required' => TRUE,
   );
-  $form['sendgrid_marketing_fields'] = array(
+  $form['sendgrid_marketing_reserved_fields'] = array(
     '#type' => 'checkboxes',
-    '#options' => $fields,
+    '#options' => $reserved_fields,
+    '#title' => t('Reserved Fields'),
+    '#description' => t('Please check all reserved fields available for user selection within this block.'),
+    '#default_value' => array_keys(variable_get("sendgrid_marketing_{$delta}_reserved_fields", array())),
+  );
+  $form['sendgrid_marketing_custom_fields'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $custom_fields,
     '#title' => t('Custom Fields'),
     '#description' => t('Please check all custom fields available for user selection within this block.'),
     '#default_value' => array_keys(variable_get("sendgrid_marketing_{$delta}_custom_fields", array())),
   );
+
   $form['sendgrid_marketing_available_agencies'] = array(
     '#type' => 'textarea',
     '#title' => t('Available Agencies'),
@@ -60,19 +69,29 @@ function _sendgrid_marketing_block_save($delta = '', $edit = array()) {
     $defaults = _sendgrid_marketing_fetch_lists();
     $contact_lists = array();
     foreach ($edit['sendgrid_marketing_newsletter'] as $newsletter) {
-      if (in_array($newsletter, array_keys($defaults))) {
+      if ($newsletter && in_array($newsletter, array_keys($defaults))) {
         $contact_lists[$newsletter] = $defaults[$newsletter];
       }
     }
     variable_set("sendgrid_marketing_{$delta}_contact_lists", $contact_lists);
-    $default_fields = _sendgrid_marketing_fetch_fields();
+    $default_custom_fields = _sendgrid_marketing_fetch_custom_fields();
+    $default_reserved_fields = _sendgrid_marketing_fetch_reserved_fields();
     $custom_fields = array();
-    foreach ($edit['sendgrid_marketing_fields'] as $field) {
-      if (in_array($field, array_keys($default_fields))) {
-        $custom_fields[$field] = $default_fields[$field];
+
+
+    foreach ($edit['sendgrid_marketing_custom_fields'] as $field) {
+      if ( $field != 0) {
+        $custom_fields[$field] = $default_custom_fields[$field];
       }
     }
+    foreach ($edit['sendgrid_marketing_reserved_fields'] as $field) {
+      if ( in_array($field, array_keys($default_reserved_fields), TRUE)) {
+        $reserved_fields[$field] = $default_reserved_fields[$field];
+      }
+    }
+
     variable_set("sendgrid_marketing_{$delta}_custom_fields", $custom_fields);
+    variable_set("sendgrid_marketing_{$delta}_reserved_fields", $reserved_fields);
     $available_fields = $edit['sendgrid_marketing_available_agencies'];
     variable_set("sendgrid_marketing_{$delta}_available_agencies", $available_fields);
   }
@@ -163,7 +182,8 @@ function sendgrid_marketing_add_block_form_submit($form, &$form_state) {
 function sendgrid_marketing_subscribe_form($form, &$form_state) {
   $delta = $form_state['build_info']['args'][0]['delta'];
   $options = variable_get("sendgrid_marketing_{$delta}_contact_lists", array());
-  $fields = variable_get("sendgrid_marketing_{$delta}_custom_fields", array());
+  $reserved_fields = variable_get("sendgrid_marketing_{$delta}_reserved_fields", array());
+  $custom_fields = variable_get("sendgrid_marketing_{$delta}_custom_fields", array());
   $custom_options = array();
   if (variable_get("sendgrid_marketing_{$delta}_available_agencies")) {
     $custom_options = explode("\n", variable_get("sendgrid_marketing_{$delta}_available_agencies"));
@@ -180,21 +200,16 @@ function sendgrid_marketing_subscribe_form($form, &$form_state) {
     '#id' => 'subscriber_email_' . $delta,
   );
 
-  $form['subscriber_first_' . $delta] = array(
-    '#type' => 'textfield',
-    '#title' => 'First Name',
-    '#maxlength' => 254,
-    '#required' => FALSE,
-  );
+  foreach ($reserved_fields as $key => $field) {
+      $form['subscriber_reserved_field'][$field . '_' . $delta] = array(
+        '#type' => 'textfield',
+        '#title' => $field,
+        '#required' => FALSE,
 
-  $form['subscriber_last_' . $delta] = array(
-    '#type' => 'textfield',
-    '#title' => 'Last Name',
-    '#maxlength' => 254,
-    '#required' => FALSE,
-  );
+      );
+  }
 
-  foreach ($fields as $key => $field) {
+  foreach ($custom_fields as $key => $field) {
     if ($field == 'Agency' && !empty($custom_options)) {
       $form['subscriber_custom_field'][$field . '_' . $delta] = array(
         '#type' => 'select',
@@ -210,7 +225,6 @@ function sendgrid_marketing_subscribe_form($form, &$form_state) {
         '#required' => FALSE,
       );
     }
-
   }
 
   $form['subscriber_list_' . $delta] = array(
@@ -246,26 +260,98 @@ function sendgrid_marketing_subscribe_email_validate($element, &$form_state) {
  * Sendgrid subscription form submission.
  */
 function sendgrid_marketing_subscribe_form_submit($form, &$form_state) {
+  $lists = array();
   $delta = $form_state['build_info']['args'][0]['delta'];
   $contact_list = $form_state['values']['subscriber_list_' . $delta];
+
   if (empty($contact_list)) {
     return;
+  }else{
+    $i = 0;
+    foreach ($contact_list as $list) {
+      if($list){
+        $lists[$i] = $list;
+      }
+      $i++;
+    }
   }
+  if(variable_get('sendgrid_marketing_new_api')){
+    $params = (object)[
+      'list_ids' => $lists,
+      'contacts' => array( new \stdClass()
+      ),
+    ];
+    $params->contacts[0]->email=$form_state['values']['subscriber_email_' . $delta];
+    foreach (variable_get("sendgrid_marketing_{$delta}_reserved_fields", array()) as $key => $field) {
+      if(!empty($form_state['values']['subscriber_reserved_field'][$field . '_' . $delta])){
+        if($key == 'alternate_emails'){
+          $params->contacts[0]->$key = array($form_state['values']['subscriber_reserved_field'][$field . '_' . $delta]);
 
-  $params = array(
-        array(
-          'first_name' => $form_state['values']['subscriber_first_' . $delta],
-          'last_name' => $form_state['values']['subscriber_last_' . $delta],
-          'email' => $form_state['values']['subscriber_email_' . $delta],
-        ),
-  );
-  foreach (variable_get("sendgrid_marketing_{$delta}_custom_fields", array()) as $key => $field) {
-    $params['0'][$field] = $form_state['values']['subscriber_custom_field'][$field . '_' . $delta];
-  }
-  $contact = _sendgrid_marketing_create_contact($params);
-  $recipient_id = $contact['persisted_recipients'][0];
-  foreach ($contact_list as $list) {
-    _sendgrid_marketing_add_contact_to_list($list, $recipient_id, $params);
+        }else{
+          $params->contacts[0]->$key = $form_state['values']['subscriber_reserved_field'][$field . '_' . $delta];
+        }
+      }
+    }
+    $params->contacts[0]->custom_fields = new stdClass();
+    foreach (variable_get("sendgrid_marketing_{$delta}_custom_fields", array()) as $key => $field) {
+      if($form_state['values']['subscriber_custom_field'][$field . '_' . $delta]) {
+        $params->contacts[0]->custom_fields->$key = $form_state['values']['subscriber_custom_field'][$field . '_' . $delta];
+      }
+    }
+
+    $url = 'https://api.sendgrid.com/v3/marketing/contacts';
+
+    if (!$api_key = decrypt(variable_get('sendgrid_marketing_key', ''))) {
+      return FALSE;
+    }
+    $ch = curl_init();
+    $headers = array('Authorization: Bearer ' . $api_key,
+      "content-type: application/json");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POSTFIELDS,    json_encode($params));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    $response = curl_exec($ch);
+
+    if (!$response)
+    {
+      drupal_set_message( 'no response');
+      return false;
+    }
+
+
+  }else {
+    $params = array(
+      array(
+        //'first_name' => $form_state['values']['subscriber_first_' . $delta],
+        //'last_name' => $form_state['values']['subscriber_last_' . $delta],
+        'email' => $form_state['values']['subscriber_email_' . $delta],
+      )
+    );
+    foreach (variable_get("sendgrid_marketing_{$delta}_reserved_fields", array()) as $key => $field) {
+      if($field == 'First Name'){
+        $params[0]['first_name'] = $form_state['values']['subscriber_reserved_field'][$field . '_' . $delta];
+      }elseif($field == 'Last Name'){
+        $params[0]['last_name'] = $form_state['values']['subscriber_reserved_field'][$field . '_' . $delta];
+      }else{
+        $params[0][$field] = $form_state['values']['subscriber_reserved_field'][$field . '_' . $delta];
+      }
+
+
+    }
+    foreach (variable_get("sendgrid_marketing_{$delta}_custom_fields", array()) as $key => $field) {
+      $params[0][$field] = $form_state['values']['subscriber_custom_field'][$field . '_' . $delta];
+    }
+
+
+    $contact = _sendgrid_marketing_create_contact($params);
+    $recipient_id = $contact['persisted_recipients'][0];
+    foreach ($contact_list as $list) {
+      _sendgrid_marketing_add_contact_to_list($list, $recipient_id, $params);
+    }
   }
   drupal_set_message(t("Thank you for subscribing to our newsletter."));
 }

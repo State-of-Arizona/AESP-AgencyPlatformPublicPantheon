@@ -6,4 +6,5 @@ core = 7.x
 
 
 dependencies[] = encrypt
+dependencies[] = encrypt_update
 dependencies[] = block

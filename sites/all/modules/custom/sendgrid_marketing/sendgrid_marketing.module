@@ -134,7 +134,11 @@ function _sendgrid_marketing_create_contact($params = array()) {
  * Utility function.
  */
 function _sendgrid_marketing_add_contact_to_list($contact_list, $recipient_id, $params) {
-  $url = 'https://api.sendgrid.com/v3/contactdb/lists/' . $contact_list . '/recipients/' . $recipient_id;
+  if(variable_get('sendgrid_marketing_new_api')){
+    $url = 'https://api.sendgrid.com/v3/marketing/contacts';
+  }else{
+    $url = 'https://api.sendgrid.com/v3/contactdb/lists/' . $contact_list . '/recipients/' . $recipient_id;
+  }
   return _sendgrid_marketing_curl_send($url, $params, TRUE);
 }
 
@@ -155,6 +159,8 @@ function _sendgrid_marketing_curl_send($url, $params = array(), $post = FALSE) {
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
   curl_setopt($ch, CURLOPT_TIMEOUT, 60);
   curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_PORT, '443');
+
   $data = curl_exec($ch);
   if (curl_errno($ch)) {
     watchdog('sendgrid', 'Sendgrid Error: %error', array('%error' => curl_error($ch)), WATCHDOG_ERROR);
@@ -162,7 +168,6 @@ function _sendgrid_marketing_curl_send($url, $params = array(), $post = FALSE) {
     return FALSE;
   }
   curl_close($ch);
-
   return drupal_json_decode($data);
 }
 
@@ -170,11 +175,20 @@ function _sendgrid_marketing_curl_send($url, $params = array(), $post = FALSE) {
  * Utility function that pulls contact lists from sendgrid.
  */
 function _sendgrid_marketing_fetch_lists() {
-  $url = 'https://api.sendgrid.com/v3/contactdb/lists';
   $options = array();
-  if ($contact_lists = _sendgrid_marketing_curl_send($url)) {
-    foreach ($contact_lists['lists'] as $key => $value) {
-      $options[$value['id']] = $value['name'];
+  if(variable_get('sendgrid_marketing_new_api')){
+    $url = 'https://api.sendgrid.com/v3/marketing/lists';
+    if ($contact_lists = _sendgrid_marketing_curl_send($url, array(), FALSE )) {
+      foreach ($contact_lists['result'] as $key => $value) {
+        $options[$value['id']] = $value['name'];
+      }
+    }
+  }else{
+    $url = 'https://api.sendgrid.com/v3/contactdb/lists';
+    if ($contact_lists = _sendgrid_marketing_curl_send($url)) {
+      foreach ($contact_lists['lists'] as $key => $value) {
+        $options[$value['id']] = $value['name'];
+      }
     }
   }
   return $options;
@@ -183,13 +197,93 @@ function _sendgrid_marketing_fetch_lists() {
 /**
  * Utility function that pulls custom fields from sendgrid.
  */
-function _sendgrid_marketing_fetch_fields() {
-  $url = 'https://api.sendgrid.com/v3/contactdb/custom_fields';
+function _sendgrid_marketing_fetch_custom_fields() {
   $options = array();
+  if(variable_get('sendgrid_marketing_new_api')){
+    $url = 'https://api.sendgrid.com/v3/marketing/field_definitions';
+  }else{
+    $url = 'https://api.sendgrid.com/v3/contactdb/custom_fields';
+  }
   if ($custom_fields = _sendgrid_marketing_curl_send($url)) {
     foreach ($custom_fields['custom_fields'] as $key => $value) {
       $options[$value['id']] = $value['name'];
     }
   }
+
+
+  return $options;
+}
+
+/**
+ * Utility function that pulls custom fields from sendgrid.
+ */
+function _sendgrid_marketing_fetch_reserved_fields() {
+  $options = array();
+  if(variable_get('sendgrid_marketing_new_api')){
+    $url = 'https://api.sendgrid.com/v3/marketing/field_definitions';
+    if ($custom_fields = _sendgrid_marketing_curl_send($url)) {
+      foreach ($custom_fields['reserved_fields'] as $key => $value) {
+        switch($value['name']){
+          case 'first_name':
+            $options['first_name'] = 'First Name';
+            break;
+          case 'last_name':
+            $options['last_name'] = 'Last Name';
+            break;
+          case 'address_line_1':
+            $options['address_line_1'] = 'Address Line 1';
+            break;
+          case 'alternate_emails':
+            $options['alternate_emails'] = 'Alternate Emails';
+            break;
+          case 'address_line_2':
+            $options['address_line_2'] = 'Address Line 2';
+            break;
+          case 'city':
+            $options['city'] = 'City';
+            break;
+          case 'state_province_region':
+            $options['state_province_region'] = 'State';
+            break;
+          case 'postal_code':
+            $options['postal_code'] = 'ZIP';
+            break;
+          case 'country':
+            $options['country'] = 'Country';
+            break;
+          case 'phone_number':
+            $options['phone_number'] = 'Phone';
+            break;
+          case 'whatsapp':
+            $options['whatsapp'] = 'WhatsApp';
+            break;
+          case 'line':
+            $options['line'] = 'Line';
+            break;
+          case 'facebook':
+            $options['facebook'] = 'Facebook';
+            break;
+        }
+
+      }
+    }
+  }else{
+    $url = 'https://api.sendgrid.com/v3/contactdb/reserved_fields';
+    if ($custom_fields = _sendgrid_marketing_curl_send($url)) {
+      if(!empty($custom_fields['reserved_fields'])){
+        foreach ($custom_fields['reserved_fields'] as $key => $value) {
+          switch($value['name']){
+            case 'first_name':
+              $options[$value['name']] = 'First Name';
+              break;
+            case 'last_name':
+              $options[$value['name']] = 'Last Name';
+              break;
+          }
+        }
+      }
+    }
+  }
+
   return $options;
 }

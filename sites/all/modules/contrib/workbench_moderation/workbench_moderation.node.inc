@@ -58,6 +58,11 @@ function workbench_moderation_router_item_page_callback($node) {
  */
 function workbench_moderation_node_view_draft($node) {
   $current_node = workbench_moderation_node_current_load($node);
+
+  // Set the $node object in menu_get_item to the current node revision.
+  $menu_item = &drupal_static('menu_get_item');
+  $menu_item['node/' . $node->nid . '/draft']['map'][1] = $current_node;
+
   return workbench_moderation_router_item_page_callback($current_node);
 }
 

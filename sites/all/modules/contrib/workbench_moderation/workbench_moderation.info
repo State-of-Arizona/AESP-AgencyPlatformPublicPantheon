@@ -22,9 +22,8 @@ files[] = tests/workbench_moderation.transition.test
 
 dependencies[] = drafty
 
-; Information added by Drupal.org packaging script on 2016-11-02
-version = "7.x-3.0"
+; Information added by Drupal.org packaging script on 2019-10-18
+version = "7.x-3.0+7-dev"
 core = "7.x"
 project = "workbench_moderation"
-datestamp = "1478119457"
-
+datestamp = "1571363288"

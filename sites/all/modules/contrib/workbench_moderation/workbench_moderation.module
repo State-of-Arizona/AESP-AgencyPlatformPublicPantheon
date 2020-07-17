@@ -270,6 +270,7 @@ function workbench_moderation_menu_local_tasks_alter(&$data, $router_item, $root
       foreach ($data['tabs'][0]['output'] as $key => $value) {
         if (!empty($value['#link']['path']) && $value['#link']['path'] == 'node/%/revisions') {
           unset($data['tabs'][0]['output'][$key]);
+          $data['tabs'][0]['count'] -= 1;
           break;
         }
       }
@@ -1008,7 +1009,7 @@ function workbench_moderation_form_node_form_alter(&$form, $form_state) {
   if ($form['options']['#access']) {
     $form['options']['log'] = $form['revision_information']['log'];
     $form['options']['log']['#title'] = t('Moderation notes');
-    $form['options']['workbench_moderation_state_new'] = isset($form['revision_information']['workbench_moderation_state_new']) ? $form['revision_information']['workbench_moderation_state_new'] : '';
+    $form['options']['workbench_moderation_state_new'] = isset($form['revision_information']['workbench_moderation_state_new']) ? $form['revision_information']['workbench_moderation_state_new'] : array();
 
     // Unset the old placement of the Revision log.
     unset($form['revision_information']['log']);
@@ -2423,4 +2424,103 @@ function workbench_moderation_node_export_node_import_alter(&$node, $original_no
     return;
   }
   $node->revision = 1;
+}
+
+/**
+ * Implements hook_ctools_plugin_pre_alter().
+ *
+ * If this is a the ctools node_edit arguments plugin provide a different context
+ * creation callback.
+ * Also if this a page manager node_edit tasks plugin provide a different
+ * hook_menu_alter callback.
+ */
+function workbench_moderation_ctools_plugin_pre_alter(&$plugin, $plugin_type_info){
+  if ($plugin_type_info['type'] == 'arguments' && $plugin['name'] == 'node_edit') {
+    $plugin['context'] = 'workbench_moderation_node_edit_context';
+  }
+  if ($plugin_type_info['type'] == 'tasks' && $plugin['name'] == 'node_edit') {
+    $plugin['hook menu alter'] = 'workbench_moderation_page_manager_node_edit_menu_alter_callback';
+  }
+}
+
+/**
+ * Custom hook_menu_alter callback for the page_manager node_edit tasks plugin.
+ * @see workbench_moderation_ctools_plugin_pre_alter()
+ *
+ * This callback is the same as the original defined in the plugin, except that
+ * it allows the menu item for node/%node/edit to be handled by
+ * page_manager_node_edit even though workbench_moderation has its own
+ * hook_menu_alter implementation that defined a different page callback.
+ * Page manager can handle this path for workbench moderated nodes because of
+ * workbench_moderation_node_edit_context().
+ */
+function workbench_moderation_page_manager_node_edit_menu_alter_callback(&$items, $task) {
+  if (variable_get('page_manager_node_edit_disabled', TRUE)) {
+    return;
+  }
+
+  $callback = $items['node/%node/edit']['page callback'];
+  // Override the node edit handler for our purpose.
+  if ($callback == 'node_page_edit' || $callback == 'workbench_moderation_node_edit_page_override' || variable_get('page_manager_override_anyway', FALSE)) {
+    $items['node/%node/edit']['page callback'] = 'page_manager_node_edit';
+    $items['node/%node/edit']['file path'] = $task['path'];
+    $items['node/%node/edit']['file'] = $task['file'];
+  }
+  else {
+    variable_set('page_manager_node_edit_disabled', TRUE);
+    if (!empty($GLOBALS['page_manager_enabling_node_edit'])) {
+      watchdog('Workbench moderation', t('Page manager module is unable to enable node/%node/edit because some other module already has overridden with %callback.', array('%callback' => $callback)), 'warning');
+    }
+    return;
+  }
+
+  // Also catch node/add handling:
+  foreach (node_type_get_types() as $type) {
+    $path = 'node/add/' . str_replace('_', '-', $type->type);
+    if ($items[$path]['page callback'] != 'node_add') {
+      if (!empty($GLOBALS['page_manager_enabling_node_edit'])) {
+        drupal_set_message(t('Page manager module is unable to override @path because some other module already has overridden with %callback. Node edit will be enabled but that edit path will not be overridden.', array('@path' => $path, '%callback' => $items[$path]['page callback'])), 'warning');
+      }
+      continue;
+    }
+
+    $items[$path]['page callback'] = 'page_manager_node_add';
+    $items[$path]['file path'] = $task['path'];
+    $items[$path]['file'] = $task['file'];
+    $items[$path]['page arguments'] = array($type->type);
+  }
+}
+
+
+/**
+ * Custom context creation callback for the ctools node_edit arguments plugin.
+ * @see workbench_moderation_ctools_plugin_pre_alter()
+ *
+ * This takes the node or nid and loads the correct node by calling
+ * workbench_moderation_node_current_load().
+ */
+function workbench_moderation_node_edit_context($arg = NULL, $conf = NULL, $empty = FALSE) {
+  // If unset it wants a generic, unfilled context.
+  if ($empty) {
+    return ctools_context_create_empty('node_edit_form');
+  }
+
+  // We can accept either a node object or a pure nid.
+  if (is_object($arg)) {
+    $node = workbench_moderation_node_current_load($arg);
+    return ctools_context_create('node_edit_form', $node);
+  }
+
+  if (!is_numeric($arg)) {
+    return FALSE;
+  }
+
+  $node = node_load($arg);
+  $node = workbench_moderation_node_current_load($node);
+  if (!$node) {
+    return NULL;
+  }
+
+  // This will perform a node_access check, so we don't have to.
+  return ctools_context_create('node_edit_form', $node);
 }

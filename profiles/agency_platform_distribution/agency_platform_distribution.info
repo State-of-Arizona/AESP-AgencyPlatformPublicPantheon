@@ -29,6 +29,7 @@ dependencies[] = overlay
 dependencies[] = field_ui
 dependencies[] = file
 dependencies[] = rdf
+dependencies[] = clamav
 
 ;media
 dependencies[] = media

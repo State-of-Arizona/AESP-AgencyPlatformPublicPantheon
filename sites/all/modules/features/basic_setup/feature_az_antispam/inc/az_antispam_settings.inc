@@ -92,6 +92,13 @@ function _form_az_antispam_settings($form, &$form_state) {
     '#default_value' => variable_get('admin_email', ''),
   );
 
+  $form['antispam']['cleanup'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Clean up foreign submissions.'),
+    '#description' => t(variable_get('feature_az_antispam_cleanup_message', '')),
+    '#default_value' => variable_get('feature_az_antispam_cleanup', 0),
+  );
+
   $form['antispam']['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save Configuration',
@@ -120,6 +127,7 @@ function _form_az_antispam_settings_submit($form, &$form_state) {
   $notify_admin = $form_state['values']['antispam']['1']['notify_admin'];
   $admin_email = $form_state['values']['antispam']['1']['admin_email'];
   $multi_paths = $form_state['values']['antispam']['0']['multi_paths'];
+  $cleanup = $form_state['values']['antispam']['cleanup'];
 
   //TODO:Check for notification setting.  If set, then you must have an email
   if ($notify_admin == 1 && $admin_email == "") {
@@ -133,6 +141,7 @@ function _form_az_antispam_settings_submit($form, &$form_state) {
   variable_set('notify_admin', $notify_admin);
   variable_set('admin_email', $admin_email);
   variable_set('multi_paths', $multi_paths);
+  variable_set('feature_az_antispam_cleanup', $cleanup);
   }
 }
 

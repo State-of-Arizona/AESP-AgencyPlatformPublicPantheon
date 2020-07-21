@@ -65,7 +65,7 @@ function feature_az_antispam_page_build(&$page) {
       //Call our IP check function
       if (($path_value == $currentpath)) {
         //check if geo plugin is up
-        if (_az_spam_geoplugin_status(ip_address())) {
+        if (_az_spam_geoplugin_status()) {
           $user_country_code = _az_antispam_ip_info("Visitor", "Country Code", FALSE);
         } else {
           //geo plugin down
@@ -255,7 +255,7 @@ function _az_antispam_mail($key, &$message, $params) {
     }
 }
 
-function _az_spam_geoplugin_status($ip) {
+function _az_spam_geoplugin_status() {
   $randIP = "".mt_rand(0,255).".".mt_rand(0,255).".".mt_rand(0,255).".".mt_rand(0,255);
   $ch = curl_init('http://www.geoplugin.net/php.gp?ip=' . $randIP);
   curl_setopt($ch, CURLOPT_TIMEOUT, 4);
@@ -272,5 +272,49 @@ function _az_spam_geoplugin_status($ip) {
     watchdog( 'AZ Anti Spam', 'GEO Plugin Down. Response Code: ' . $httpcode, NULL, WATCHDOG_WARNING);
     _az_antispam_email_admin ($to, $user_ip = NULL, FALSE);
     return false;
+  }
+}
+
+function feature_az_antispam_cron(){
+  //check if cleaning up submissions
+  if (variable_get('feature_az_antispam_cleanup')) {
+    //check if geoplugin is up
+    if (_az_spam_geoplugin_status()) {
+      $min = db_query("SELECT MIN(sid) as min_id FROM webform_submissions")->fetchField();
+      $last_checked_submission = variable_get('feature_az_antispam_last_submission', $min);
+      $max = db_query("SELECT MAX(sid) as max_id FROM webform_submissions")->fetchField();
+
+      if ($last_checked_submission < $max) {
+        $query = db_select('webform_submissions', 'ws')
+          ->condition('sid', $last_checked_submission, '>')
+          //ignoring private addresses
+          ->condition('remote_addr', '10.%.%.%', 'NOT LIKE' )
+          ->condition('remote_addr', '192.168.%.%', 'NOT LIKE' )
+          ->range(0, 30)
+          ->fields('ws', array('nid', 'sid', 'remote_addr'))
+          ->execute()
+          ->fetchAll();
+
+        //watchdog('antispam', '<pre>' . print_r($query, TRUE) . '</pre>');
+        module_load_include('inc', 'webform', 'includes/webform.submissions' );
+        foreach ($query as $submission) {
+          variable_set('feature_az_antispam_last_submission', $submission->sid);
+          //$submission->remote_addr = "" . mt_rand(0, 255) . "." . mt_rand(0, 255) . "." . mt_rand(0, 255) . "." . mt_rand(0, 255);
+          $submission_country_code = _az_antispam_ip_info($submission->remote_addr, "Country Code", FALSE);
+          //watchdog('antispam', 'sid: ' . $submission->sid . '. checking ip: ' . $submission->remote_addr . '. country: ' . $submission_country_code);
+          if ($submission_country_code != 'US' && $submission_country_code != '') {
+            $node = node_load($submission->nid);
+            $submission = webform_get_submission($submission->nid, $submission->sid);
+            webform_submission_delete($node, $submission);
+          }
+        }
+        $percent_complete = round( 100* $last_checked_submission/$max, 2);
+        variable_set('feature_az_antispam_cleanup_message', 'Submissions are being cleaned. ' . $percent_complete . '% have been processed.');
+      } else {
+        variable_set('feature_az_antispam_cleanup_message', 'Foreign submissions have been removed');
+      }
+    }else{
+      watchdog('antispam', 'geoplugin down');
+    }
   }
 }

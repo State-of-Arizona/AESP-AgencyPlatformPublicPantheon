@@ -33,5 +33,8 @@ function sendgrid_marketing_uninstall() {
  * Implements hook_enable().
  */
 function sendgrid_marketing_enable() {
+  drupal_cron_run();
   drupal_set_message(t('To use Sendgrid Marketing, first add Sendgrid API key. <a href="@url">Click here to add key.</a>', array('@url' => url('admin/config/services/sendgrid_marketing'))));
 }
+
+

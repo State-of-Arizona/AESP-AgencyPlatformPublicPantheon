@@ -1071,7 +1071,7 @@ function scs_payment_form_alter(&$form, &$form_state, $form_id) {
 
     $form['payment_status'] = array(
       '#options' => $status_options,
-      '#access' => !payment_status_is_or_has_ancestor($payment->getStatus()->status, PAYMENT_STATUS_NEW),
+      '#access' => user_access('update new payments'),
       '#type' => 'select',
       '#title' => t('Status'),
       '#default_value' => $payment->getStatus()->status,
@@ -1325,4 +1325,15 @@ function scs_payment_payment_delete($entity) {
     db_delete('scs_payment_token')
         ->condition('pid', $entity->pid)
         ->execute();
+}
+
+
+function scs_payment_permission() {
+  return array(
+    'update new payments' => array(
+      'title' => t('Update New Payments'),
+      'restrict access' => TRUE,
+      'description' => t('Update payments that are in the created phase.  This permission should be used sparingly.')
+    ),
+  );
 }

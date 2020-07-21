@@ -34,6 +34,7 @@ function payment_schema() {
       'name' => array(
         'type' => 'varchar',
         'length' => 255,
+        'not null' => TRUE,
       ),
       'pid' => array(
         'description' => 'The {payment}.pid this line item belongs to.',
@@ -101,6 +102,7 @@ function payment_schema() {
       ),
       'pid' => array(
         'type' => 'serial',
+        'not null' => TRUE,
       ),
       'pmid' => array(
         'type' => 'int',
@@ -179,6 +181,7 @@ function payment_schema() {
       ),
       'psiid' => array(
         'type' => 'serial',
+        'not null' => TRUE,
       ),
     ),
     'foreign keys' => array(
@@ -219,6 +222,7 @@ function payment_schema() {
       ),
       'pmid' => array(
         'type' => 'serial',
+        'not null' => TRUE,
       ),
       'status' => array(
         'type' => 'int',

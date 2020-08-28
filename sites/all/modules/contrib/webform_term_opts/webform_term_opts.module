@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * @file
+ * This is a simple module implementing a webform hook to offer vocabulary terms
+ * to be used as options in form components.
+ */
+
+/**
+ * Implementation of hook_webform_select_options_info().
+ */
+function webform_term_opts_webform_select_options_info() {
+  $items = array();
+
+  $vocabularies = taxonomy_get_vocabularies();
+
+  foreach ($vocabularies as $voc) {
+    /**
+     * @todo Check if each vocabulary is configured to be shown here.
+     */
+    $items['vid_' . $voc->vid] = array(
+      'title' => $voc->name,
+      'options callback' => 'webform_term_options_vocabulary_terms',
+      'options arguments' => $voc->vid,
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * Option list containing all terms of specified vocabulary.
+ */
+function webform_term_options_vocabulary_terms($component, $flat, $vid) {
+  $terms = array();
+
+  $tree = taxonomy_get_tree($vid);
+  /**
+   * @todo Do something for hierarchical vocabularies here (hint: use $flat arg)
+   */
+  foreach ($tree as $term) {
+    $terms['tid_' . $term->tid] = $term->name;
+  }
+
+  return $terms;
+}

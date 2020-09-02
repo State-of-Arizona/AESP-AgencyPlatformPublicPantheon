@@ -5,7 +5,7 @@
     "keywords": [ "saml2", "shibboleth","oauth","ws-federation","sp","idp" ],
     "homepage": "http://simplesamlphp.org",
     "license": "LGPL-2.1-or-later",
-    "version": "1.18.7",
+    "version": "v1.18.8",
     "authors": [
         {
             "name": "Andreas Åkre Solberg",
@@ -75,15 +75,14 @@
         "simplesamlphp/simplesamlphp-module-sanitycheck": "^0.9",
         "simplesamlphp/simplesamlphp-module-statistics": "^0.9",
         "simplesamlphp/simplesamlphp-module-sqlauth": "^0.9",
-        "simplesamlphp/twig-configurable-i18n": "^2.1",
+        "simplesamlphp/twig-configurable-i18n": "^2.2",
         "symfony/routing": "^3.4 || ^4.0",
         "symfony/http-foundation": "^3.4 || ^4.0",
         "symfony/config": "^3.4 || ^4.0",
         "symfony/http-kernel": "^3.4 || ^4.0",
         "symfony/dependency-injection": "^3.4 || ^4.0",
         "symfony/yaml": "^3.4 || ^4.0",
-        "twig/twig": "~1.0 || ~2.0",
-        "whitehat101/apr1-md5": "~1.0"
+        "twig/twig": "~1.0 || ~2.0"
     },
     "require-dev": {
         "ext-curl": "*",

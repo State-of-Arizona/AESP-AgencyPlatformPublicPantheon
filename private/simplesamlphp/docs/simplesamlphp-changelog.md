@@ -6,6 +6,44 @@ SimpleSAMLphp changelog
 This document lists the changes between versions of SimpleSAMLphp.
 See the upgrade notes for specific information about upgrading.
 
+## Version 1.18.8
+
+Released 2020-09-02
+
+  * Fixed Artifact Resolution due to incorrect use of Issuer objects (#1343).
+  * Fixed some of the German translations (#1331). Thanks @htto!
+  * Harden against CVE-2020-13625;  this package is not affected, but 3rd party modules may (#1333).
+  * Harden against sevaral JS issues (npm update & npm audit fix)
+  * Fixed inconsistent configuration of backtraces logging
+  * Support for Symfony 3.x is now deprecated
+  * Support for Twig 1.x is now deprecated
+
+### authcrypt
+  * The dependency for whitehat101/apr1-md5 was moved from the base repository to the module (v0.9.2)
+
+### authx509
+  * Restore PHP 5.6 compatibility (v0.9.5)
+
+### cron
+  * Fixed old-ui (#1248)
+
+### ldap
+  * Moved array with binary attributes to authsource config (v0.9.9)
+    Instead of having to edit code, you can now set 'attributes.binary' in the authsource configuration.
+
+### metarefresh
+  * Add attributewhitelist to support e.g. R&S+Sirtfi (v0.9.5)
+  * Restore PHP 5.6 compatibility (v0.9.6)
+
+### negotiate ###
+  * Restore PHP 5.6 compatibility (v0.9.8)
+  * Fixed a link (v0.9.9)
+
+### saml2 library
+  * Fixed a bug in the AuthnRequest-class that would raise an InvalidArgumentException when setting
+      the AssertionConsumerServiceIndex as an integer on an saml:SP authsource.
+      Thanks to Andrea @ Oracle for reporting this.
+
 ## Version 1.18.7
 
 Released 2020-05-12
@@ -13,7 +51,7 @@ Released 2020-05-12
   * Fix spurious warnings when session_create_id() fails to create ID (#1291)
   * Fix inconsistency in the way PATH_INFO is being used (#1227).
   * Fix a potential security issue [CVE-2020-11022](https://nvd.nist.gov/vuln/detail/CVE-2020-11022) by updating jQuery. If any of your custom modules rely on jQuery,
-  *   make sure you read the following [update notes](https://jquery.com/upgrade-guide/3.5/), since jQuery has solved this in a non-BC way (#1321).
+      make sure you read the following [update notes](https://jquery.com/upgrade-guide/3.5/), since jQuery has solved this in a non-BC way (#1321).
   * Fix incorrect Polish translations (#1311).
   * Fix a broken migration query in the LogoutStore (#1324).
   * Fix an issue with the SameSite cookie parameter when running on PHP versions older than 7.3 (#1320).

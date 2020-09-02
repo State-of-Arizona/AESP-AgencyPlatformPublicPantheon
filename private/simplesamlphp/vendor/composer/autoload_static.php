@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b
+class ComposerStaticInitb63f0c3bfe3b47f4057f49d353ab5462
 {
     public static $files = array (
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
@@ -525,7 +525,7 @@ class ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b
         'Psr\\Log\\LoggerInterface' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerInterface.php',
         'Psr\\Log\\LoggerTrait' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerTrait.php',
         'Psr\\Log\\NullLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/NullLogger.php',
-        'Psr\\Log\\Test\\DummyTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
+        'Psr\\Log\\Test\\DummyTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/DummyTest.php',
         'Psr\\Log\\Test\\LoggerInterfaceTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
         'Psr\\Log\\Test\\TestLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/TestLogger.php',
         'RobRichards\\XMLSecLibs\\Utils\\XPath' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/Utils/XPath.php',
@@ -757,6 +757,7 @@ class ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b
         'SimpleSAML\\Module\\adfs\\SAML2\\XML\\fed\\TokenTypesOffered' => __DIR__ . '/../..' . '/modules/adfs/lib/SAML2/XML/fed/TokenTypesOffered.php',
         'SimpleSAML\\Module\\authX509\\Auth\\Process\\ExpiryWarning' => __DIR__ . '/../..' . '/modules/authX509/lib/Auth/Process/ExpiryWarning.php',
         'SimpleSAML\\Module\\authX509\\Auth\\Source\\X509userCert' => __DIR__ . '/../..' . '/modules/authX509/lib/Auth/Source/X509userCert.php',
+        'SimpleSAML\\Module\\authX509\\Controller\\ExpiryWarning' => __DIR__ . '/../..' . '/modules/authX509/lib/Controller/ExpiryWarning.php',
         'SimpleSAML\\Module\\authcrypt\\Auth\\Source\\Hash' => __DIR__ . '/../..' . '/modules/authcrypt/lib/Auth/Source/Hash.php',
         'SimpleSAML\\Module\\authcrypt\\Auth\\Source\\Htpasswd' => __DIR__ . '/../..' . '/modules/authcrypt/lib/Auth/Source/Htpasswd.php',
         'SimpleSAML\\Module\\authfacebook\\Auth\\Source\\Facebook' => __DIR__ . '/../..' . '/modules/authfacebook/lib/Auth/Source/Facebook.php',
@@ -1158,6 +1159,7 @@ class ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b
         'Symfony\\Component\\HttpFoundation\\Session\\SessionBagInterface' => __DIR__ . '/..' . '/symfony/http-foundation/Session/SessionBagInterface.php',
         'Symfony\\Component\\HttpFoundation\\Session\\SessionBagProxy' => __DIR__ . '/..' . '/symfony/http-foundation/Session/SessionBagProxy.php',
         'Symfony\\Component\\HttpFoundation\\Session\\SessionInterface' => __DIR__ . '/..' . '/symfony/http-foundation/Session/SessionInterface.php',
+        'Symfony\\Component\\HttpFoundation\\Session\\SessionUtils' => __DIR__ . '/..' . '/symfony/http-foundation/Session/SessionUtils.php',
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/AbstractSessionHandler.php',
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\MemcacheSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/MemcacheSessionHandler.php',
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\MemcachedSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/MemcachedSessionHandler.php',
@@ -1806,10 +1808,10 @@ class ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit937f06b6efdbb3041c140f7a0a54683b::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitb63f0c3bfe3b47f4057f49d353ab5462::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitb63f0c3bfe3b47f4057f49d353ab5462::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitb63f0c3bfe3b47f4057f49d353ab5462::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitb63f0c3bfe3b47f4057f49d353ab5462::$classMap;
 
         }, null, ClassLoader::class);
     }

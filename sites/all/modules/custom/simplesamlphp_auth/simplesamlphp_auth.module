@@ -321,7 +321,7 @@ function simplesamlphp_auth_init() {
 
         // If user IDs or roles are specified, we let them in, but everyone else gets logged out.
         if (drupal_strlen($strAllwDefLogUsers) || $arrAllwDefLogRoles) {
-          
+
           // Convert the string into an array.
           // @todo Perform a test to make sure that only numbers, spaces, or commas are in the string.
           $arrAllwDefLogUsers = explode(',', $strAllwDefLogUsers);
@@ -345,9 +345,9 @@ function simplesamlphp_auth_init() {
               _simplesamlphp_auth_destroy_drupal_session();
             }
           }
-          
+
         } // Test for specified users.
-        
+
       } // End if $_simplesamlphp_auth_as->isAuthenticated().
     } // End test to see if we allow default logins.
   } // End if user->uid.
@@ -359,23 +359,29 @@ function simplesamlphp_auth_init() {
 function simplesamlphp_auth_user_insert(&$edit, $account, $category = NULL) {
   global $_simplesamlphp_auth_as;
   global $_simplesamlphp_auth_saml_attributes;
+  global $user;
 
   if (!_simplesamlphp_auth_isEnabled()) {
     // Exit without initializing.
     return;
   }
 
-  if ($category = 'account') {
+  if ($category == 'account') {
     // If user registration has a valid session...
     if ($_simplesamlphp_auth_as->isAuthenticated()) {
-      // Get name from default attributes.
-      try {
-        _simplesaml_auth_debug(t('Registering user [%acctname]', array('%acctname' => $account->name)));
-        $account->name = _simplesamlphp_auth_get_default_name($account->uid);
-      }
-      catch (Exception $e) {
-        drupal_set_message(t('Your user name was not provided by your identity provider (IDP).'), "error");
-        watchdog('simplesamlphp_auth', $e->getMessage(), NULL, WATCHDOG_CRITICAL);
+      // There are cases where the logged in user is an admin and is creating
+      // accounts.  In such cases we don't want to use his name and email;
+      // we want to keep the supplied values.
+      if ($user->uid === $account->uid) {
+        // Get name from default attributes.
+        try {
+          _simplesaml_auth_debug(t('Registering user [%acctname]', array('%acctname' => $account->name)));
+          $account->name = _simplesamlphp_auth_get_default_name($account->uid);
+        }
+        catch (Exception $e) {
+          drupal_set_message(t('Your user name was not provided by your identity provider (IDP).'), "error");
+          watchdog('simplesamlphp_auth', $e->getMessage(), NULL, WATCHDOG_CRITICAL);
+        }
       }
 
       db_update('users')
@@ -385,13 +391,21 @@ function simplesamlphp_auth_user_insert(&$edit, $account, $category = NULL) {
 
       _simplesaml_auth_debug(t('Updating username [%acctname]', array('%acctname' => $account->name)));
 
-      // Get mail from default attribute.
-      try {
-        $mail_address = _simplesamlphp_auth_get_mail();
+      $mail_address = '';
+      if ($user->uid === $account->uid) {
+        // Get mail from default attribute.
+        try {
+          $mail_address = _simplesamlphp_auth_get_mail();
+        }
+        catch (Exception $e)  {
+          drupal_set_message(t('Your e-mail address was not provided by your identity provider (IDP).'), "error");
+          watchdog('simplesamlphp_auth', $e->getMessage(), NULL, WATCHDOG_CRITICAL);
+        }
       }
-      catch (Exception $e)  {
-        drupal_set_message(t('Your e-mail address was not provided by your identity provider (IDP).'), "error");
-        watchdog('simplesamlphp_auth', $e->getMessage(), NULL, WATCHDOG_CRITICAL);
+      else {
+        if (!empty($account->mail)) {
+          $mail_address = $account->mail;
+        }
       }
 
       if (!empty($mail_address)) {
@@ -400,9 +414,9 @@ function simplesamlphp_auth_user_insert(&$edit, $account, $category = NULL) {
           ->condition('uid', $account->uid)
           ->execute();
       }
-      
+
       if (module_exists('rules')) {
-        rules_invoke_event('simplesamlphp_auth_rules_event_register', $account); 
+        rules_invoke_event('simplesamlphp_auth_rules_event_register', $account);
       }
 
       _simplesaml_auth_debug(t('Updating mail [%mailaddr]', array('%mailaddr' => $mail_address)));
@@ -466,7 +480,7 @@ function simplesamlphp_auth_settings() {
     '#type' => 'fieldset',
     '#title' => t('Basic Setup'),
     '#description' => t('<div><strong>WARNING:</strong> Entering incorrect values in this configuration can lead to the site breaking or potential security issues. Please follow the following process document of how to set up your website with Okta: <a href="https://docs.google.com/document/d/17hXbfBL501I7lSDVws01bf55TNEGLJhG92ddZyugysA/edit">https://docs.google.com/document/d/17hXbfBL501I7lSDVws01bf55TNEGLJhG92ddZyugysA/edit</a></div><br>'),
-    '#collapsible' => FALSE, 
+    '#collapsible' => FALSE,
   );
   $form['simplesamlphp_auth_grp_setup']['simplesamlphp_auth_activate'] = array(
     '#type' => 'checkbox',
@@ -492,11 +506,11 @@ function simplesamlphp_auth_settings() {
     '#default_value' => variable_get('simplesamlphp_auth_forcehttps', TRUE),
     '#description' => t('Should be enabled on production sites.'),
   );
-  
+
   $form['simplesamlphp_auth_grp_user'] = array(
     '#type' => 'fieldset',
     '#title' => t('User Info and Syncing'),
-    '#collapsible' => FALSE, 
+    '#collapsible' => FALSE,
   );
   $form['simplesamlphp_auth_grp_user']['simplesamlphp_auth_user_name'] = array(
     '#type' => 'textfield',

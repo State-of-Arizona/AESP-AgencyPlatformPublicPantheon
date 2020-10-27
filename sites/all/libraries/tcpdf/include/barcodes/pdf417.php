@@ -1,9 +1,9 @@
 <?php
 //============================================================+
 // File name   : pdf417.php
-// Version     : 1.0.004
+// Version     : 1.0.005
 // Begin       : 2010-06-03
-// Last Update : 2012-02-06
+// Last Update : 2014-04-25
 // Author      : Nicola Asuni - Tecnick.com LTD - www.tecnick.com - info@tecnick.com
 // License     : GNU-LGPL v3 (http://www.gnu.org/copyleft/lesser.html)
 // -------------------------------------------------------------------
@@ -50,7 +50,7 @@
  * (requires PHP bcmath extension)
  * @package com.tecnick.tcpdf
  * @author Nicola Asuni
- * @version 1.0.003
+ * @version 1.0.005
  */
 
 // definitions
@@ -636,7 +636,7 @@ class PDF417 {
 			// add macro section
 			$codewords = array_merge($codewords, $macrocw);
 		}
-		// Symbol Lenght Descriptor (number of data codewords including Symbol Lenght Descriptor and pad codewords)
+		// Symbol Length Descriptor (number of data codewords including Symbol Length Descriptor and pad codewords)
 		$sld = $size - $errsize;
 		// add symbol length description
 		array_unshift($codewords, $sld);
@@ -740,16 +740,6 @@ class PDF417 {
 	 * @protected
 	 */
 	protected function getErrorCorrectionLevel($ecl, $numcw) {
-		// get maximum correction level
-		$maxecl = 8; // starting error level
-		$maxerrsize = (928 - $numcw); // available codewords for error
-		while ($maxecl > 0) {
-			$errsize = (2 << $ecl);
-			if ($maxerrsize >= $errsize) {
-				break;
-			}
-			--$maxecl;
-		}
 		// check for automatic levels
 		if (($ecl < 0) OR ($ecl > 8)) {
 			if ($numcw < 41) {
@@ -764,6 +754,16 @@ class PDF417 {
 				$ecl = $maxecl;
 			}
 		}
+		// get maximum correction level
+		$maxecl = 8; // starting error level
+		$maxerrsize = (928 - $numcw); // available codewords for error
+		while ($maxecl > 0) {
+			$errsize = (2 << $ecl);
+			if ($maxerrsize >= $errsize) {
+				break;
+			}
+			--$maxecl;
+		}
 		if ($ecl > $maxecl) {
 			$ecl = $maxecl;
 		}
@@ -772,7 +772,7 @@ class PDF417 {
 
 	/**
 	 * Returns the error correction codewords
-	 * @param $cw (array) array of codewords including Symbol Lenght Descriptor and pad
+	 * @param $cw (array) array of codewords including Symbol Length Descriptor and pad
 	 * @param $ecl (int) error correction level 0-8
 	 * @return array of error correction codewords
 	 * @protected
@@ -878,7 +878,7 @@ class PDF417 {
 				$txtarr = array(); // array of characters and sub-mode switching characters
 				$codelen = strlen($code);
 				for ($i = 0; $i < $codelen; ++$i) {
-					$chval = ord($code{$i});
+					$chval = ord($code[$i]);
 					if (($k = array_search($chval, $this->textsubmodes[$submode])) !== false) {
 						// we are on the same sub-mode
 						$txtarr[] = $k;
@@ -888,7 +888,7 @@ class PDF417 {
 							// search new sub-mode
 							if (($s != $submode) AND (($k = array_search($chval, $this->textsubmodes[$s])) !== false)) {
 								// $s is the new submode
-								if (((($i + 1) == $codelen) OR ((($i + 1) < $codelen) AND (array_search(ord($code{($i + 1)}), $this->textsubmodes[$submode]) !== false))) AND (($s == 3) OR (($s == 0) AND ($submode == 1)))) {
+								if (((($i + 1) == $codelen) OR ((($i + 1) < $codelen) AND (array_search(ord($code[($i + 1)]), $this->textsubmodes[$submode]) !== false))) AND (($s == 3) OR (($s == 0) AND ($submode == 1)))) {
 									// shift (temporary change only for this char)
 									if ($s == 3) {
 										// shift to puntuaction
@@ -934,20 +934,25 @@ class PDF417 {
 						$sublen = strlen($code);
 					}
 					if ($sublen == 6) {
-						$t = bcmul(''.ord($code{0}), '1099511627776');
-						$t = bcadd($t, bcmul(''.ord($code{1}), '4294967296'));
-						$t = bcadd($t, bcmul(''.ord($code{2}), '16777216'));
-						$t = bcadd($t, bcmul(''.ord($code{3}), '65536'));
-						$t = bcadd($t, bcmul(''.ord($code{4}), '256'));
-						$t = bcadd($t, ''.ord($code{5}));
+						$t = bcmul(''.ord($code[0]), '1099511627776');
+						$t = bcadd($t, bcmul(''.ord($code[1]), '4294967296'));
+						$t = bcadd($t, bcmul(''.ord($code[2]), '16777216'));
+						$t = bcadd($t, bcmul(''.ord($code[3]), '65536'));
+						$t = bcadd($t, bcmul(''.ord($code[4]), '256'));
+						$t = bcadd($t, ''.ord($code[5]));
+						// tmp array for the 6 bytes block
+						$cw6 = array();
 						do {
 							$d = bcmod($t, '900');
 							$t = bcdiv($t, '900');
-							array_unshift($cw, $d);
+							// prepend the value to the beginning of the array
+							array_unshift($cw6, $d);
 						} while ($t != '0');
+						// append the result array at the end
+						$cw = array_merge($cw, $cw6);
 					} else {
 						for ($i = 0; $i < $sublen; ++$i) {
-							$cw[] = ord($code{$i});
+							$cw[] = ord($code[$i]);
 						}
 					}
 					$code = $rest;

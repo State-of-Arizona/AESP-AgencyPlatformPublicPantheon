@@ -145,14 +145,11 @@ function _webform_edit_file($component) {
     '#weight' => 3,
   );
 
-  $scheme_options = array();
-  foreach (file_get_stream_wrappers(STREAM_WRAPPERS_WRITE_VISIBLE) as $scheme => $stream_wrapper) {
-    $scheme_options[$scheme] = $stream_wrapper['name'];
-  }
   $form['extra']['scheme'] = array(
     '#type' => 'hidden',
-    '#value' => 'Private',
+    '#value' => 'private',
   );
+
   $form['extra']['directory'] = array(
     '#type' => 'textfield',
     '#title' => t('Upload directory'),

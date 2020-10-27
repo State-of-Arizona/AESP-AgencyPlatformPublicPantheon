@@ -1,0 +1,20 @@
+diff --git a/sites/all/modules/contrib/webform/components/file.inc b/sites/all/modules/contrib/webform/components/file.inc
+index b8233e507..f9805bbe3 100644
+--- a/sites/all/modules/contrib/webform/components/file.inc
++++ b/sites/all/modules/contrib/webform/components/file.inc
+@@ -150,13 +150,8 @@ function _webform_edit_file($component) {
+     $scheme_options[$scheme] = $stream_wrapper['name'];
+   }
+   $form['extra']['scheme'] = array(
+-    '#type' => 'radios',
+-    '#title' => t('Upload destination'),
+-    '#options' => $scheme_options,
+-    '#default_value' => $component['extra']['scheme'],
+-    '#description' => t('Public files upload destination is dangerous for forms that are available to anonymous and/or untrusted users. For more information, see <a href="@psa">DRUPAL-PSA-2016-003</a>.', array('@psa' => 'https://www.drupal.org/psa-2016-003')),
+-    '#weight' => 4,
+-    '#access' => count($scheme_options) > 1,
++    '#type' => 'hidden',
++    '#value' => 'Private',
+   );
+   $form['extra']['directory'] = array(
+     '#type' => 'textfield',

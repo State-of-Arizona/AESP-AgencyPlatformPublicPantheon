@@ -20,7 +20,7 @@ use Symfony\Component\ExpressionLanguage\Expression;
 
 abstract class AbstractConfigurator
 {
-    const FACTORY = 'unknown';
+    public const FACTORY = 'unknown';
 
     /** @internal */
     protected $definition;
@@ -28,7 +28,7 @@ abstract class AbstractConfigurator
     public function __call($method, $args)
     {
         if (method_exists($this, 'set'.$method)) {
-            return \call_user_func_array([$this, 'set'.$method], $args);
+            return $this->{'set'.$method}(...$args);
         }
 
         throw new \BadMethodCallException(sprintf('Call to undefined method "%s::%s()".', static::class, $method));

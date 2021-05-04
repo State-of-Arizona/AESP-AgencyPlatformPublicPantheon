@@ -63,6 +63,7 @@ return array(
     'SimpleSAML\\Module\\authcrypt\\' => array($baseDir . '/modules/authcrypt/lib'),
     'SimpleSAML\\Module\\authX509\\' => array($baseDir . '/modules/authX509/lib'),
     'SimpleSAML\\Module\\adfs\\' => array($baseDir . '/modules/adfs/lib'),
+    'SimpleSAML\\Assert\\' => array($vendorDir . '/simplesamlphp/assert/src'),
     'SimpleSAML\\' => array($baseDir . '/lib/SimpleSAML'),
     'SAML2\\' => array($vendorDir . '/simplesamlphp/saml2/src/SAML2'),
     'RobRichards\\XMLSecLibs\\' => array($vendorDir . '/robrichards/xmlseclibs/src'),

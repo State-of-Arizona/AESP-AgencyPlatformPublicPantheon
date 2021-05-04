@@ -6,6 +6,36 @@ SimpleSAMLphp changelog
 This document lists the changes between versions of SimpleSAMLphp.
 See the upgrade notes for specific information about upgrading.
 
+## Version 1.19.1
+
+Released 2021-04-29
+
+  * Added authproc-filters for generating the subject-id and pairwise-id (#1435)
+  * Restore support for custom error messages (#1326)
+  * Fixed a bug in the Artifact Resolution Service (#1428)
+  * Fixed compatibility with Composer pre 1.8.5 (Debian 10) (#1427)
+  * Updated npm dependencies up to April 23, 2021
+  * Fixed a bug where it was impossible to set WantAssertionsSigned=true on SP-metadata (#1433)
+  * Make inResponseTo available in state array (#1447)
+
+### admin
+  * Fixed a bug in the metadata-coverter where the coverted metadata would contain newline-characters
+
+### authorize
+  * Fix a bug in the Twig-template that causes an exception in Twig strict vars mode
+
+### memcacheMonitor
+  * Fix a bug in the Twig-template that causes an exception on newer Twig-versions
+
+### negotiate
+  * Fix a bug that was breaking the module when using the old UI
+
+### statistics
+  * Fix a bug in the Twig-template that causes an exception on newer Twig-versions
+
+### sqlauth
+  * Fix a security bug where in rare cases the database user credentials would be printed in exception messages
+
 ## Version 1.19.0
 
 Released 2021-01-21

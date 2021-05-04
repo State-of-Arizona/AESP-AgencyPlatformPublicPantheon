@@ -1,7 +1,7 @@
 {
     "name": "symfony/dependency-injection",
     "type": "library",
-    "description": "Symfony DependencyInjection Component",
+    "description": "Allows you to standardize and centralize the way objects are constructed in your application",
     "keywords": [],
     "homepage": "https://symfony.com",
     "license": "MIT",
@@ -40,7 +40,7 @@
     },
     "provide": {
         "psr/container-implementation": "1.0",
-        "symfony/service-implementation": "1.0"
+        "symfony/service-implementation": "1.0|2.0"
     },
     "autoload": {
         "psr-4": { "Symfony\\Component\\DependencyInjection\\": "" },

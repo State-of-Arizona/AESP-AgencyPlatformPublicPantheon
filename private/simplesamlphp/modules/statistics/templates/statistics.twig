@@ -207,7 +207,7 @@
                     <td>{{ dd[0] }}</td>
                     <td class="datacontent">{{ dd[1] }}</td>
                     {% for key, value in topdelimiters %}
-                    {% if results[slot] is defined %}
+                    {% if results[slot] is defined and value == '_' %}
                     <td class="datacontent">{{ results[slot][value] }}</td>
                     {% else %}
                     <td class="datacontent">&nbsp;</td>

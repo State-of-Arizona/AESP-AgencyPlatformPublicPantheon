@@ -566,7 +566,7 @@ $config = [
      * through https. If the user can access the service through
      * both http and https, this must be set to FALSE.
      */
-    'session.cookie.secure' => false,
+    'session.cookie.secure' => true,
 
     /*
      * Set the SameSite attribute in the cookie.
@@ -765,7 +765,7 @@ $config = [
          * ],
          *
          * establishing that if a translation for the "no" language code is
-         * not available, we look for translations in "nb" (Norwegian Bokmål),
+         * not available, we look for translations in "nb",
          * and so on, in that order.
          */
         'priorities' => [
@@ -803,7 +803,7 @@ $config = [
     'language.cookie.name' => 'language',
     'language.cookie.domain' => null,
     'language.cookie.path' => '/',
-    'language.cookie.secure' => false,
+    'language.cookie.secure' => true,
     'language.cookie.httponly' => false,
     'language.cookie.lifetime' => (60 * 60 * 24 * 900),
     'language.cookie.samesite' => \SimpleSAML\Utils\HTTP::canSetSameSiteNone() ? 'None' : null,
@@ -986,7 +986,7 @@ $config = [
             'type'          => 'saml20-idp-SSO',
         ],
 
-        /* When called without parameters, it will fallback to filter attributes ‹the old way›
+        /* When called without parameters, it will fallback to filter attributes 'the old way'
          * by checking the 'attributes' parameter in metadata on IdP hosted and SP remote.
          */
         50 => 'core:AttributeLimit',

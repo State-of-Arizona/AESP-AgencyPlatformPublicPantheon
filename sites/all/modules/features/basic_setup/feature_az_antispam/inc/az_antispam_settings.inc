@@ -26,6 +26,7 @@ function _form_az_antispam_settings($form, &$form_state) {
     '#title' => t('Antispam Settings'),
   );
 
+
   //First set - Dev
   $form['antispam']['0'] = array(
     '#type' => 'fieldset',
@@ -35,6 +36,12 @@ function _form_az_antispam_settings($form, &$form_state) {
     // '#description' => t('Description or instructions for ALL fields, if required.'),
     '#tree' => TRUE,
     '#after_build' => array(),
+  );
+  $form['antispam']['0']['foreign_webform_block'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Block foreign submissions on all webforms.'),
+    '#description' => t('Enabling will block all foreign submissions on all webforms.'),
+    '#default_value' => variable_get('feature_az_antispam_foreign_webform_block', 1),
   );
   $form['antispam']['0']['access_denied'] = array(
     '#type' => 'textfield',
@@ -120,6 +127,7 @@ function _form_az_antispam_settings_submit($form, &$form_state) {
   drupal_set_message(t('The configuration has been saved.'), 'status');
 
   //Set values
+  $foreign_webform_block = $form_state['values']['antispam']['0']['foreign_webform_block'];
   $access_denied = $form_state['values']['antispam']['0']['access_denied'];
   $path_get_ip = $form_state['values']['antispam']['0']['path_get_ip'];//test this as created as array
   $save_watchdog = $form_state['values']['antispam']['1']['save_watchdog'];
@@ -133,15 +141,16 @@ function _form_az_antispam_settings_submit($form, &$form_state) {
   if ($notify_admin == 1 && $admin_email == "") {
     drupal_set_message(t('You must enter an email address if notifications are enabled'), 'error', FALSE);
   } else {
-  //Save values
-  variable_set('access_denied', $access_denied);
-  variable_set('path_get_ip', $path_get_ip);//test this as created as array
-  variable_set('save_watchdog', $save_watchdog);
-  variable_set('save_all_watchdog', $save_all_watchdog);
-  variable_set('notify_admin', $notify_admin);
-  variable_set('admin_email', $admin_email);
-  variable_set('multi_paths', $multi_paths);
-  variable_set('feature_az_antispam_cleanup', $cleanup);
+    //Save values
+    variable_set('feature_az_antispam_foreign_webform_block', $foreign_webform_block);
+    variable_set('access_denied', $access_denied);
+    variable_set('path_get_ip', $path_get_ip);//test this as created as array
+    variable_set('save_watchdog', $save_watchdog);
+    variable_set('save_all_watchdog', $save_all_watchdog);
+    variable_set('notify_admin', $notify_admin);
+    variable_set('admin_email', $admin_email);
+    variable_set('multi_paths', $multi_paths);
+    variable_set('feature_az_antispam_cleanup', $cleanup);
   }
 }
 

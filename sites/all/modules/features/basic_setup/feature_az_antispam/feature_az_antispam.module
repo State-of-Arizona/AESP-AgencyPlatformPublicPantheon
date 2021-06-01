@@ -318,3 +318,50 @@ function feature_az_antispam_cron(){
     }
   }
 }
+/**
+ * Respond to the creation of a new submission from form values.
+ *
+ * This hook is called when a user has completed a submission to initialize the
+ * submission object. After this object has its values populated, it will be
+ * saved by webform_submission_insert(). Note that this hook is only called for
+ * new submissions, not for submissions being edited. If responding to the
+ * saving of all submissions, it's recommended to use
+ * hook_webform_submission_presave().
+ *
+ * @param $submission
+ *   The submission object that has been created.
+ * @param $node
+ *   The Webform node for which this submission is being saved.
+ * @param $account
+ *   The user account that is creating the submission.
+ * @param $form_state
+ *   The contents of form state that is the basis for this submission.
+ *
+ * @see webform_submission_create()
+ */
+function feature_az_antispam_webform_submission_create_alter(&$submission, &$node, &$account, &$form_state) {
+  if(variable_get('feature_az_antispam_foreign_webform_block')){
+    if(_az_spam_geoplugin_status()){
+      $submission_country_code = _az_antispam_ip_info($submission->remote_addr, "Country Code", FALSE);
+      if ($submission_country_code != 'US' && $submission_country_code != '') {
+        watchdog('antispam', 'sid: ' . $submission->sid . '. Blocking Submission: ' . $submission->remote_addr . '. country: ' . $submission_country_code);
+        drupal_set_message('At this time foreign submissions are not allowed.  If you would like to contact us, please see our contact information.');
+        $access_denied_page = variable_get('access_denied', '');
+        _az_antispam_redirect($access_denied_page);
+      }
+    }
+  }
+}
+
+
+function feature_az_antispam_mail_alter(&$message) {
+  if ($message['module'] == 'webform' && strpos($message['to'], '.gov' )){
+    $notice = '***Be Aware of Potential Phishing Attacks***
+
+    WARNING: The following message contains information provided by an anonymous user through an online webform. The user who submitted the webform has not been validated and may be using the form to submit unsafe content. Please treat the below message with caution, avoid clicking links, downloading attachments, or replying with personal information. If you believe this is a phishing attempt, please report to your agency\'s information security team or mail.review@azdoa.gov. For more information on phishing attempts please visit: https://espac.az.gov/security-awareness-videos and search the videos for "Phishing."
+
+    ';
+    $body = $message['body'][0];
+    $message['body'][0] = $notice . $body;
+  }
+}

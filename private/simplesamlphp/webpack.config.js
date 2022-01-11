@@ -62,10 +62,13 @@ module.exports = environment => {
                 {
                     // expose jquery for use outside webpack bundle
                     test: require.resolve('jquery'),
-                    loader: "expose-loader",
-                    options: {
-                        exposes: ["$", "jQuery"],
-                    }
+                    use: [{
+                        loader: 'expose-loader',
+                        options: 'jQuery'
+                    }, {
+                        loader: 'expose-loader',
+                        options: '$'
+                    }]
                 }
             ]
         },
@@ -84,7 +87,8 @@ module.exports = environment => {
                 patterns: [
                     {
                         from: path.resolve(__dirname + '/node_modules/\@fortawesome/fontawesome-free/webfonts/*'),
-                        to: 'fonts/[name][ext]'
+                        to: 'fonts/',
+                        flatten: true
                     }
                 ]
             })

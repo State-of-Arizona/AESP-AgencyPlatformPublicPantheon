@@ -83,6 +83,7 @@ class ErrorLogLoggingHandler implements LoggingHandlerInterface
         $formats = ['%process', '%level'];
         $replacements = [$this->processname, $levelName];
         $string = str_replace($formats, $replacements, $string);
+        $string = preg_replace('/%\w+(\{[^\}]+\})?/', '', $string);
         $string = trim($string);
 
         error_log($string);

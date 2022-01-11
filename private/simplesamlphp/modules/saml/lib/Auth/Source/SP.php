@@ -140,7 +140,7 @@ class SP extends \SimpleSAML\Auth\Source
         ];
 
         // add NameIDPolicy
-        if ($this->metadata->hasValue('NameIDPolicy')) {
+        if ($this->metadata->hasValue('NameIDValue')) {
             $format = $this->metadata->getValue('NameIDPolicy');
             if (is_array($format)) {
                 $metadata['NameIDFormat'] = Configuration::loadFromArray($format)->getString(
@@ -191,7 +191,7 @@ class SP extends \SimpleSAML\Auth\Source
         }
 
         // add contacts
-        $contacts = $this->metadata->getArray('contacts', []);
+        $contacts = $this->metadata->getArray('contact', []);
         foreach ($contacts as $contact) {
             $metadata['contacts'][] = Utils\Config\Metadata::getContact($contact);
         }
@@ -349,11 +349,6 @@ class SP extends \SimpleSAML\Auth\Source
      */
     private function getACSEndpoints(): array
     {
-        // If a list of endpoints is specified in config, take that at face value
-        if ($this->metadata->hasValue('AssertionConsumerService')) {
-            return $this->metadata->getArray('AssertionConsumerService');
-        }
-
         $endpoints = [];
         $default = [
             Constants::BINDING_HTTP_POST,
@@ -444,8 +439,7 @@ class SP extends \SimpleSAML\Auth\Source
                 Constants::BINDING_SOAP,
             ]
         );
-        $defaultLocation = Module::getModuleURL('saml/sp/saml2-logout.php/' . $this->getAuthId());
-        $location = $this->metadata->getString('SingleLogoutServiceLocation', $defaultLocation);
+        $location = Module::getModuleURL('saml/sp/saml2-logout.php/' . $this->getAuthId());
 
         $endpoints = [];
         foreach ($bindings as $binding) {

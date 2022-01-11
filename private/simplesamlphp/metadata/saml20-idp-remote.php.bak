@@ -1,0 +1,67 @@
+<?php
+
+//Bootstrap Drupal
+//Go to the Drupal root
+chdir("../../../");
+define('DRUPAL_ROOT', getcwd()); //the most important line - get current working directory, define the Drupal Root
+require_once 'includes/bootstrap.inc';
+drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+//End Bootstrap code
+
+//TODO:add some html to test returned output from function calls
+//Testing output only - remove HTML after testing
+echo "<!DOCTYPE html>
+<html>
+<head>
+    <title>saml20-idp-remote.php</title>
+</head>
+<body>Testing Array availability<br/>";
+$array = print_r(_az_okta_parse_xml ());
+echo "</body>
+</html>";
+//End of testing HTML
+
+/**
+ * SAML 2.0 remote IdP metadata for SimpleSAMLphp.
+ *
+ * Remember to remove the IdPs you don't use from this file.
+ *
+ * See: https://simplesamlphp.org/docs/stable/simplesamlphp-reference-idp-remote 
+ */
+
+//====================================== Metadata for live ===================================================
+//============================================================================================================
+
+if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'live' ) {
+
+	//Enter converted metadata for live here
+	//Returning the array from XML in Drupal admin configuration
+	_az_okta_parse_xml ();
+
+}
+
+
+//====================================== Metadata for test ===================================================
+//============================================================================================================
+
+if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'test' ) {
+
+	//Enter converted metadata for test here
+	//Returning the array from XML in Drupal admin configuration
+	_az_okta_parse_xml ();
+
+} 
+
+
+//====================================== Metadata for dev  ===================================================
+//============================================================================================================
+
+if (isset($_SERVER['PANTHEON_ENVIRONMENT']) && $_SERVER['PANTHEON_ENVIRONMENT'] === 'dev' ) {
+
+	//Enter converted metadata for dev here
+	//Returning the array from XML in Drupal admin configuration
+	_az_okta_parse_xml ();
+
+}
+
+

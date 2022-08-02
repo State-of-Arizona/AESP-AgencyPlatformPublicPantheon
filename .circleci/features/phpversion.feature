@@ -8,4 +8,3 @@ Feature: Check php version
     Given I am logged in as a user with the "administrator" role
     And I am on "/admin/reports/status/php"
     Then I should see "PHP Version 7.4."
-

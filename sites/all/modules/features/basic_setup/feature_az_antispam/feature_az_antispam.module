@@ -56,7 +56,7 @@ function feature_az_antispam_page_build(&$page) {
   //testing multi_paths values
   $multi_paths = variable_get('multi_paths', 'contact, contact-us');
   $paths_array = explode(', ', $multi_paths);
-  //$currentpath = $_SERVER['REQUEST_URI'];
+  $user_country_code = '';
   $currentpath =  request_path();
   if(user_is_anonymous() && drupal_lookup_path('source', $currentpath)) {
     $currentpath = '/' . $currentpath;
@@ -65,11 +65,10 @@ function feature_az_antispam_page_build(&$page) {
       //Call our IP check function
       if (($path_value == $currentpath)) {
         //check if geo plugin is up
-        if (_az_spam_geoplugin_status()) {
-          $user_country_code = _az_antispam_ip_info("Visitor", "Country Code", FALSE);
-        } else {
-          //geo plugin down
-          break;
+        if (isset($_SERVER["HTTP_CF_IPCOUNTRY"])) {
+          // If it exists, use it.
+          $user_country_code = $_SERVER["HTTP_CF_IPCOUNTRY"];
+          // dpm('cloudflare ip: ' . $_SERVER['REMOTE_ADDR'] );.
         }
         if ($user_country_code != 'US' && $user_country_code != '') {
           //Log the hit to watchdog, if configured
@@ -112,34 +111,6 @@ function feature_az_antispam_page_build(&$page) {
   }
 }
 
-//tesing purposes only
-// function feature_az_antispam_form_alter(&$form, &$form_state, $form_id) {
-//   if ($form_id == "_form_az_antispam_settings") {
-//   dsm($GLOBALS['base_url'], "base url");
-//   dsm($_SERVER['REMOTE_ADDR'], "The server remote address given by PHP is: ");
-//   dsm(ip_address(), 'The user IP is');
-//   $true_ip = ip_address();
-//   dsm($_SERVER['REMOTE_ADDR'], 'The standard remote IP');
-//   //$country_test = _az_antispam_ip_info("50.251.161.125", "Country");
-//   $country_test = _az_antispam_ip_info($true_ip, "Country");
-//   $user_country = _az_antispam_ip_info("Visitor", "Country");
-//   $user_country_code = _az_antispam_ip_info("Visitor", "Country Code", FALSE);
-//   $user_state = _az_antispam_ip_info("Visitor", "State");
-//   $user_city = _az_antispam_ip_info("Visitor", "City");
-//   $user_address = _az_antispam_ip_info("Visitor", "Address");
-//   dsm($country_test, "Country test returns: ");
-//   dsm($user_country_code, "The country code returned is: ");
-//   dsm($user_state, "The state returned is: ");
-//   //testing multi_paths values
-//   $multi_paths = variable_get('multi_paths', '');
-//   $paths_array = explode(', ', $multi_paths);
-//   //dsm($paths_array, 'multi_paths array = ');
-//   foreach ($paths_array as $key => $value) {
-//     # code...
-//     dsm($value, 'The path is ');
-//   }
-//   }
-// }
 
 /**
 * Utility Functions
@@ -318,41 +289,6 @@ function feature_az_antispam_cron(){
     }
   }
 }
-/**
- * Respond to the creation of a new submission from form values.
- *
- * This hook is called when a user has completed a submission to initialize the
- * submission object. After this object has its values populated, it will be
- * saved by webform_submission_insert(). Note that this hook is only called for
- * new submissions, not for submissions being edited. If responding to the
- * saving of all submissions, it's recommended to use
- * hook_webform_submission_presave().
- *
- * @param $submission
- *   The submission object that has been created.
- * @param $node
- *   The Webform node for which this submission is being saved.
- * @param $account
- *   The user account that is creating the submission.
- * @param $form_state
- *   The contents of form state that is the basis for this submission.
- *
- * @see webform_submission_create()
- */
-function feature_az_antispam_webform_submission_create_alter(&$submission, &$node, &$account, &$form_state) {
-  if(variable_get('feature_az_antispam_foreign_webform_block')){
-    if(_az_spam_geoplugin_status()){
-      $submission_country_code = _az_antispam_ip_info($submission->remote_addr, "Country Code", FALSE);
-      if ($submission_country_code != 'US' && $submission_country_code != '') {
-        watchdog('antispam', 'sid: ' . $submission->sid . '. Blocking Submission: ' . $submission->remote_addr . '. country: ' . $submission_country_code);
-        drupal_set_message('At this time foreign submissions are not allowed.  If you would like to contact us, please see our contact information.');
-        $access_denied_page = variable_get('access_denied', '');
-        _az_antispam_redirect($access_denied_page);
-      }
-    }
-  }
-}
-
 
 function feature_az_antispam_mail_alter(&$message) {
   if ($message['module'] == 'webform' && strpos($message['to'], '.gov' )){

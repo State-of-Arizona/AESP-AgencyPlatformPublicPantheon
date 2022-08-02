@@ -64,22 +64,19 @@ function feature_az_antispam_page_build(&$page) {
       $path_value = "/" . $path_value;
       //Call our IP check function
       if (($path_value == $currentpath)) {
-        //check if geo plugin is up
         if (isset($_SERVER["HTTP_CF_IPCOUNTRY"])) {
           // If it exists, use it.
           $user_country_code = $_SERVER["HTTP_CF_IPCOUNTRY"];
           // dpm('cloudflare ip: ' . $_SERVER['REMOTE_ADDR'] );.
         }
         if ($user_country_code != 'US' && $user_country_code != '') {
-          //Log the hit to watchdog, if configured
-          $detected_ip = ip_address();
           if (variable_get('save_watchdog', '') == 1) {
-            _az_antispam_watchdog_foreign($detected_ip);
+            _az_antispam_watchdog_foreign($user_country_code);
           }
 
           //Below will be called ANY time a protected path is accessed, so it will not reside in the check for foreign IP.
           if (variable_get('save_all_watchdog', '') == 1) {
-            _az_antispam_watchdog_all($detected_ip);
+            _az_antispam_watchdog_all($user_country_code);
           }
 
           //Email the admin
@@ -88,7 +85,7 @@ function feature_az_antispam_page_build(&$page) {
           $notify = variable_get('notify_admin', '');
           //Check if the admin email isset or not null
           if ($admin_email != '' && $notify == 1) {
-            _az_antispam_email_admin($admin_email, $detected_ip, TRUE);
+            _az_antispam_email_admin($admin_email, $user_country_code  );
           }
 
           $default_denied = variable_get('site_403', '');
@@ -111,102 +108,29 @@ function feature_az_antispam_page_build(&$page) {
   }
 }
 
-
-/**
-* Utility Functions
-*
-**/
-function _az_antispam_ip_info($ip = NULL, $purpose = "location", $deep_detect = TRUE) {
-    $output = NULL;
-    if (filter_var($ip, FILTER_VALIDATE_IP) === FALSE) {
-        $ip = $_SERVER["REMOTE_ADDR"];
-        if ($deep_detect) {
-            if (filter_var(@$_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP))
-                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-            if (filter_var(@$_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP))
-                $ip = $_SERVER['HTTP_CLIENT_IP'];
-        }
-    }
-    $purpose    = str_replace(array("name", "\n", "\t", " ", "-", "_"), NULL, strtolower(trim($purpose)));
-    $support    = array("country", "countrycode", "state", "region", "city", "location", "address");
-    $continents = array(
-        "AF" => "Africa",
-        "AN" => "Antarctica",
-        "AS" => "Asia",
-        "EU" => "Europe",
-        "OC" => "Australia (Oceania)",
-        "NA" => "North America",
-        "SA" => "South America"
-    );
-    if (filter_var($ip, FILTER_VALIDATE_IP) && in_array($purpose, $support)) {
-        $ipdat = @json_decode(file_get_contents("http://www.geoplugin.net/json.gp?ip=" . $ip));
-        if (@strlen(trim($ipdat->geoplugin_countryCode)) == 2) {
-            switch ($purpose) {
-                case "location":
-                    $output = array(
-                        "city"           => @$ipdat->geoplugin_city,
-                        "state"          => @$ipdat->geoplugin_regionName,
-                        "country"        => @$ipdat->geoplugin_countryName,
-                        "country_code"   => @$ipdat->geoplugin_countryCode,
-                        "continent"      => @$continents[strtoupper($ipdat->geoplugin_continentCode)],
-                        "continent_code" => @$ipdat->geoplugin_continentCode
-                    );
-                    break;
-                case "address":
-                    $address = array($ipdat->geoplugin_countryName);
-                    if (@strlen($ipdat->geoplugin_regionName) >= 1)
-                        $address[] = $ipdat->geoplugin_regionName;
-                    if (@strlen($ipdat->geoplugin_city) >= 1)
-                        $address[] = $ipdat->geoplugin_city;
-                    $output = implode(", ", array_reverse($address));
-                    break;
-                case "city":
-                    $output = @$ipdat->geoplugin_city;
-                    break;
-                case "state":
-                    $output = @$ipdat->geoplugin_regionName;
-                    break;
-                case "region":
-                    $output = @$ipdat->geoplugin_regionName;
-                    break;
-                case "country":
-                    $output = @$ipdat->geoplugin_countryName;
-                    break;
-                case "countrycode":
-                    $output = @$ipdat->geoplugin_countryCode;
-                    break;
-            }
-        }
-    }
-    return $output;
-}
-
 function _az_antispam_redirect ($redirect_path) {
   drupal_goto("$redirect_path");
 }
 
-function _az_antispam_watchdog_foreign ($user_ip) {
+function _az_antispam_watchdog_foreign ($user_country_code) {
   //add watchdog entry for foreign ip detected
-  watchdog('feature_az_antispam', 'An attempt to access a configured path from a foreign IP was detected.  IP is @userip', array('@userip' => $user_ip), WATCHDOG_NOTICE, '');
+  watchdog('feature_az_antispam', 'An attempt to access a configured path from a foreign IP was detected.  Country code is @@user_country_code', array('@user_country_code' => $user_country_code), WATCHDOG_NOTICE, '');
 }
 
-function _az_antispam_watchdog_all ($user_ip) {
+function _az_antispam_watchdog_all ($user_country_code) {
   //add watchdog entry for every path hit, regardless of ip source
-  watchdog('feature_az_antispam', 'An attempt to access a configured path was detected.  IP is @userip', array('@userip' => $user_ip), WATCHDOG_NOTICE, '');
+  watchdog('feature_az_antispam', 'An attempt to access a configured path was detected.  Country code is @user_country_code', array('@user_country_code' => $user_country_code), WATCHDOG_NOTICE, '');
 }
 
-function _az_antispam_email_admin ($email, $user_ip = NULL, $plugin_status) {
+function _az_antispam_email_admin ($email, $user_country_code = NULL) {
   $to = "$email"; // to e-mail address
   $from = "test@example.com"; // from e-mail address
   $site_email = variable_get('site_mail', '');
   $from = $site_email;
-  if($plugin_status){
-    $subject = "A protected path has been blocked from a foreign IP"; // subject of e-mail
-    $body = "A protected path has been blocked from a foreign IP.  The user IP is $user_ip."; //it might be any variable from the form eg. $form_state['values']['your_field']
-  }else{
-    $subject = "GeoPlugin is currently down."; // subject of e-mail
-    $body = "GeoPlugin is currently down.";
-  }
+  $subject = "A protected path has been blocked from a foreign IP"; // subject of e-mail
+  $body = "A protected path has been blocked from a foreign IP.  The user country code is $user_country_code ."; //it might be any variable from the form eg. $form_state['values']['your_field']
+
+
 
   //params is the array passed to hook_mail function
   $params = array(
@@ -224,70 +148,6 @@ function _az_antispam_mail($key, &$message, $params) {
       $message['body'][] = $params['body'];
     break;
     }
-}
-
-function _az_spam_geoplugin_status() {
-  $randIP = "".mt_rand(0,255).".".mt_rand(0,255).".".mt_rand(0,255).".".mt_rand(0,255);
-  $ch = curl_init('http://www.geoplugin.net/php.gp?ip=' . $randIP);
-  curl_setopt($ch, CURLOPT_TIMEOUT, 4);
-  curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  $data = curl_exec($ch);
-  $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  $time = curl_getinfo($ch, CURLINFO_TOTAL_TIME);
-  curl_close($ch);
-  if($httpcode>=200 && $httpcode<300){
-    return true;
-  } else {
-    $to = variable_get('admin_email', '');
-    watchdog( 'AZ Anti Spam', 'GEO Plugin Down. Response Code: ' . $httpcode, NULL, WATCHDOG_WARNING);
-    _az_antispam_email_admin ($to, $user_ip = NULL, FALSE);
-    return false;
-  }
-}
-
-function feature_az_antispam_cron(){
-  //check if cleaning up submissions
-  if (variable_get('feature_az_antispam_cleanup')) {
-    //check if geoplugin is up
-    if (_az_spam_geoplugin_status()) {
-      $min = db_query("SELECT MIN(sid) as min_id FROM webform_submissions")->fetchField();
-      $last_checked_submission = variable_get('feature_az_antispam_last_submission', $min);
-      $max = db_query("SELECT MAX(sid) as max_id FROM webform_submissions")->fetchField();
-
-      if ($last_checked_submission < $max) {
-        $query = db_select('webform_submissions', 'ws')
-          ->condition('sid', $last_checked_submission, '>')
-          //ignoring private addresses
-          ->condition('remote_addr', '10.%.%.%', 'NOT LIKE' )
-          ->condition('remote_addr', '192.168.%.%', 'NOT LIKE' )
-          ->range(0, 30)
-          ->fields('ws', array('nid', 'sid', 'remote_addr'))
-          ->execute()
-          ->fetchAll();
-
-        //watchdog('antispam', '<pre>' . print_r($query, TRUE) . '</pre>');
-        module_load_include('inc', 'webform', 'includes/webform.submissions' );
-        foreach ($query as $submission) {
-          variable_set('feature_az_antispam_last_submission', $submission->sid);
-          //$submission->remote_addr = "" . mt_rand(0, 255) . "." . mt_rand(0, 255) . "." . mt_rand(0, 255) . "." . mt_rand(0, 255);
-          $submission_country_code = _az_antispam_ip_info($submission->remote_addr, "Country Code", FALSE);
-          //watchdog('antispam', 'sid: ' . $submission->sid . '. checking ip: ' . $submission->remote_addr . '. country: ' . $submission_country_code);
-          if ($submission_country_code != 'US' && $submission_country_code != '') {
-            $node = node_load($submission->nid);
-            $submission = webform_get_submission($submission->nid, $submission->sid);
-            webform_submission_delete($node, $submission);
-          }
-        }
-        $percent_complete = round( 100* $last_checked_submission/$max, 2);
-        variable_set('feature_az_antispam_cleanup_message', 'Submissions are being cleaned. ' . $percent_complete . '% have been processed.');
-      } else {
-        variable_set('feature_az_antispam_cleanup_message', 'Foreign submissions have been removed');
-      }
-    }else{
-      watchdog('antispam', 'geoplugin down');
-    }
-  }
 }
 
 function feature_az_antispam_mail_alter(&$message) {

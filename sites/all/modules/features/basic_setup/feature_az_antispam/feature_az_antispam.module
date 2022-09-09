@@ -152,10 +152,8 @@ function _az_antispam_mail($key, &$message, $params) {
 
 function feature_az_antispam_mail_alter(&$message) {
   if ($message['module'] == 'webform' && strpos($message['to'], '.gov' )){
-    $notice = '***Be Aware of Potential Phishing Attacks***
-
-    WARNING: The following message contains information provided by an anonymous user through an online webform. The user who submitted the webform has not been validated and may be using the form to submit unsafe content. Please treat the below message with caution, avoid clicking links, downloading attachments, or replying with personal information. If you believe this is a phishing attempt, please report to your agency\'s information security team or mail.review@azdoa.gov. For more information on phishing attempts please visit: https://espac.az.gov/security-awareness-videos and search the videos for "Phishing."
-
+    $notice = '
+        CAUTION: The following message contains information provided by an anonymous user through an online webform. Please treat the below message with caution, avoid clicking links, downloading attachments, or replying with personal information.
     ';
     $body = $message['body'][0];
     $message['body'][0] = $notice . $body;

@@ -23,7 +23,7 @@ class views_plugin_argument_default_menu_block_placement_per_path extends views_
         $menus = array_merge($menus, array_filter($field['settings']['default_menus']));
       }
     }
-
+    $mlids = [];
     foreach ($menus as $menu) {
       $row = db_select('menu_links', 'm')
         ->fields('m')
@@ -32,7 +32,10 @@ class views_plugin_argument_default_menu_block_placement_per_path extends views_
         ->execute()
         ->fetchAssoc();
 
-      $mlids[] = $row['mlid'];
+      if( $row ){
+        $mlids[] = $row['mlid'];
+      }
+
     }
 
     if (!empty($mlids)) {

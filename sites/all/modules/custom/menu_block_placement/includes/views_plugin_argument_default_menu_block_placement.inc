@@ -33,7 +33,7 @@ class views_plugin_argument_default_menu_block_placement extends views_plugin_ar
         ->execute()
         ->fetchAssoc();
       for ($i = 1; $i < 9; $i++) {
-        if ($row['p' . $i]) {
+        if ($row && $row['p' . $i]) {
           $mlids[] = $row['p' . $i];
         }
       }

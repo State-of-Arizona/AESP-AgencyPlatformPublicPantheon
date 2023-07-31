@@ -71,7 +71,7 @@ class views_plugin_style extends views_plugin {
   public function destroy() {
     parent::destroy();
 
-    if (isset($this->row_plugin)) {
+    if ($this->row_plugin) {
       $this->row_plugin->destroy();
     }
   }
@@ -113,7 +113,10 @@ class views_plugin_style extends views_plugin {
    */
   public function uses_tokens() {
     if ($this->uses_row_class()) {
-      $class = $this->options['row_class'];
+      $class = '';
+      if (isset($this->options['row_class'])) {
+        $class = $this->options['row_class'];
+      }
       if (strpos($class, '[') !== FALSE || strpos($class, '!') !== FALSE || strpos($class, '%') !== FALSE) {
         return TRUE;
       }
@@ -152,6 +155,9 @@ class views_plugin_style extends views_plugin {
    * Take a value and apply token replacement logic to it.
    */
   public function tokenize_value($value, $row_index) {
+    if (!isset($value)) {
+      $value = '';
+    }
     if (strpos($value, '[') !== FALSE || strpos($value, '!') !== FALSE || strpos($value, '%') !== FALSE) {
       $fake_item = array(
         'alter_text' => TRUE,
@@ -372,6 +378,7 @@ class views_plugin_style extends views_plugin {
     $output = '';
     foreach ($sets as $set) {
       $row = reset($set['rows']);
+      $level = isset($set['level']) ? $set['level'] : 0;
       // Render as a grouping set.
       if (is_array($row) && isset($row['group'])) {
         $output .= theme(views_theme_functions('views_view_grouping', $this->view, $this->display),
@@ -463,7 +470,7 @@ class views_plugin_style extends views_plugin {
         // hierarchically positioned set where the current row belongs to.
         // While iterating, parent groups, that do not exist yet, are added.
         $set = &$sets;
-        foreach ($groupings as $info) {
+        foreach ($groupings as $level => $info) {
           $field = $info['field'];
           $rendered = isset($info['rendered']) ? $info['rendered'] : $group_rendered;
           $rendered_strip = isset($info['rendered_strip']) ? $info['rendered_strip'] : FALSE;
@@ -480,7 +487,7 @@ class views_plugin_style extends views_plugin {
             if ($rendered) {
               $grouping = $group_content;
               if ($rendered_strip) {
-                $group_content = $grouping = strip_tags(htmlspecialchars_decode($group_content));
+                $group_content = $grouping = strip_tags(htmlspecialchars_decode((string) $group_content));
               }
             }
             else {
@@ -496,6 +503,7 @@ class views_plugin_style extends views_plugin {
           // Create the group if it does not exist yet.
           if (empty($set[$grouping])) {
             $set[$grouping]['group'] = $group_content;
+            $set[$grouping]['level'] = $level;
             $set[$grouping]['rows'] = array();
           }
 
@@ -623,7 +631,7 @@ class views_plugin_style extends views_plugin {
    */
   public function query() {
     parent::query();
-    if (isset($this->row_plugin)) {
+    if ($this->row_plugin) {
       $this->row_plugin->query();
     }
   }

@@ -394,7 +394,7 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
         // with that bundle. Otherwise, we use all bundles.
         $bundles = array_keys($entity_info['bundles']);
         // Double check that this is a real bundle before using it (since above
-        // we added a dummy option 'all' to the bundle list on the form).
+        // we added a placeholder option 'all' to the bundle list on the form).
         if (isset($selected_bundle) && in_array($selected_bundle, $bundles)) {
           $bundles = array($selected_bundle);
         }
@@ -683,6 +683,9 @@ class ViewsUiBaseViewsWizard implements ViewsWizardInterface {
       }
       else {
         foreach ($fields as $field_name => $value) {
+          if (!isset($field_name)) {
+            $field_name = '';
+          }
           if ($pos = strpos($field_name, '.' . $bundle_key)) {
             $table = substr($field_name, 0, $pos);
             break;

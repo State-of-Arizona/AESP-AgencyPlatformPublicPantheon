@@ -110,6 +110,19 @@ function user_views_data() {
     ),
   );
 
+  // Comments authored.
+  $data['users']['uid_comment'] = array(
+    'relationship' => array(
+      'title' => t('Comments authored'),
+      'help' => t('Relate comments to the user who created it. This relationship will create one record for each comment created by the user.'),
+      'handler' => 'views_handler_relationship',
+      'base' => 'comment',
+      'base field' => 'uid',
+      'field' => 'uid',
+      'label' => t('comments'),
+    ),
+  );
+
   // User name.
   $data['users']['name'] = array(
     // The item it appears as on the UI,
@@ -139,7 +152,7 @@ function user_views_data() {
     // The item it appears as on the UI,
     'title' => t('E-mail'),
     // The help that appears on the UI,
-    'help' => t('Email address for a given user. This field is normally not shown to users, so be cautious when using it.'),
+    'help' => t('E-mail address for a given user. This field is normally not shown to users, so be cautious when using it.'),
     'field' => array(
       'handler' => 'views_handler_field_user_mail',
       'click sortable' => TRUE,
@@ -200,7 +213,7 @@ function user_views_data() {
   // Link.
   $data['users']['view_user'] = array(
     'field' => array(
-      'title' => t('Link'),
+      'title' => t('Link to user'),
       'help' => t('Provide a simple link to the user.'),
       'handler' => 'views_handler_field_user_link',
     ),
@@ -279,6 +292,27 @@ function user_views_data() {
     ),
   );
 
+  // Changed column was added in Drupal 7.83.
+  if (db_field_exists('users', 'changed')) {
+    // Changed field.
+    $data['users']['changed'] = array(
+      // The item it appears as on the UI,
+      'title' => t('Changed date'),
+      // The help that appears on the UI,
+      'help' => t('The date the user was changed.'),
+      'field' => array(
+        'handler' => 'views_handler_field_date',
+        'click sortable' => TRUE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort_date',
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_date',
+      ),
+    );
+  }
+
   // Access field.
   $data['users']['access'] = array(
     // The item it appears as on the UI,
@@ -318,7 +352,7 @@ function user_views_data() {
   // Active status.
   $data['users']['status'] = array(
     // The item it appears as on the UI,
-    'title' => t('Active'),
+    'title' => t('Active status'),
     // The help that appears on the UI,
     'help' => t('Whether a user is active or blocked.'),
     // Information for displaying a title as a field.
@@ -357,7 +391,7 @@ function user_views_data() {
 
   $data['users']['edit_node'] = array(
     'field' => array(
-      'title' => t('Edit link'),
+      'title' => t('Link to edit user'),
       'help' => t('Provide a simple link to edit the user.'),
       'handler' => 'views_handler_field_user_link_edit',
     ),
@@ -365,7 +399,7 @@ function user_views_data() {
 
   $data['users']['cancel_node'] = array(
     'field' => array(
-      'title' => t('Cancel link'),
+      'title' => t('Link to cancel user'),
       'help' => t('Provide a simple link to cancel the user.'),
       'handler' => 'views_handler_field_user_link_cancel',
     ),

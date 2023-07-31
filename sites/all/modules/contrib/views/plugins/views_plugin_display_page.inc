@@ -10,6 +10,7 @@
  *
  * @ingroup views_display_plugins
  */
+#[\AllowDynamicProperties]
 class views_plugin_display_page extends views_plugin_display {
 
   /**
@@ -87,7 +88,7 @@ class views_plugin_display_page extends views_plugin_display {
     $path = implode('/', $bits);
 
     $access_plugin = $this->get_plugin('access');
-    if (!isset($access_plugin)) {
+    if (!$access_plugin) {
       $access_plugin = views_get_plugin('access', 'none');
     }
 
@@ -166,6 +167,9 @@ class views_plugin_display_page extends views_plugin_display {
 
         case 'default tab':
           $items[$path]['type'] = MENU_DEFAULT_LOCAL_TASK;
+          break;
+        case 'local action':
+          $items[$path]['type'] = MENU_LOCAL_ACTION;
           break;
       }
 
@@ -311,6 +315,8 @@ class views_plugin_display_page extends views_plugin_display {
       case 'default tab':
         $menu_str = t('Tab: @title', array('@title' => $menu['title']));
         break;
+      case 'local action':
+        $menu_str = t('Local action: @title', array('@title' => $menu['title']));
     }
 
     $options['menu'] = array(
@@ -345,6 +351,7 @@ class views_plugin_display_page extends views_plugin_display {
           '#field_prefix' => '<span dir="ltr">' . url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
           '#field_suffix' => '</span>&lrm;',
           '#attributes' => array('dir'=>'ltr'),
+          '#maxlength' => 255,
         );
         break;
 
@@ -360,6 +367,7 @@ class views_plugin_display_page extends views_plugin_display {
         if (empty($menu)) {
           $menu = array('type' => 'none', 'title' => '', 'weight' => 0);
         }
+        $menu_type_dependencies = array('normal', 'tab', 'default tab', 'local action');
         $form['menu']['type'] = array(
           '#prefix' => '<div class="views-left-30">',
           '#suffix' => '</div>',
@@ -369,7 +377,8 @@ class views_plugin_display_page extends views_plugin_display {
             'none' => t('No menu entry'),
             'normal' => t('Normal menu entry'),
             'tab' => t('Menu tab'),
-            'default tab' => t('Default menu tab')
+            'default tab' => t('Default menu tab'),
+            'local action' => t('Local action'),
           ),
           '#default_value' => $menu['type'],
         );
@@ -379,14 +388,14 @@ class views_plugin_display_page extends views_plugin_display {
           '#type' => 'textfield',
           '#default_value' => $menu['title'],
           '#description' => t('If set to normal or tab, enter the text to use for the menu item.'),
-          '#dependency' => array('radio:menu[type]' => array('normal', 'tab', 'default tab')),
+          '#dependency' => array('radio:menu[type]' => $menu_type_dependencies),
         );
         $form['menu']['description'] = array(
           '#title' => t('Description'),
           '#type' => 'textfield',
           '#default_value' => $menu['description'],
           '#description' => t("If set to normal or tab, enter the text to use for the menu item's description."),
-          '#dependency' => array('radio:menu[type]' => array('normal', 'tab', 'default tab')),
+          '#dependency' => array('radio:menu[type]' => $menu_type_dependencies),
         );
 
         // Only display the menu selector if menu module is enabled.
@@ -414,7 +423,7 @@ class views_plugin_display_page extends views_plugin_display {
           '#type' => 'textfield',
           '#default_value' => isset($menu['weight']) ? $menu['weight'] : 0,
           '#description' => t('The lower the weight the higher/further left it will appear.'),
-          '#dependency' => array('radio:menu[type]' => array('normal', 'tab', 'default tab')),
+          '#dependency' => array('radio:menu[type]' => $menu_type_dependencies),
         );
         $form['menu']['context'] = array(
           '#title' => t('Context'),
@@ -502,8 +511,8 @@ class views_plugin_display_page extends views_plugin_display {
           '#type' => 'textfield',
           '#default_value' => $tab_options['weight'],
           '#size' => 5,
-          '#description' => t('If the parent menu item is a tab, enter the weight of the tab. The lower the number, the more to the left it will be.'),
-          '#dependency' => array('radio:tab_options[type]' => array('tab')),
+          '#description' => t('Enter the weight of the item. The lower the number, the more to the left it will be.'),
+          '#dependency' => array('radio:tab_options[type]' => array('normal', 'tab')),
         );
         break;
     }
@@ -517,11 +526,15 @@ class views_plugin_display_page extends views_plugin_display {
     parent::options_validate($form, $form_state);
     switch ($form_state['section']) {
       case 'path':
-        if (strpos($form_state['values']['path'], '$arg') !== FALSE) {
+        $skip = FALSE;
+        if (!isset($form_state['values']['path'])) {
+          $skip = TRUE;
+        }
+        if (!$skip && strpos($form_state['values']['path'], '$arg') !== FALSE) {
           form_error($form['path'], t('"$arg" is no longer supported. Use % instead.'));
         }
 
-        if (strpos($form_state['values']['path'], '%') === 0) {
+        if (!$skip && strpos($form_state['values']['path'], '%') === 0) {
           form_error($form['path'], t('"%" may not be used for the first segment of a path.'));
         }
 
@@ -530,8 +543,12 @@ class views_plugin_display_page extends views_plugin_display {
         break;
 
       case 'menu':
+        $skip = FALSE;
         $path = $this->get_option('path');
-        if ($form_state['values']['menu']['type'] == 'normal' && strpos($path, '%') !== FALSE) {
+        if (!isset($path)) {
+          $skip = TRUE;
+        }
+        if (!$skip && $form_state['values']['menu']['type'] == 'normal' && strpos($path, '%') !== FALSE) {
           form_error($form['menu']['type'], t('Views cannot create normal menu items for paths with a % in them.'));
         }
 

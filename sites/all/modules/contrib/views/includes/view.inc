@@ -14,6 +14,7 @@
  * Also includes the member functions to build the view query, execute the
  * query and render the output.
  */
+#[\AllowDynamicProperties]
 class view extends views_db_object {
 
   /**
@@ -843,7 +844,11 @@ class view extends views_db_object {
 
       $argument->set_relationship();
 
-      $arg = isset($this->args[$position]) ? $this->args[$position] : NULL;
+      $arg = NULL;
+      if (isset($this->args[$position]) && $this->args[$position] !== '') {
+        $arg = $this->args[$position];
+      }
+
       $argument->position = $position;
 
       if (isset($arg) || $argument->has_default_argument()) {
@@ -939,6 +944,10 @@ class view extends views_db_object {
       $this->base_database = $views_data['table']['base']['database'];
     }
 
+    if (empty($this->display_handler)) {
+      return FALSE;
+    }
+
     // Load the options.
     $query_options = $this->display_handler->get_option('query');
 
@@ -996,6 +1005,7 @@ class view extends views_db_object {
     // Let the handlers interact with each other if they really want.
     $this->_pre_query();
 
+    $exposed_form = FALSE;
     if ($this->display_handler->uses_exposed()) {
       $exposed_form = $this->display_handler->get_plugin('exposed_form');
       // (1) Record the errors before rendering the exposed form widgets.
@@ -1076,7 +1086,7 @@ class view extends views_db_object {
     $this->style_plugin->query($this->display_handler->use_group_by());
 
     // Allow exposed form to affect the query.
-    if (isset($exposed_form)) {
+    if ($exposed_form) {
       $exposed_form->query();
     }
 
@@ -1186,6 +1196,9 @@ class view extends views_db_object {
     if (!empty($this->live_preview)) {
       $cache = FALSE;
     }
+    elseif (views_view_has_form_elements($this) && isset($_POST['form_id']) && $_POST['form_id'] == views_form_id($this)) {
+      $cache = FALSE;
+    }
     else {
       $cache = $this->display_handler->get_plugin('cache');
     }
@@ -1225,7 +1238,7 @@ class view extends views_db_object {
    * @param string $display_id
    *   The machine name of the display, which should be rendered.
    *
-   * @return string|NULL
+   * @return array|string|null
    *   Return the output of the rendered view or NULL if something failed in the
    *   process.
    */
@@ -1252,6 +1265,9 @@ class view extends views_db_object {
 
     // Check for already-cached output.
     if (!empty($this->live_preview)) {
+      $cache = FALSE;
+    }
+    elseif (views_view_has_form_elements($this) && isset($_POST['form_id']) && $_POST['form_id'] == views_form_id($this)) {
       $cache = FALSE;
     }
     else {
@@ -1575,7 +1591,7 @@ class view extends views_db_object {
   /**
    * Override the view's current title.
    *
-   * The tokens in the title get's replaced before rendering.
+   * The tokens in the title get replaced before rendering.
    */
   public function set_title($title) {
     $this->build_info['title'] = $title;
@@ -2008,7 +2024,7 @@ class view extends views_db_object {
   public function clone_view() {
     $clone = clone $this;
 
-    $keys = array('current_display', 'display_handler', 'build_info', 'built', 'executed', 'attachment_before', 'attachment_after', 'field', 'argument', 'filter', 'sort', 'relationship', 'header', 'footer', 'empty', 'query', 'inited', 'style_plugin', 'plugin_name', 'exposed_data', 'exposed_input', 'exposed_widgets', 'many_to_one_tables', 'feed_icon');
+    $keys = array('current_display', 'display_handler', 'build_info', 'built', 'executed', 'attachment_before', 'attachment_after', 'field', 'argument', 'filter', 'sort', 'relationship', 'header', 'footer', 'empty', 'query', 'inited', 'style_plugin', 'plugin_name', 'exposed_data', 'exposed_input', 'exposed_widgets', 'many_to_one_aliases', 'many_to_one_tables', 'feed_icon');
     foreach ($keys as $key) {
       if (isset($clone->{$key})) {
         unset($clone->{$key});
@@ -2192,7 +2208,10 @@ class view extends views_db_object {
     // Ensure this view supports translation, we have a display, and we
     // have a localization plugin.
     // @todo Export does not init every handler.
-    if (($this->is_translatable() || $op == 'export') && $this->init_display() && $this->init_localization()) {
+    if (($this->is_translatable() || $op == 'export')
+        && $this->init_display()
+        && $this->init_localization()
+        && isset($this->localization_plugin->view->display)) {
       $this->localization_plugin->process_locale_strings($op);
     }
   }
@@ -2202,6 +2221,7 @@ class view extends views_db_object {
 /**
  * Base class for views' database objects.
  */
+#[\AllowDynamicProperties]
 class views_db_object {
 
   public $db_table;
@@ -2608,6 +2628,7 @@ class views_db_object {
  * This is just the database storage mechanism, and isn't terribly important
  * to the behavior of the display at all.
  */
+#[\AllowDynamicProperties]
 class views_display extends views_db_object {
 
   /**

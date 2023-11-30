@@ -24,30 +24,30 @@ V2E8K7T3QIc=</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor><
 );
 
 $az_okta_xml = array (
-  'EntityDescriptor' => 
+  'EntityDescriptor' =>
   array (
     '@entityID' => 'http://www.okta.com/exk1g3zjvnI1RxZY4297',
-    'md:IDPSSODescriptor' => 
+    'md:IDPSSODescriptor' =>
     array (
       '@WantAuthnRequestsSigned' => 'false',
       '@protocolSupportEnumeration' => 'urn:oasis:names:tc:SAML:2.0:protocol',
-      'md:KeyDescriptor' => 
+      'md:KeyDescriptor' =>
       array (
         '@use' => 'signing',
       ),
-      'md:NameIDFormat' => 
+      'md:NameIDFormat' =>
       array (
         0 => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
         1 => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
       ),
-      'md:SingleSignOnService' => 
+      'md:SingleSignOnService' =>
       array (
-        0 => 
+        0 =>
         array (
           '@Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
           '@Location' => 'https://az.okta.com/app/stateofarizonaprod_agencyplatformasetazgovdev_1/exk1g3zjvnI1RxZY4297/sso/saml',
         ),
-        1 => 
+        1 =>
         array (
           '@Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
           '@Location' => 'https://az.okta.com/app/stateofarizonaprod_agencyplatformasetazgovdev_1/exk1g3zjvnI1RxZY4297/sso/saml',
@@ -55,6 +55,5 @@ $az_okta_xml = array (
       ),
     ),
   ),
-)
+);
 
-?>

@@ -76,9 +76,9 @@ function custom_breadcrumbs_views_menu() {
 }
 
 /**
- * Implements hook_views_pre_render().
+ * Implements hook_views_post_render().
  */
-function custom_breadcrumbs_views_views_pre_render(&$view) {
+function custom_breadcrumbs_views_views_post_render(&$view) {
   // Don't really do anything with the view. This is just a pretense to insert a
   // breadcrumb.
   global $language;

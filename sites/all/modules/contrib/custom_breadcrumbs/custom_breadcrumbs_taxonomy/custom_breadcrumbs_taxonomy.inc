@@ -29,6 +29,8 @@ function custom_breadcrumbs_taxonomy_node_get_terms($node, $key = 'tid') {
         $terms[$node->vid][$key][$term->$key] = $term;
       }
     }
+    // Allow other modules to alter the terms found by the previous query.
+    drupal_alter('custom_breadcrumbs_taxonomy_node_terms', $terms, $node, $key);
     return $terms[$node->vid][$key];
   }
   return array();

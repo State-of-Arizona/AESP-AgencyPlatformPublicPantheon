@@ -446,14 +446,16 @@ function _custom_breadcrumbs_get_breadcrumb($breadcrumb, $objs, &$locations) {
 
   // Use the returned items to set the trail.
   foreach ($items as $item) {
-    if (isset($item['crumb'])) {
-      $trail[] = $item['crumb'];
-    }
-    if (variable_get('custom_breadcrumbs_force_active_trail', FALSE)) {
-      $locations[] = array(
-        'title' => $item['title'],
-        'href' => drupal_get_normal_path(trim($item['href'])),
-      );
+    if (!empty($item)) {
+      if (isset($item['crumb'])) {
+        $trail[] = $item['crumb'];
+      }
+      if (variable_get('custom_breadcrumbs_force_active_trail', FALSE)) {
+        $locations[] = array(
+          'title' => $item['title'],
+          'href' => drupal_get_normal_path(trim($item['href'])),
+        );
+      }
     }
   }
 
@@ -660,8 +662,8 @@ function _custom_breadcrumbs_create_crumb_items($title, $original_path, $attribu
   if (isset($title_parts[1])) {
     $attributes['attributes']['title'] = $title_parts[1];
   }
-  // Collapse double slashes to one.
-  $original_path = preg_replace('/\/+/', '/', $original_path);
+  // Collapse double slashes to one, except after a colon.
+  $original_path = preg_replace('/[^:](\/\/+)/', '/', $original_path);
   // Removing leading and trailing slashes.
   $original_path = preg_replace('/^\/|\/+$/', '', $original_path);
   $path_parts = explode("|", $original_path, 2);
@@ -809,7 +811,7 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL, $param = ar
         $result = $query->execute();
         foreach ($result as $breadcrumb) {
           if (!isset($breadcrumb->name)) {
-            $breadcrumb->name = (isset($info['name_constructor'])) ? $info['name_constructor']($breadcrumb) : $breadcrumb->$info['field'];
+            $breadcrumb->name = (isset($info['name_constructor'])) ? $info['name_constructor']($breadcrumb) : $breadcrumb->{$info['field']};
           }
           $breadcrumb->breadcrumb_type = $info['type'];
           $breadcrumbs[] = $breadcrumb;
@@ -838,7 +840,7 @@ function custom_breadcrumbs_load_breadcrumbs($module, $table = NULL, $param = ar
 function custom_breadcrumbs_is_visible($breadcrumb, $objs = array()) {
   // @codingStandardsIgnoreEnd
   $visibility = TRUE;
-  if (isset($breadcrumb->visibility_php)) {
+  if (isset($breadcrumb->visibility_php) && $breadcrumb->visibility_php) {
     // Guard against hidden spaces.
     $trimmed = trim($breadcrumb->visibility_php);
     if ($trimmed != '') {
@@ -849,7 +851,7 @@ function custom_breadcrumbs_is_visible($breadcrumb, $objs = array()) {
       }
       ob_start();
       // @codingStandardsIgnoreLine
-      $visibility = eval($trimmed);
+      $visibility = eval('return ' . $trimmed . ';');
       ob_end_clean();
     }
   }
@@ -889,6 +891,11 @@ function _custom_breadcrumbs_load_all_breadcrumbs($refresh = FALSE) {
 function custom_breadcrumbs_set_menu_breadcrumb() {
   static $menu_id_cache = array();
   $menu_item = menu_get_item();
+
+  if (!$menu_item) {
+    return FALSE;
+  }
+
   $ckey = $menu_item['href'];
   if (!isset($menu_id_cache[$ckey])) {
     $result = db_query("SELECT mlid, menu_name FROM {menu_links} WHERE link_path = :link_path", array(':link_path' => $menu_item['href']));
@@ -1282,7 +1289,7 @@ function _custom_breadcrumbs_get_module_weight($names) {
  *   if the result is an array, it will be returned. Otherwise nothing is
  *   returned.
  *
- * @codingStandardsIgnoreStart  
+ * @codingStandardsIgnoreStart
  */
 function extract_php($text, $objs = array()) {
   // @codingStandardsIgnoreEnd

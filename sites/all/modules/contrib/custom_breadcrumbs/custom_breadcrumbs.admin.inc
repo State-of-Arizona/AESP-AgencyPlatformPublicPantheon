@@ -159,16 +159,16 @@ function _custom_breadcrumbs_sort_cmp($bc1, $bc2) {
   foreach ($custom_breadcrumbs_sort['direction'] as $key => $sort) {
     $sortdir[$key] = ($sort == 'asc') ? 1 : -1;
   }
-  if ($bc1->$first == $bc2->$first) {
-    if (!empty($bc1->$options[0]) && !empty($bc2->$options[0]) && $bc1->$options[0] == $bc2->$options[0]) {
-      if ($bc1->$options[1] == $bc2->$options[1]) {
+  if ($bc1->{$first} == $bc2->{$first}) {
+    if (!empty($bc1->{$options[0]}) && !empty($bc2->{$options[0]}) && $bc1->{$options[0]} == $bc2->{$options[0]}) {
+      if ($bc1->{$options[1]} == $bc2->{$options[1]}) {
         return 0;
       }
-      return ($bc1->$options[1] > $bc2->$options[1]) ? $sortdir[$options[1]] : -1 * $sortdir[$options[1]];
+      return ($bc1->{$options[1]} > $bc2->{$options[1]}) ? $sortdir[$options[1]] : -1 * $sortdir[$options[1]];
     }
-    return ($bc1->$options[0] > $bc2->$options[0]) ? $sortdir[$options[0]] : -1 * $sortdir[$options[0]];
+    return ($bc1->{$options[0]} > $bc2->{$options[0]}) ? $sortdir[$options[0]] : -1 * $sortdir[$options[0]];
   }
-  return ($bc1->$first > $bc2->$first) ? $sortdir[$first] : -1 * $sortdir[$first];
+  return ($bc1->{$first} > $bc2->{$first}) ? $sortdir[$first] : -1 * $sortdir[$first];
 }
 
 /**
@@ -677,7 +677,7 @@ function custom_breadcrumbs_admin_settings_submit($form, &$form_state) {
 
   // Rebuild the theme registry if custom_breadcrumbs_force_active_trail has
   // changed.
-  if ($form_state['values']['custom_breadcrumbs_force_active_trail'] != $form['adv_settings']['custom_breadcrumbs_force_active_trail']['#default_value']) {
+  if ($form_state['values']['custom_breadcrumbs_force_active_trail'] != $form['adv_settings']['custom_breadcrumbs_experimental']['custom_breadcrumbs_force_active_trail']['#default_value']) {
     drupal_theme_rebuild();
     drupal_set_message(t('The theme registry has been rebuilt'));
   }

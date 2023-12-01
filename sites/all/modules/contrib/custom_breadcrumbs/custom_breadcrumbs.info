@@ -13,8 +13,8 @@ files[] = custom_breadcrumbs.module
 # @codingStandardsIgnoreLine
 files[] = custom_breadcrumbs_common.inc
 
-; Information added by Drupal.org packaging script on 2019-01-25
-version = "7.x-2.0-beta1+34-dev"
+; Information added by Drupal.org packaging script on 2021-05-26
+version = "7.x-2.0-beta1+46-dev"
 core = "7.x"
 project = "custom_breadcrumbs"
-datestamp = "1548424109"
+datestamp = "1622034762"

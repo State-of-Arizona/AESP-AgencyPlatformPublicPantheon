@@ -157,7 +157,7 @@ function custom_breadcrumbs_taxonomy_menu() {
  * Implements hook_node_view().
  */
 function custom_breadcrumbs_taxonomy_node_view($node, $build_mode) {
-  if ($build_mode == 'full') {
+  if ($build_mode == 'full' && !drupal_is_front_page()) {
     if (_custom_breadcrumbs_taxonomy_allowed_node_type($node->type)) {
       module_load_include('inc', 'custom_breadcrumbs_taxonomy');
       // Extract the most recently viewed term or the lightest term from

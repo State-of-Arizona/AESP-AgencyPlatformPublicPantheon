@@ -683,7 +683,7 @@ function field_slideshow_field_formatter_view($entity_type, $entity, $field, $in
   if ($settings['slideshow_caption'] != '') {
     foreach ($items as $delta => $item) {
       if ($field['type'] == 'media' || $field['type'] == 'field_collection') {
-        if ($field['type'] == 'media') $items[$delta]['caption'] = $items[$delta]['file']->$settings['slideshow_caption'];
+        if ($field['type'] == 'media') $items[$delta]['caption'] = $items[$delta]['file']->{$settings}['slideshow_caption'];
         elseif ($field['type'] == 'field_collection') $items[$delta]['caption'] = $items[$delta][$settings['slideshow_caption']];
         if (!empty($items[$delta]['caption']) && isset($items[$delta]['caption'][$langcode]))
           $items[$delta]['caption'] = filter_xss($items[$delta]['caption'][$langcode][0]['value']);
@@ -754,7 +754,7 @@ function field_slideshow_field_formatter_view($entity_type, $entity, $field, $in
           }
         break;
         case 'link_field':
-          if ($field['type'] == 'media') $pathfield = $item['file']->$settings[$setting];
+          if ($field['type'] == 'media') $pathfield = $item['file']->{$settings}[$setting];
           elseif ($field['type'] == 'field_collection') $pathfield = $item[$settings[$setting]];
           if (isset($pathfield[$langcode])) {
             $uri = array(
@@ -764,7 +764,7 @@ function field_slideshow_field_formatter_view($entity_type, $entity, $field, $in
           }
         break;
         case 'node_reference':
-          if ($field['type'] == 'media') $pathfield = $item['file']->$settings[$setting];
+          if ($field['type'] == 'media') $pathfield = $item['file']->{$settings}[$setting];
           elseif ($field['type'] == 'field_collection') $pathfield = $item[$settings[$setting]];
           if (isset($pathfield[$langcode])) {
             $uri = array(
@@ -774,7 +774,7 @@ function field_slideshow_field_formatter_view($entity_type, $entity, $field, $in
           }
         break;
         case 'entityreference':
-          if ($field['type'] == 'media') $pathfield = $item['file']->$settings[$setting];
+          if ($field['type'] == 'media') $pathfield = $item['file']->{$settings}[$setting];
           elseif ($field['type'] == 'field_collection') $pathfield = $item[$settings[$setting]];
           if (isset($pathfield[$langcode])) {
             $uri = array(

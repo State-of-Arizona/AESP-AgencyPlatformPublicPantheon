@@ -22,6 +22,10 @@ class FeedsCSVParser extends FeedsParser {
     $parser = new ParserCSV();
     $delimiter = $this->getDelimiterChar($source_config);
     $parser->setDelimiter($delimiter);
+    if (isset($source_config['encoding'])) {
+      // Encoding can only be set when the mbstring extension is loaded.
+      $parser->setEncoding($source_config['encoding']);
+    }
 
     $iterator = new ParserCSVIterator($fetcher_result->getFilePath());
     if (empty($source_config['no_headers'])) {
@@ -52,24 +56,34 @@ class FeedsCSVParser extends FeedsParser {
   /**
    * Get first line and use it for column names, convert them to lower case.
    * Be aware that the $parser and iterator objects can be modified in this
-   * function since they are passed in by reference
+   * function since they are passed in by reference.
    *
    * @param ParserCSV $parser
    * @param ParserCSVIterator $iterator
-   * @return
-   *   An array of lower-cased column names to use as keys for the parsed items.
+   *
+   * @return array|false
+   *   An array of lower-cased column names to use as keys for the parsed items
+   *   or FALSE if the document was empty.
    */
   protected function parseHeader(ParserCSV $parser, ParserCSVIterator $iterator) {
-    $parser->setLineLimit(1);
-    $rows = $parser->parse($iterator);
-    if (!count($rows)) {
-      return FALSE;
+    try {
+      $parser->setLineLimit(1);
+      $rows = $parser->parse($iterator);
+      if (!count($rows)) {
+        return FALSE;
+      }
+      $header = array_shift($rows);
+      foreach ($header as $i => $title) {
+        $header[$i] = trim(drupal_strtolower($title));
+      }
+      return $header;
     }
-    $header = array_shift($rows);
-    foreach ($header as $i => $title) {
-      $header[$i] = trim(drupal_strtolower($title));
+    catch (Exception $e) {
+      // Make sure that the file on the iterator gets properly closed when
+      // exceptions occur during parsing.
+      $iterator->releaseHandler();
+      throw $e;
     }
-    return $header;
   }
 
   /**
@@ -77,14 +91,27 @@ class FeedsCSVParser extends FeedsParser {
    *
    * @param ParserCSV $parser
    * @param ParserCSVIterator $iterator
-   * @return
-   *   An array of rows of the CSV keyed by the column names previously set
+   * @param int $start
+   *   The byte number from where to start parsing the file.
+   * @param int $limit
+   *   The number of lines to parse, 0 for all lines.
+   *
+   * @return array
+   *   An array of rows of the CSV keyed by the column names previously set.
    */
   protected function parseItems(ParserCSV $parser, ParserCSVIterator $iterator, $start = 0, $limit = 0) {
-    $parser->setLineLimit($limit);
-    $parser->setStartByte($start);
-    $rows = $parser->parse($iterator);
-    return $rows;
+    try {
+      $parser->setLineLimit($limit);
+      $parser->setStartByte($start);
+      $rows = $parser->parse($iterator);
+      return $rows;
+    }
+    catch (Exception $e) {
+      // Make sure that the file on the iterator gets properly closed when
+      // exceptions occur during parsing.
+      $iterator->releaseHandler();
+      throw $e;
+    }
   }
 
   /**
@@ -114,6 +141,7 @@ class FeedsCSVParser extends FeedsParser {
   public function sourceDefaults() {
     return array(
       'delimiter' => $this->config['delimiter'],
+      'encoding' => $this->config['encoding'],
       'no_headers' => $this->config['no_headers'],
     );
   }
@@ -133,10 +161,10 @@ class FeedsCSVParser extends FeedsParser {
       if (strpos($mapping['source'], ',') !== FALSE) {
         $sources[] = '"' . $mapping['source'] . '"';
       }
-      else {
+      elseif (strlen(trim($mapping['source']))) {
         $sources[] = $mapping['source'];
       }
-      if (!empty($mapping['unique'])) {
+      if (!empty($mapping['unique']) && strlen(trim($mapping['source']))) {
         $uniques[] = $mapping['source'];
       }
     }
@@ -144,7 +172,18 @@ class FeedsCSVParser extends FeedsParser {
 
     $output = t('Import !csv_files with one or more of these columns: @columns.', array('!csv_files' => l(t('CSV files'), 'http://en.wikipedia.org/wiki/Comma-separated_values'), '@columns' => implode(', ', $sources)));
     $items = array();
-    $items[] = format_plural(count($uniques), 'Column <strong>@columns</strong> is mandatory and considered unique: only one item per @columns value will be created.', 'Columns <strong>@columns</strong> are mandatory and values in these columns are considered unique: only one entry per value in one of these column will be created.', array('@columns' => implode(', ', $uniques)));
+    if ($uniques) {
+      $items[] = format_plural(count($uniques),
+        'Column <strong>@columns</strong> is mandatory and considered unique: only one item per @columns value will be created.',
+        'Columns <strong>@columns</strong> are mandatory and values in these columns are considered unique: only one entry per value in one of these column will be created.',
+        array(
+          '@columns' => implode(', ', $uniques),
+        )
+      );
+    }
+    else {
+      $items[] = t('No columns are unique. The import will only create new items, no items will be updated.');
+    }
     $items[] = l(t('Download a template'), 'import/' . $this->id . '/template');
     $form['help'] = array(
       '#prefix' => '<div class="help">',
@@ -172,6 +211,10 @@ class FeedsCSVParser extends FeedsParser {
       '#description' => t('Check if the imported CSV file does not start with a header row. If checked, mapping sources must be named \'0\', \'1\', \'2\' etc.'),
       '#default_value' => isset($source_config['no_headers']) ? $source_config['no_headers'] : 0,
     );
+    $form['encoding'] = $this->configEncodingForm();
+    if (isset($source_config['encoding'])) {
+      $form['encoding']['#default_value'] = $source_config['encoding'];
+    }
     return $form;
   }
 
@@ -181,8 +224,9 @@ class FeedsCSVParser extends FeedsParser {
   public function configDefaults() {
     return array(
       'delimiter' => ',',
+      'encoding' => 'UTF-8',
       'no_headers' => 0,
-    );
+    ) + parent::configDefaults();
   }
 
   /**
@@ -203,9 +247,45 @@ class FeedsCSVParser extends FeedsParser {
       '#description' => t('Check if the imported CSV file does not start with a header row. If checked, mapping sources must be named \'0\', \'1\', \'2\' etc.'),
       '#default_value' => $this->config['no_headers'],
     );
+    $form['encoding'] = $this->configEncodingForm();
     return $form;
   }
 
+  /**
+   * Builds configuration field for setting file encoding.
+   *
+   * If the mbstring extension is not available a markup render array
+   * will be returned instead.
+   *
+   * @return array
+   *   A renderable array.
+   */
+  public function configEncodingForm() {
+    if (extension_loaded('mbstring') && variable_get('feeds_use_mbstring', TRUE)) {
+      // Get the system's list of available encodings.
+      $options = mb_list_encodings();
+      // Make the key/values the same in the array.
+      $options = array_combine($options, $options);
+      // Sort alphabetically not-case sensitive.
+      natcasesort($options);
+      return array(
+        '#type' => 'select',
+        '#title' => t('File encoding'),
+        '#description' => t('Performs character encoding conversion from selected option to UTF-8.'),
+        '#options' => $options,
+        '#default_value' => $this->config['encoding'],
+      );
+    }
+    else {
+      return array(
+        '#markup' => '<em>' . t('PHP mbstring extension must be available for character encoding conversion.') . '</em>',
+      );
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getTemplate() {
     $mappings = feeds_importer($this->id)->processor->config['mappings'];
     $sources = $uniques = array();
@@ -232,7 +312,10 @@ class FeedsCSVParser extends FeedsParser {
         $col = '"' . str_replace('"', '""', $col) . '"';
       }
 
-      $columns[] = $col;
+      // Prevent columns without headers from being added to the template.
+      if (strlen(trim($col))) {
+        $columns[] = $col;
+      }
     }
 
     $template_file_details = $this->getTemplateFileDetails($this->config);
@@ -328,4 +411,5 @@ class FeedsCSVParser extends FeedsParser {
       'mime_type' => $mime_type,
     );
   }
+
 }

@@ -3,16 +3,10 @@ description = "Support module for Feeds related testing."
 package = Testing
 version = VERSION
 core = 7.x
-test_dependencies[] = date
-test_dependencies[] = entity_translation
-test_dependencies[] = feeds_xpathparser
-test_dependencies[] = link
-test_dependencies[] = i18n_taxonomy
 hidden = TRUE
 
-; Information added by Drupal.org packaging script on 2016-01-06
-version = "7.x-2.0-beta1+31-dev"
+; Information added by Drupal.org packaging script on 2022-10-21
+version = "7.x-2.0-beta6"
 core = "7.x"
 project = "feeds"
-datestamp = "1452112746"
-
+datestamp = "1666326463"

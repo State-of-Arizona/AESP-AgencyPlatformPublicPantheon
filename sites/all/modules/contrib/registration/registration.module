@@ -603,7 +603,7 @@ function registration_administer_registrations_access($entity_type, $entity, $ac
     if (user_access("administer $registration_type registration", $account)) {
       return TRUE;
     }
-    elseif (user_access("update own $registration_type registration", $account) && entity_access('update', $entity_type, $entity, $account)) {
+    elseif (user_access("administer own $registration_type registration", $account) && entity_access('update', $entity_type, $entity, $account)) {
       return TRUE;
     }
   }

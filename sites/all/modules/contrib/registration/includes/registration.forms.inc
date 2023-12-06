@@ -86,6 +86,7 @@ function registration_form($form, &$form_state, Registration $registration) {
     '#size' => 40,
     '#maxlength' => 255,
     '#access' => isset($who_options[REGISTRATION_REGISTRANT_TYPE_ANON]),
+    '#required' => (user_is_anonymous()) ? TRUE : FALSE,
     '#states' => array(
       'visible' => array(
         ':input[name="who_is_registering"]' => array('value' => REGISTRATION_REGISTRANT_TYPE_ANON),

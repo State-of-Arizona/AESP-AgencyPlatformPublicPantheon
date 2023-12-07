@@ -1,6 +1,6 @@
 api_version: 1
 drush_version: 8
-php_version: 7.4
+php_version: 8.1
 
 protected_web_paths:
   - /README.txt

@@ -1,0 +1,28 @@
+diff --git a/sites/all/modules/contrib/oauth/includes/OAuthSignatureMethod_HMAC.inc b/sites/all/modules/contrib/oauth/includes/OAuthSignatureMethod_HMAC.inc
+index f347f34..5be6230 100644
+--- a/sites/all/modules/contrib/oauth/includes/OAuthSignatureMethod_HMAC.inc
++++ b/sites/all/modules/contrib/oauth/includes/OAuthSignatureMethod_HMAC.inc
+@@ -38,8 +38,8 @@ class OAuthSignatureMethod_HMAC extends OAuthSignatureMethod {
+     if (empty($this->algo)) {
+       throw new OAuthException(t('None of the suggested hash algorithms (@cand) were '
+         . 'supported by the server. Try one of the following: !algos.', array(
+-          '@cand' => join($algo, ', '),
+-          '!algos' => join($algos, ', '),
++          '@cand' => join(', ', $algo),
++          '!algos' => join(', ', $algos),
+       )));
+     }
+   }
+diff --git a/lib/OAuth.php b/lib/OAuth.php
+index f2d7ef2..27dc612 100644
+--- a/sites/all/modules/contrib/oauth/lib/OAuth.php
++++ b/sites/all/modules/contrib/oauth/lib/OAuth.php
+@@ -111,7 +111,7 @@ abstract class OAuthSignatureMethod {
+     // Avoid a timing leak with a (hopefully) time insensitive compare
+     $result = 0;
+     for ($i = 0; $i < strlen($signature); $i++) {
+-      $result |= ord($built{$i}) ^ ord($signature{$i});
++      $result |= ord($built[$i]) ^ ord($signature[$i]);
+     }
+
+     return $result == 0;

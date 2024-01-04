@@ -38,8 +38,8 @@ class OAuthSignatureMethod_HMAC extends OAuthSignatureMethod {
     if (empty($this->algo)) {
       throw new OAuthException(t('None of the suggested hash algorithms (@cand) were '
         . 'supported by the server. Try one of the following: !algos.', array(
-          '@cand' => join($algo, ', '),
-          '!algos' => join($algos, ', '),
+          '@cand' => join(', ', $algo),
+          '!algos' => join(', ', $algos),
       )));
     }
   }

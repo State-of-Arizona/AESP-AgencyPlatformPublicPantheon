@@ -1,0 +1,22 @@
+diff --git a/sites/all/modules/contrib/entity/views/entity.views.inc b/sites/all/modules/contrib/entity/views/entity.views.inc
+index 5f7d0fa9a399b3e85d925ad69776619da4e69602..3667128ff48e81d90ec7e628a7b0852930ce2e33 100644
+--- a/sites/all/modules/contrib/entity/views/entity.views.inc
++++ b/sites/all/modules/contrib/entity/views/entity.views.inc
+@@ -149,7 +149,7 @@ function entity_views_table_definition($type, $exclude = TRUE) {
+     );
+     foreach (entity_get_all_property_info($type) as $key => $property) {
+       if (!$exclude || empty($property['entity views field'])) {
+-        entity_views_field_definition($key, $property, $tables[$type]);
++        entity_views_field_definition($key, (array) $property, $tables[$type]);
+       }
+     }
+   }
+@@ -188,7 +188,7 @@ function entity_views_field_definition($field, array $property_info, array &$tab
+
+   $property_info += entity_property_info_defaults();
+   $type = entity_property_extract_innermost_type($property_info['type']);
+-  $title = $title_prefix . $property_info['label'];
++  $title = $title_prefix . (isset($property_info['label']) ? $property_info['label'] : '');
+   if ($info = entity_get_info($type)) {
+     $additional['relationship'] = array(
+       'handler' => $field_handlers['relationship'],

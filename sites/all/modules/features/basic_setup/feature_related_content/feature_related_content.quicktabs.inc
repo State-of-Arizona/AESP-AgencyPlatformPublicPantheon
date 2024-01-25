@@ -20,14 +20,14 @@ function feature_related_content_quicktabs_default_quicktabs() {
   $quicktabs->title = 'Draggable Views Related Content';
   $quicktabs->tabs = array(
     0 => array(
-      'bid' => 'views_delta_related_content-block_1',
+      //'bid' => 'views_delta_related_content-block_1',
       'hide_title' => 1,
       'title' => 'Display',
       'weight' => '-100',
       'type' => 'block',
     ),
     1 => array(
-      'bid' => 'views_delta_related_content-block',
+     // 'bid' => 'views_delta_related_content-block',
       'hide_title' => 1,
       'title' => 'Sort',
       'weight' => '-99',

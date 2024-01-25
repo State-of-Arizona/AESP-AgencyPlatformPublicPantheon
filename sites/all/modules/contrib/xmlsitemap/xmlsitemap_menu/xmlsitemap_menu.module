@@ -86,7 +86,7 @@ function xmlsitemap_menu_cron() {
  */
 function xmlsitemap_menu_xmlsitemap_index_links($limit) {
   if ($menus = xmlsitemap_get_link_type_enabled_bundles('menu_link')) {
-    $sql = "SELECT ml.mlid FROM {menu_links} ml LEFT JOIN {xmlsitemap} x ON x.type = 'menu' AND ml.mlid = x.id WHERE x.id IS NULL AND ml.menu_name IN (:menus) ORDER BY ml.mlid DESC";
+    $sql = "SELECT ml.mlid FROM {menu_links} ml LEFT JOIN {xmlsitemap} x ON x.type = 'menu_link' AND ml.mlid = x.id WHERE x.id IS NULL AND ml.menu_name IN (:menus) ORDER BY ml.mlid DESC";
     $mlids = db_query_range($sql, 0, $limit, array(':menus' => $menus))->fetchCol();
     xmlsitemap_menu_xmlsitemap_process_menu_links($mlids);
   }

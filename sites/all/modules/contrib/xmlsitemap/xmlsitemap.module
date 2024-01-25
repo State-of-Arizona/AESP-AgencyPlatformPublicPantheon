@@ -18,7 +18,7 @@ define('XMLSITEMAP_MAX_SITEMAP_LINKS', 50000);
 /**
  * The maximum filesize of a sitemap chunk file.
  */
-define('XMLSITEMAP_MAX_SITEMAP_FILESIZE', 10485760);
+define('XMLSITEMAP_MAX_SITEMAP_FILESIZE', 52428800);
 
 // 60 * 60 * 24 * 7 * 52.
 define('XMLSITEMAP_FREQUENCY_YEARLY', 31449600);
@@ -284,10 +284,22 @@ function xmlsitemap_modules_disabled(array $modules) {
  * Implements hook_robotstxt().
  */
 function xmlsitemap_robotstxt() {
-  if ($sitemap = xmlsitemap_sitemap_load_by_context()) {
-    $robotstxt[] = 'Sitemap: ' . url($sitemap->uri['path'], $sitemap->uri['options']);
-    return $robotstxt;
+  if (variable_get('xmlsitemap_robotstxt', 1)) {
+    if ($sitemap = xmlsitemap_sitemap_load_by_context()) {
+      $robotstxt[] = 'Sitemap: ' . url($sitemap->uri['path'], $sitemap->uri['options']);
+      return $robotstxt;
+    }
   }
+}
+
+
+/**
+ * Implements hook_views_api().
+ */
+function xmlsitemap_views_api() {
+  return array(
+    'api' => 3,
+  );
 }
 
 /**
@@ -302,6 +314,7 @@ function xmlsitemap_variables() {
     'xmlsitemap_generated_last' => 0,
     'xmlsitemap_xsl' => 1,
     'xmlsitemap_prefetch_aliases' => 1,
+    'xmlsitemap_robotstxt' => 1,
     'xmlsitemap_chunk_size' => 'auto',
     'xmlsitemap_batch_limit' => 100,
     'xmlsitemap_path' => 'xmlsitemap',
@@ -531,7 +544,7 @@ function xmlsitemap_sitemap_get_max_filesize(stdClass $sitemap) {
  * Get context.
  */
 function xmlsitemap_sitemap_get_context_hash(array &$context) {
-  asort($context);
+  ksort($context);
   return drupal_hash_base64(serialize($context));
 }
 
@@ -861,7 +874,10 @@ function xmlsitemap_get_directory(stdClass $sitemap = NULL) {
     $directory = variable_get('xmlsitemap_path', 'xmlsitemap');
   }
 
-  if (!empty($sitemap->smid)) {
+  if (empty($directory)) {
+    return FALSE;
+  }
+  elseif (!empty($sitemap->smid)) {
     return file_build_uri($directory . '/' . $sitemap->smid);
   }
   else {
@@ -910,8 +926,12 @@ function xmlsitemap_check_all_directories() {
  * Clear Directory.
  */
 function xmlsitemap_clear_directory(stdClass $sitemap = NULL, $delete = FALSE) {
-  $directory = xmlsitemap_get_directory($sitemap);
-  return _xmlsitemap_delete_recursive($directory, $delete);
+  if ($directory = xmlsitemap_get_directory($sitemap)) {
+    return _xmlsitemap_delete_recursive($directory, $delete);
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -1382,7 +1402,7 @@ function xmlsitemap_form_submit_flag_regenerate($form, $form_state) {
     }
     if ($stored_value != 'not_a_variable' && $stored_value != $value) {
       variable_set('xmlsitemap_regenerate_needed', TRUE);
-      drupal_set_message(t('XML sitemap settings have been modified and the files should be regenerated. You can <a href="@run-cron">run cron manually</a> to regenerate the cached files.', array('@run-cron' => url('admin/reports/status/run-cron', array('query' => drupal_get_destination())))), 'warning', FALSE);
+      drupal_set_message(t('XML sitemap settings have been modified and the files should be regenerated. You can <a href="@run-cron">run cron manually</a> to regenerate the cached files.', array('@run-cron' => url('admin/reports/status/run-cron', array('query' => drupal_get_destination() + array('token' => drupal_get_token('run-cron')))))), 'warning', FALSE);
       return;
     }
   }
@@ -1584,7 +1604,7 @@ function xmlsitemap_get_current_context() {
   if (!isset($context)) {
     $context = module_invoke_all('xmlsitemap_context');
     drupal_alter('xmlsitemap_context', $context);
-    asort($context);
+    ksort($context);
   }
 
   return $context;

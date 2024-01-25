@@ -4,12 +4,14 @@ package = XML sitemap
 core = 7.x
 files[] = xmlsitemap.xmlsitemap.inc
 files[] = xmlsitemap.test
+files[] = tests/xmlsitemap_views_fields.test
 recommends[] = robotstxt
 configure = admin/config/search/xmlsitemap
 test_dependencies[] = robotstxt:robotstxt
+test_dependencies[] = views:views
 
-; Information added by Drupal.org packaging script on 2018-10-09
-version = "7.x-2.6"
+; Information added by Drupal.org packaging script on 2023-05-08
+version = "7.x-2.7"
 core = "7.x"
 project = "xmlsitemap"
-datestamp = "1539120486"
+datestamp = "1683528260"

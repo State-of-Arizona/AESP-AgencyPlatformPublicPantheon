@@ -163,7 +163,7 @@ function metatag_metatag_info() {
 
   $info['tags']['description'] = array(
     'label' => t('Description'),
-    'description' => t("A brief and concise summary of the page's content, preferably 150 characters or less. Where as the description meta tag may be used by search engines to display a snippet about the page in search results, the abstract tag is used by search engines to archive a summary about the page."),
+    'description' => t("A brief and concise summary of the page's content that is a maximum of 160 characters in length. The description meta tag may be used by search engines to display a snippet about the page in search results."),
     'maxlength' => 380,
     'class' => 'DrupalTextMetaTag',
     'group' => 'basic',
@@ -211,7 +211,7 @@ function metatag_metatag_info() {
   $info['tags']['robots'] = array(
     'label' => t('Robots'),
     'description' => t("Provides search engines with specific directions for what to do when this page is indexed."),
-    'class' => 'DrupalListMetaTag',
+    'class' => 'DrupalRobotsMetaTag',
     'group' => 'advanced',
     'weight' => ++$weight,
     'form' => array(
@@ -222,17 +222,37 @@ function metatag_metatag_info() {
         'nofollow' => t('nofollow - Prevents search engines from following links on this page.'),
         'noarchive' => t('noarchive - Prevents cached copies of this page from appearing in search results.'),
         'nosnippet' => t('nosnippet - Prevents descriptions from appearing in search results, and prevents page caching.'),
-        'noodp' => t('noodp - Blocks the <a href="!opendirectory">Open Directory Project</a> description from appearing in search results.', array('!opendirectory' => 'http://www.dmoz.org/')),
-        'noydir' => t('noydir - Prevents Yahoo! from listing this page in the <a href="@ydir">Yahoo! Directory</a>.', array('@ydir' => 'http://dir.yahoo.com/')),
         'noimageindex' => t('noimageindex - Prevent search engines from indexing images on this page.'),
         'notranslate' => t('notranslate - Prevent search engines from offering to translate this page in search results.'),
+      ),
+    ),
+    'google_directives' => array(
+      'max-snippet' => array(
+        'label' => t('Google robots: Limit snippets to a certain length (max-snippet)'),
+        'description' => t("Defines a maximum number of characters as a textual snippet for this search result. <a href=\"@directives\" aria-label=\"Details of Google's ROBOTS meta tag options\">This directive can be used</a> to control indexing and serving of a snippet with the robots meta tag and the X-Robots-Tag.", array('@directives' => 'https://developers.google.com/search/reference/robots_meta_tag#directives')),
+        'type' => 'textfield',
+      ),
+      'max-image-preview' => array(
+        'label' => t('Google robots: Image preview (max-image-preview)'),
+        'description' => t("Set the maximum size of an image preview for this page in a search results. <a href=\"@directives\" aria-label=\"Details of Google's ROBOTS meta tag options\">This directive can be used</a> to control indexing and serving of a snippet with the robots meta tag and the X-Robots-Tag.", array('@directives' => 'https://developers.google.com/search/reference/robots_meta_tag#directives')),
+        'type' => 'select',
+        'options' => array(
+          'none' => t('none'),
+          'standard' => t('standard'),
+          'large' => t('large'),
+        ),
+      ),
+      'max-video-preview' => array(
+        'label' => t('Google robots: Limit video preview in seconds (max-video-preview)'),
+        'description' => t("Defines a maximum number of seconds as a video snippet for videos on this page in search results. <a href=\"@directives\" aria-label=\"Details of Google's ROBOTS meta tag options\">This directive can be used</a> to control indexing and serving of a snippet with the robots meta tag and the X-Robots-Tag.", array('@directives' => 'https://developers.google.com/search/reference/robots_meta_tag#directives')),
+        'type' => 'textfield',
       ),
     ),
   );
 
   $info['tags']['news_keywords'] = array(
     'label' => t('Google News Keywords'),
-    'description' => t('A comma-separated list of keywords about the page. This meta tag is used as an indicator in <a href="@google_news">Google News</a>.', array('@google_news' => 'http://support.google.com/news/publisher/bin/answer.py?hl=en&answer=68297')),
+    'description' => t('A comma-separated list of keywords about the page. This meta tag is used as an indicator in <a href="@google_news">Google News</a>.', array('@google_news' => 'https://support.google.com/news/publisher/bin/answer.py?hl=en&answer=68297')),
     'maxlength' => 0,
     'class' => 'DrupalTextMetaTag',
     'group' => 'advanced',
@@ -269,7 +289,7 @@ function metatag_metatag_info() {
 
   $info['tags']['referrer'] = array(
     'label' => t('Referrer policy'),
-    'description' => t('Indicate to search engines and other page scrapers whether or not links should be followed. See <a href="http://w3c.github.io/webappsec/specs/referrer-policy/">the W3C specifications</a> for further details.'),
+    'description' => t('Indicate to search engines and other page scrapers whether or not links should be followed. See <a href="https://w3c.github.io/webappsec/specs/referrer-policy/">the W3C specifications</a> for further details.'),
     'class' => 'DrupalTextMetaTag',
     'group' => 'advanced',
     'select_or_other' => TRUE,
@@ -277,9 +297,12 @@ function metatag_metatag_info() {
       '#type' => 'select',
       '#options' => array(
         'no-referrer' => t('No Referrer'),
-        'origin' => t('Origin'),
         'no-referrer-when-downgrade' => t('No Referrer When Downgrade'),
+        'origin' => t('Origin'),
         'origin-when-cross-origin' => t('Origin When Cross-Origin'),
+        'same-origin' => t('Same Origin'),
+        'strict-origin' => t('Strict Origin'),
+        'strict-origin-when-cross-origin' => t('Strict Origin When Cross-Origin'),
         'unsafe-url' => t('Unsafe URL'),
       ),
       '#empty_option' => t('- None -'),
@@ -405,7 +428,7 @@ function metatag_metatag_info() {
 
   $info['tags']['geo.position'] = array(
     'label' => t('Geo position'),
-    'description' => t('Geo-spatial information in "latitude;longitude" format, e.g. "50.167958;-97.133185"; <a href="http://en.wikipedia.org/wiki/Geotagging#HTML_pages">see Wikipedia for details</a>.'),
+    'description' => t('Geo-spatial information in "latitude; longitude" format, e.g. "50.167958; -97.133185"; <a href="https://en.wikipedia.org/wiki/Geographic_coordinate_system" aria-label="see Wikipedia for details on the geographic coordinate system">see Wikipedia for details</a>.'),
     'class' => 'DrupalTextMetaTag',
     'group' => 'advanced',
     'weight' => ++$weight,
@@ -429,7 +452,7 @@ function metatag_metatag_info() {
 
   $info['tags']['icbm'] = array(
     'label' => t('ICBM'),
-    'description' => t('Geo-spatial information in "latitude, longitude" format, e.g. "50.167958, -97.133185"; <a href="https://en.wikipedia.org/wiki/ICBM_address">see Wikipedia for details</a>.'),
+    'description' => t('Geo-spatial information in "latitude, longitude" format, e.g. "50.167958, -97.133185"; <a href="https://en.wikipedia.org/wiki/ICBM_address" aria-label="see Wikipedia for details on ICBM addresses">see Wikipedia for details</a>.'),
     'class' => 'DrupalTextMetaTag',
     'group' => 'advanced',
     'weight' => ++$weight,
@@ -437,7 +460,7 @@ function metatag_metatag_info() {
 
   $info['tags']['refresh'] = array(
     'label' => t('Refresh'),
-    'description' => t('The number of seconds to wait before refreshing the page. May also force redirect to another page using the format "5; url=http://example.com/", which would be triggered after five seconds.'),
+    'description' => t('The number of seconds to wait before refreshing the page. May also force redirect to another page using the format "5; url=https://example.com/", which would be triggered after five seconds.'),
     'class' => 'DrupalTextMetaTag',
     'group' => 'advanced',
     'weight' => ++$weight,
@@ -481,7 +504,7 @@ function metatag_metatag_info() {
 
   $info['tags']['expires'] = array(
     'label' => t('Expires'),
-    'description' => t("Control when the browser's internal cache of the current page should expire. The date must to be an <a href=\"@rfc\">RFC-1123</a>-compliant date string that is represented in Greenwich Mean Time (GMT), e.g. 'Thu, 01 Sep 2016 00:12:56 GMT'. Set to '0' to stop the page being cached entirely.", array('@rfc' => 'http://www.csgnetwork.com/timerfc1123calc.html')),
+    'description' => t("Control when the browser's internal cache of the current page should expire. The date must to be an <a href=\"@rfc\">RFC-1123</a>-compliant date string that is represented in Greenwich Mean Time (GMT), e.g. 'Thu, 01 Sep 2016 00:12:56 GMT'. Set to '0' to stop the page being cached entirely.", array('@rfc' => 'https://www.csgnetwork.com/timerfc1123calc.html')),
     'class' => 'DrupalTextMetaTag',
     'weight' => ++$weight,
     'group' => 'advanced',

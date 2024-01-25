@@ -146,7 +146,7 @@ class MetatagTagsTest extends MetatagTagsTestBase {
    * Implements {meta_tag_name}_test_value() for 'image_src'.
    */
   public function image_src_test_value() {
-    return 'http://example.com/images/test-image.gif';
+    return 'https://example.com/images/test-image.gif';
   }
 
   /**

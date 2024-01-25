@@ -59,7 +59,8 @@ function background_process_ass_cron_alter(&$items) {
   $items['background_process_ass_cron']['override_congestion_protection'] = TRUE;
   // Unlock background if too old.
   // @todo Move to some access handler or pre-execute?
-  if ($process = background_process_get_process('uc:background_process_ass_cron')) {
+  $handle_prefix = variable_get('ultimate_cron_handle_prefix', 'uc:');
+  if ($process = background_process_get_process($handle_prefix . 'background_process_ass_cron')) {
     if ($process->start + 30 < time()) {
       background_process_unlock($process->handle, t('Self unlocking stale lock'));
     }

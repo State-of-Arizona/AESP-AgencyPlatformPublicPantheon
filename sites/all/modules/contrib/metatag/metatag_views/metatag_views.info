@@ -13,8 +13,8 @@ files[] = metatag_views_plugin_display_extender_metatags.inc
 files[] = tests/MetatagViewsTest.test
 files[] = tests/MetatagViewsI18nTest.test
 
-; Information added by Drupal.org packaging script on 2020-02-10
-version = "7.x-1.27"
+; Information added by Drupal.org packaging script on 2023-05-26
+version = "7.x-1.32"
 core = "7.x"
 project = "metatag"
-datestamp = "1581369088"
+datestamp = "1685130949"

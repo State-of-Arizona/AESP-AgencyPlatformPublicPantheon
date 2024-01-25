@@ -66,7 +66,9 @@ function metatag_opengraph_metatag_bundled_config_alter(array &$configs) {
           $config->config += array(
             'og:image' => array('value' => '[user:picture:url]'),
             // For now keep the old default.
+            // @code
             // 'og:image:url' => array('value' => '[user:picture:url]'),
+            // @endcode
           );
         }
         break;
@@ -80,7 +82,12 @@ function metatag_opengraph_metatag_bundled_config_alter(array &$configs) {
 function metatag_opengraph_metatag_info() {
   $info['groups']['open-graph'] = array(
     'label' => t('Open Graph'),
-    'description' => t("The <a href=\"@ogp\">Open Graph meta tags</a> are used control how Facebook, Pinterest, LinkedIn and other social networking sites interpret the site's content.", array('@ogp' => 'http://ogp.me/')),
+    'description' => t('The <a href="@ogp">Open Graph meta tags</a> are used control how Facebook, Pinterest, LinkedIn and other social networking sites interpret the content of the site.<br /><br />The Facebook <a href="@debugger">Sharing Debugger</a> lets you preview how your content will look when shared to Facebook and debug any issues with your Open Graph tags.',
+      array(
+        '@ogp' => 'https://ogp.me/',
+        '@debugger' => 'https://developers.facebook.com/tools/debug/',
+      )
+    ),
     'form' => array(
       '#weight' => 50,
     ),
@@ -123,7 +130,7 @@ function metatag_opengraph_metatag_info() {
 
   $info['tags']['og:url'] = array(
     'label' => t('Page URL'),
-    'description' => t('Preferred page location or URL to help eliminate duplicate content for search engines, e.g., <em>http://www.imdb.com/title/tt0117500/</em>.'),
+    'description' => t('Preferred page location or URL to help eliminate duplicate content for search engines, e.g., <em>https://www.imdb.com/title/tt0117500/</em>.'),
     'weight' => ++$weight,
     'devel_generate' => array(
       'type' => 'canonical',
@@ -166,7 +173,7 @@ function metatag_opengraph_metatag_info() {
   // Basic tags.
   $info['tags']['og:updated_time'] = array(
     'label' => t('Content modification date & time'),
-    'description' => t("The date this content was last modified, with an optional time value. Needs to be in <a href='http://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format. Can be the same as the 'Article modification date' tag."),
+    'description' => t("The date this content was last modified, with an optional time value. Needs to be in <a href='https://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format. Can be the same as the 'Article modification date' tag."),
     'weight' => ++$weight,
   ) + $og_defaults;
 
@@ -199,7 +206,7 @@ function metatag_opengraph_metatag_info() {
   ) + $og_defaults;
   $info['tags']['og:image:secure_url'] = array(
     'label' => t('Secure image URL'),
-    'description' => t('The secure URL (HTTPS) of an image which should represent the content. The image must be at least 50px by 50px and have a maximum aspect ratio of 3:1. Supports PNG, JPEG and GIF formats. All "http://" URLs will automatically be converted to "https://". Note: if multiple images are added many services (e.g. Facebook) will default to the largest image, not the first one.'),
+    'description' => t('The secure URL (HTTPS) of an image which should represent the content. The image must be at least 50px by 50px and have a maximum aspect ratio of 3:1. Supports PNG, JPEG and GIF formats. All "https://" URLs will automatically be converted to "https://". Note: if multiple images are added many services (e.g. Facebook) will default to the largest image, not the first one.'),
     'multiple' => TRUE,
     'secure' => TRUE,
     'image' => TRUE,
@@ -361,17 +368,17 @@ function metatag_opengraph_metatag_info() {
   ) + $og_defaults + $article_defaults;
   $info['tags']['article:published_time'] = array(
     'label' => t('Article publication date & time'),
-    'description' => t("The date this content was published on, with an optional time value. Needs to be in <a href='http://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
+    'description' => t("The date this content was published on, with an optional time value. Needs to be in <a href='https://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
     'weight' => ++$weight,
   ) + $og_defaults + $article_defaults;
   $info['tags']['article:modified_time'] = array(
     'label' => t('Article modification date & time'),
-    'description' => t("The date this content was last modified, with an optional time value. Needs to be in <a href='http://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
+    'description' => t("The date this content was last modified, with an optional time value. Needs to be in <a href='https://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
     'weight' => ++$weight,
   ) + $og_defaults + $article_defaults;
   $info['tags']['article:expiration_time'] = array(
     'label' => t('Article expiration date & time'),
-    'description' => t("The date this content will expire, with an optional time value. Needs to be in <a href='http://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
+    'description' => t("The date this content will expire, with an optional time value. Needs to be in <a href='https://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
     'weight' => ++$weight,
   ) + $og_defaults + $article_defaults;
 
@@ -418,7 +425,7 @@ function metatag_opengraph_metatag_info() {
   ) + $og_defaults;
   $info['tags']['og:audio:secure_url'] = array(
     'label' => t('Audio secure URL'),
-    'description' => t('The secure URL to an audio file that complements this object. All "http://" URLs will automatically be converted to "https://".'),
+    'description' => t('The secure URL to an audio file that complements this object. All "https://" URLs will automatically be converted to "https://".'),
     'secure' => TRUE,
     'weight' => ++$weight,
     'devel_generate' => array(
@@ -450,12 +457,12 @@ function metatag_opengraph_metatag_info() {
   ) + $og_defaults + $book_defaults;
   $info['tags']['book:isbn'] = array(
     'label' => t("Book's ISBN"),
-    'description' => t("The book's <a href=\"http://en.wikipedia.org/wiki/International_Standard_Book_Number\">International Standard Book Number</a>, which may be in one of several formats."),
+    'description' => t("The book's <a href=\"https://en.wikipedia.org/wiki/International_Standard_Book_Number\">International Standard Book Number</a>, which may be in one of several formats."),
     'weight' => ++$weight,
   ) + $og_defaults + $book_defaults;
   $info['tags']['book:release_date'] = array(
     'label' => t('Book release date'),
-    'description' => t("The date this content will expire, with an optional time value. Needs to be in <a href='http://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
+    'description' => t("The date this content will expire, with an optional time value. Needs to be in <a href='https://en.wikipedia.org/wiki/ISO_8601'>ISO 8601</a> format."),
     'weight' => ++$weight,
   ) + $og_defaults + $book_defaults;
   $info['tags']['book:tag'] = array(
@@ -467,6 +474,7 @@ function metatag_opengraph_metatag_info() {
 
   // For the "video" og:type.
   $video_defaults = array();
+  // @code
   //   'dependencies' => array(
   //     array(
   //       'dependency' => 'og:type',
@@ -475,7 +483,7 @@ function metatag_opengraph_metatag_info() {
   //       'value' => 'profile',
   //     ),
   //   ),
-  // );
+  // @endcode
   $info['tags']['og:video:url'] = array(
     'label' => t('Video URL'),
     'description' => t('The URL of an video which should represent the content. For best results use a source that is at least 1200 x 630 pixels in size, but at least 600 x 316 pixels is a recommended minimum. Object types supported include video.episode, video.movie, video.other, and video.tv_show.'),
@@ -489,7 +497,7 @@ function metatag_opengraph_metatag_info() {
   ) + $og_defaults;
   $info['tags']['og:video:secure_url'] = array(
     'label' => t('Video secure URL'),
-    'description' => t('A URL to a video file that complements this object using the HTTPS protocol. All "http://" URLs will automatically be converted to "https://".'),
+    'description' => t('A URL to a video file that complements this object using the HTTPS protocol. All "https://" URLs will automatically be converted to "https://".'),
     'secure' => TRUE,
     'weight' => ++$weight,
     'devel_generate' => array(
@@ -573,6 +581,12 @@ function metatag_opengraph_metatag_info() {
   return $info;
 }
 
+/**
+ * Provide a list of Open Graph "type" values, grouped by topic.
+ *
+ * @return array
+ *   A list of OG "type" values.
+ */
 function _metatag_opengraph_type_options() {
   $options = array(
     t('Activities') => array(

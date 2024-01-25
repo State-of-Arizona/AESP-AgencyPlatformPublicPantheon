@@ -816,6 +816,58 @@ class XMLSitemapUnitTest extends XMLSitemapTestHelper {
     $this->assertNoRaw('lifetime-test');
   }
 
+  /**
+   * Test xmlsitemap_clear_directory().
+   */
+  public function testClearDirectory() {
+    $directory = 'public://not-xmlsitemap';
+    file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+    $directory = 'public://xmlsitemap/test';
+    file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+    file_unmanaged_save_data('File unrelated to XML sitemap', 'public://not-xmlsitemap/file.txt');
+    file_unmanaged_save_data('File unrelated to XML sitemap', 'public://file.txt');
+    file_unmanaged_save_data('Test contents', 'public://xmlsitemap/test/index.xml');
+
+    // Set the directory to an empty value.
+    variable_set('xmlsitemap_path', '');
+    drupal_static_reset('xmlsitemap_get_directory');
+
+    // Test that nothing was deleted.
+    $result = xmlsitemap_clear_directory(NULL, TRUE);
+    $this->assertTrue(is_file('public://xmlsitemap/test/index.xml'));
+    $this->assertTrue(is_dir('public://not-xmlsitemap'));
+    $this->assertTrue(is_file('public://file.txt'));
+    $this->assertFalse($result);
+
+    // Reset the value back to the default.
+    variable_set('xmlsitemap_path', 'xmlsitemap');
+    drupal_static_reset('xmlsitemap_get_directory');
+
+    // Test that only the xmlsitemap directory was deleted.
+    $result = xmlsitemap_clear_directory(NULL, TRUE);
+    $this->assertFalse(is_dir('public://xmlsitemap'));
+    $this->assertTrue(is_dir('public://not-xmlsitemap'));
+    $this->assertTrue(is_file('public://file.txt'));
+    $this->assertTrue($result);
+  }
+
+  /**
+   * Test that uninstalling the module correctly deletes the directory.
+   */
+  public function testUninstallDeleteDirectory() {
+    $directory = 'public://test';
+    file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+
+    // Update the directory path to a different value.
+    variable_set('xmlsitemap_path', 'test');
+    drupal_static_reset('xmlsitemap_get_directory');
+
+    // Test that running uninstall removes the correct directory (test) and not the default (xmlsitemap)
+    drupal_uninstall_modules(array('xmlsitemap'));
+    $this->assertFalse(is_dir('public://test'));
+    $this->assertTrue(is_dir('public://xmlsitemap'));
+  }
+
 }
 
 /**

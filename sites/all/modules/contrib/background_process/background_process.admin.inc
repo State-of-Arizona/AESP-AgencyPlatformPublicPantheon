@@ -68,6 +68,13 @@ function background_process_settings_form() {
     '#default_value' => variable_get('background_process_default_service_host', 'default'),
   );
 
+  $form['background_process_ssl_verification'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('SSL verification'),
+    '#description' => t("Don't turn this off on production environments, as it will raise security issues"),
+    '#default_value' => variable_get('background_process_ssl_verification', TRUE),
+  );
+
   $methods = module_invoke_all('service_group');
   $options = background_process_get_service_groups();
   foreach ($options as $key => &$value) {

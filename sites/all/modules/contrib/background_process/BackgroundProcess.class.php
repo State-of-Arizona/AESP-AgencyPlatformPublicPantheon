@@ -199,7 +199,7 @@ class BackgroundProcess {
     }
     else {
       background_process_remove_process($this->handle);
-      watchdog('bg_process', 'Could not call service %handle for callback %callback: !error', array('%handle' => $this->handle, '%callback' => $this->callback, '!error' => print_r($result, TRUE)), WATCHDOG_ERROR);
+      watchdog('bg_process', 'Could not call service %handle for callback %callback: !error', array('%handle' => $this->handle, '%callback' => _background_process_callback_name($this->callback), '!error' => print_r($result, TRUE)), WATCHDOG_ERROR);
       // Throw exception here instead?
       return NULL;
     }

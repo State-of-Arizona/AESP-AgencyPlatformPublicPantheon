@@ -1,3 +1,88 @@
+Metatag 7.x-1.32, 2023-05-26
+----------------------------
+#3360190 by mparker17, DamienMcKenna, rclemings: Unnecessary watchdog messages:
+  The basic/advanced tag group is missing a value for the description element.
+#3360841 by DamienMcKenna: Remove the NOYDIR, NOODP robots options.
+#2827909 by DamienMcKenna, cebasqueira, TynanFox: Remove deprecated Twitter
+  Card types.
+
+
+Metatag 7.x-1.31, 2023-05-12
+----------------------------
+#2217549 by DamienMcKenna, Alan D., Kuldeep K, Antares89: Integration with the
+  Diff module.
+#3309125 by DamienMcKenna, ravi.joshi53, Borodada: Argument 1 passed to
+  metatag_config_save() must be an instance of object, instance of stdClass
+  given, called in metatag/metatag.admin.inc.
+#3274588 by Dmitrii_Zadorozhnyi, DamienMcKenna, loon: PHP warnings during static
+  code analysis using Phan.
+#3037874 by Ronino, DamienMcKenna: Build meta tags for panels much later like
+  metatag and metatag_views do so they can be altered after page data has been
+  processed.
+#3164895 by Eugene Bocharov, DamienMcKenna: Loss of existing meta tags after
+  importing Page Title or Metatags Quick data.
+#3106692 by sergey.semchuk, DamienMcKenna: Add Google's new robots tags.
+#3311543 by DamienMcKenna, lostcarpark, lucassc: Add new Metatag logo files,
+  update tests to use them.
+#3210889 by immaculatexavier, Pracheth, DamienMcKenna, dineshreddymathuku:
+  Convert the README.txt to a markdown file.
+#3337784 by DamienMcKenna, alex.skrypnyk: Undefined array key "description" on
+  Feeds integration; API improvement to log meta tags, groups that are missing
+  default values.
+#3249349 by beatrizrodrigues, DamienMcKenna, wamwam: Error: Call to a member
+  function tokenize_value() on null in function metatag_views_page_alter.
+#1918738 by DamienMcKenna, JeroenT, gowrann, Dave Reid: Character count on
+  fields via Maxlength integration.
+#3344475 by DamienMcKenna, circuscowboy: Must be of type string, array given in
+  strpos().
+#3359952 by DamienMcKenna: Rename logo file to just "logo.png".
+
+
+Metatag 7.x-1.30, 2022-07-27
+----------------------------
+#3300076 by DamienMcKenna, ttkaminski: HTTPS secure URL replacement typo.
+
+
+Metatag 7.x-1.29, 2022-07-26
+----------------------------
+#3224758 by DamienMcKenna, jrealsteed, mnico: Update to 1.28 caused panels to
+  break if metatags enable for the panel.
+#3106872 by DamienMcKenna: Change uses of http:// to https://.
+#3243694 by DamienMcKenna, Kasey_MK: Avoid similar-sounding links with different
+  purposes.
+#3270984 by DamienMcKenna: Test meta tags don't work.
+#3271006 by DamienMcKenna, FeyP: Fix tests in 7.x-1.x branch.
+#3271006 by DamienMcKenna, FeyP: Tests break due to change in core's default
+  file field path settings.
+#3293480 by Darren Oh, kellyimagined, DamienMcKenna: Fix incorrect
+  entity_load() call in _metatag_remove_dupes().
+#3243775 by mohit.bansal623, DamienMcKenna: Replace all title= attributes with
+  aria-label=.
+#3028344 by pramodga, DamienMcKenna, chakkche: Coding standards improvements.
+#3265196 by Dimiter, DamienMcKenna: Expand referrer-policy dropdown.
+
+
+Metatag 7.x-1.28, 2021-07-12
+----------------------------
+#3137241 by tmin: metatag_metatags_form() breaks entire page/panel in some
+  extreme cases.
+#3113325 by VladimirAus, DamienMcKenna: Make hreflang tags available even if
+  only one language enabled.
+#3181898 by andyg5000, DamienMcKenna, geoffray, thejimbirch: Add Facebook
+  verification meta header.
+#1906578 by DamienMcKenna, andyg5000, Leo Pitt, arpas, nikita_tt, kmajzlik,
+  ericwenger, mgerbault, ciss, philsward: Expose meta tag data as a Views field.
+#3213283 by DamienMcKenna: Coding standards improvements.
+#3182561 by thejimbirch, DamienMcKenna, volkswagenchick: Provide link to
+  Facebook Open Graph debugger.
+#3165571 by Eugene Bocharov, DamienMcKenna: MetatagSearchTestSearchApiService
+  ::search() should return 'result count' to avoid Notice in php7.4.
+#3114121 by DamienMcKenna, felribeiro: Recommend "description" tag be less than
+  ~160 characters.
+#3116138 by DamienMcKenna, danharper: Facebook/OG product tag
+  product:retailer_item_id, and description updates.
+
+
 Metatag 7.x-1.27, 2020-02-10
 ----------------------------
 #3047486 by DamienMcKenna: Fixed hook_requirements message about Fast Token

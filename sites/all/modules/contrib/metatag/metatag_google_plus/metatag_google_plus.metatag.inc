@@ -88,7 +88,7 @@ function metatag_google_plus_metatag_info() {
 
   $info['tags']['itemtype'] = array(
     'label' => t('Page type'),
-    'description' => t('Schema type. <a href="!url">More schema info</a>. If your page type does not exist in options above, please install <a href="!url2">select_or_other</a> module to enter page type manually.', array('!url' => 'http://schema.org/docs/schemas.html', '!url2' => 'https://drupal.org/project/select_or_other')),
+    'description' => t('Schema type. <a href="!url">More schema info</a>. If your page type does not exist in options above, please install <a href="!url2">select_or_other</a> module to enter page type manually.', array('!url' => 'https://schema.org/docs/schemas.html', '!url2' => 'https://drupal.org/project/select_or_other')),
     'class' => 'DrupalSchemaMetaTag',
     'weight' => ++$weight,
     'select_or_other' => TRUE,

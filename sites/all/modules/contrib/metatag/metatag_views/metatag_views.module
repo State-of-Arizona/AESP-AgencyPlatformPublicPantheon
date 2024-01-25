@@ -131,7 +131,7 @@ function metatag_views_page_alter(&$page) {
 
         foreach ($metatags as $langcode => $values) {
           foreach ($values as $metatag => $config) {
-            if (!empty($config['value']) && is_scalar($config['value'])) {
+            if (!empty($view->style_plugin) && !empty($config['value']) && is_scalar($config['value'])) {
               $metatags[$langcode][$metatag]['value'] = $view->style_plugin->tokenize_value($config['value'], 0);
             }
           }

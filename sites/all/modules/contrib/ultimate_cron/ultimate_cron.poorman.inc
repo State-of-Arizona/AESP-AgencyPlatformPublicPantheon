@@ -76,7 +76,7 @@ function ultimate_cron_poorman_capable() {
   elseif (basename($_SERVER['PHP_SELF']) == 'cron.php') {
     $capable = FALSE;
   }
-  elseif (isset($_GET['q']) && preg_match('!^system/files/!', $_GET['q'])) {
+  elseif (isset($_GET['q']) && preg_match('!system/files/!', $_GET['q'])) {
     $capable = FALSE;
   }
   else {

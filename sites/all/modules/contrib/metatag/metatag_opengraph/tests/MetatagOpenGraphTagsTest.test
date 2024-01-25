@@ -89,7 +89,7 @@ class MetatagOpenGraphTagsTest extends MetatagTagsTestBase {
   /**
    * {@inheritdoc}
    */
-  function setUp(array $modules = array()) {
+  public function setUp(array $modules = array()) {
     $modules[] = 'metatag_opengraph';
     parent::setUp($modules);
   }
@@ -179,7 +179,15 @@ class MetatagOpenGraphTagsTest extends MetatagTagsTestBase {
    * Implements {meta_tag_name}_test_value() for 'og:image:secure_url'.
    */
   public function og_image_secure_url_test_value() {
-    return str_replace('http://', 'https://', $this->randomImageUrl());
+    // This also tests the whole 'secure' option for meta tags.
+    return str_replace('https://', 'http://', $this->randomImageUrl());
+  }
+
+  /**
+   * Implements {meta_tag_name}_test_preprocess_output() for 'og:image:secure_url'.
+   */
+  public function og_image_secure_url_test_preprocess_output($string) {
+    return str_replace('http://', 'https://', $string);
   }
 
 }

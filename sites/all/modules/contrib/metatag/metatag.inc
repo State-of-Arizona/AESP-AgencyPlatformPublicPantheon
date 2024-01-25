@@ -15,30 +15,62 @@ interface DrupalMetaTagInterface {
    *
    * @param array $info
    *   The information about the meta tag from metatag_get_info().
+   * @param array $data
+   *   The data to load for this meta tag, usually including the item 'value'.
    */
-  function __construct(array $info, array $data = array());
+  public function __construct(array $info, array $data = array());
 
+  /**
+   * Build the form for this meta tag.
+   *
+   * @return array
+   *   A standard FormAPI array.
+   */
   public function getForm();
 
-  //function validateForm();
-
-  //function processForm();
-
+  /**
+   * Get the string value of this meta tag.
+   *
+   * @return string
+   *   The value of this meta tag.
+   */
   public function getValue();
 
-  function getWeight();
+  /**
+   * Calculate the weight of this meta tag.
+   *
+   * @return int
+   *   Weight.
+   */
+  public function getWeight();
 
-  function getElement();
+  /**
+   * Get the HTML tag for this meta tag.
+   *
+   * @return array
+   *   A render array for this meta tag.
+   */
+  public function getElement();
 
-  function tidyValue($value);
-
-  function convertUrlToAbsolute($url);
-
-  function truncate($value);
-
-  function maxlength();
-
-  static function text_summary($text, $size);
+  /**
+   * Copied from text.module with the following changes:.
+   *
+   * Change 1: $size is required.
+   * Change 2: $format is removed.
+   * Change 3: Don't trim at the end of short sentences
+   *   (https://www.drupal.org/node/1620104).
+   * Change 4: Word boundaries (https://www.drupal.org/node/1482178).
+   * Change 5: Trim the final string.
+   *
+   * @param string $text
+   *   The string to be processed.
+   * @param int $size
+   *   The maximum length to trim the string to.
+   *
+   * @return string
+   *   The string after it is truncated.
+   */
+  public static function textSummary($text, $size);
 
 }
 
@@ -69,9 +101,9 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
   protected $weight = 0;
 
   /**
-   * Constructor.
+   * {@inheritdoc}
    */
-  function __construct(array $info, array $data = NULL) {
+  public function __construct(array $info, array $data = NULL) {
     $this->info = $info;
     if (isset($data)) {
       $this->data = $data;
@@ -79,12 +111,9 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
   }
 
   /**
-   * Calculate the weight of this meta tag.
-   *
-   * @return int
-   *   Weight.
+   * {@inheritdoc}
    */
-  function getWeight() {
+  public function getWeight() {
     static $counter = 0;
 
     // If no weight value is found, stack this meta tag at the end.
@@ -97,20 +126,14 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
   }
 
   /**
-   * Build the form for this meta tag.
-   *
-   * @return array
-   *   A standard FormAPI array.
+   * {@inheritdoc}
    */
   public function getForm(array $options = array()) {
     return array();
   }
 
   /**
-   * Get the string value of this meta tag.
-   *
-   * @return string
-   *   The value of this meta tag.
+   * {@inheritdoc}
    */
   public function getValue(array $options = array()) {
     $value = $this->tidyValue($this->data['value']);
@@ -124,10 +147,7 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
   }
 
   /**
-   * Get the HTML tag for this meta tag.
-   *
-   * @return array
-   *   A render array for this meta tag.
+   * {@inheritdoc}
    */
   public function getElement(array $options = array()) {
     $value = $this->getValue($options);
@@ -173,7 +193,10 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
 
         // Add header information if desired.
         if (!empty($this->info['header'])) {
-          $element['#attached']['drupal_add_http_header'][] = array($this->info['header'], $value);
+          $element['#attached']['drupal_add_http_header'][] = array(
+            $this->info['header'],
+            $value,
+          );
         }
 
         $elements[] = array($element, $element['#id']);
@@ -196,7 +219,7 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
    * @return string
    *   The meta tag value after it has been tidied up.
    */
-  public function tidyValue($value) {
+  protected function tidyValue($value) {
     // This shouldn't happen, but protect against tokens returning arrays.
     if (!is_string($value)) {
       return '';
@@ -246,7 +269,7 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
    * @return string
    *   The argument converted to an absolute URL.
    */
-  function convertUrlToAbsolute($url) {
+  protected function convertUrlToAbsolute($url) {
     // Convert paths relative to the hostname, that start with a slash, to
     // ones that are relative to the Drupal root path; ignore protocol-relative
     // URLs.
@@ -266,7 +289,7 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
   }
 
   /**
-   * Shorten a string to a certain length using text_summary().
+   * Shorten a string to a certain length using ::textSummary().
    *
    * @param string $value
    *   String to shorten.
@@ -274,11 +297,11 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
    * @return string
    *   Shortened string.
    */
-  function truncate($value) {
+  protected function truncate($value) {
     $maxlength = $this->maxlength();
 
     if (!empty($value) && $maxlength > 0) {
-      $value = $this->text_summary($value, $maxlength);
+      $value = $this->textSummary($value, $maxlength);
     }
 
     return $value;
@@ -290,7 +313,7 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
    * @return int
    *   Maxlenght.
    */
-  function maxlength() {
+  protected function maxlength() {
     if (isset($this->info['maxlength'])) {
       return intval(variable_get('metatag_maxlength_' . $this->info['name'], $this->info['maxlength']));
     }
@@ -298,26 +321,21 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
   }
 
   /**
-   * Copied from text.module with the following changes:.
-   *
-   * Change 1: $size is required.
-   * Change 2: $format is removed.
-   * Change 3: Don't trim at the end of short sentences
-   *   (https://www.drupal.org/node/1620104).
-   * Change 4: Word boundaries (https://www.drupal.org/node/1482178).
-   * Change 5: Trim the final string.
+   * {@inheritdoc}
    */
-  static function text_summary($text, $size) {
+  public static function textSummary($text, $size) {
+    // What used to be called 'teaser' is now called 'summary', but
+    // the variable 'teaser_length' is preserved for backwardscompatibility.
+    // @code
     // if (!isset($size)) {
-    //   // What used to be called 'teaser' is now called 'summary', but
-    //   // the variable 'teaser_length' is preserved for backwards compatibility.
     //   $size = variable_get('teaser_length', 600);
     // }
+    // @endcode
     // Find where the delimiter is in the body.
     $delimiter = strpos($text, '<!--break-->');
 
-    // If the size is zero, and there is no delimiter,
-    // the entire body is the summary.
+    // If the size is zero, and there is no delimiter, the entire body is the
+    // summary.
     if ($size == 0 && $delimiter === FALSE) {
       return $text;
     }
@@ -330,12 +348,14 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
     // We check for the presence of the PHP evaluator filter in the current
     // format. If the body contains PHP code, we do not split it up to prevent
     // parse errors.
+    // @code
     // if (isset($format)) {
     //   $filters = filter_list_format($format);
     //   if (isset($filters['php_code']) && $filters['php_code']->status && strpos($text, '<?') !== FALSE) {
     //     return $text;
     //   }
     // }
+    // @endcode
     // If we have a short body, the entire body is the summary.
     if (drupal_strlen($text) <= $size) {
       return $text;
@@ -370,12 +390,16 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
     // $line_breaks = array('<br />' => 6, '<br>' => 4);
     // Newline only indicates a line break if line break converter
     // filter is present.
+    // @code
     // if (isset($filters['filter_autop'])) {
     //   $line_breaks["\n"] = 1;
     // }
     // $break_points[] = $line_breaks;
+    // @endcode
     // If the first paragraph is too long, split at the end of a sentence.
+    // @code
     // $break_points[] = array('. ' => 1, '! ' => 1, '? ' => 1, '。' => 0, '؟ ' => 1);
+    // @endcode
     // From https://www.drupal.org/node/1482178.
     // If the first sentence is too long, split at the first word break.
     $word_breaks = array(' ' => 0, "\t" => 0);
@@ -402,9 +426,11 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
 
     // If the htmlcorrector filter is present, apply it to the generated
     // summary.
+    // @code
     // if (isset($filters['filter_htmlcorrector'])) {
     //   $summary = _filter_htmlcorrector($summary);
     // }
+    // @endcode
     return trim($summary);
   }
 
@@ -428,7 +454,7 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
     $form['value'] += array(
       '#type' => 'textfield',
       '#title' => $this->info['label'],
-      '#description' => !empty($this->info['description']) ? $this->info['description'] : '',
+      '#description' => $this->info['description'],
       '#default_value' => isset($this->data['value']) ? $this->data['value'] : '',
       '#element_validate' => array('token_element_validate'),
       '#token_types' => $options['token types'],
@@ -440,10 +466,17 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
       $form['value']['#description'] .= ' ' . t('Multiple values may be used, separated by a comma. Note: Tokens that return multiple values will be handled automatically.');
     }
 
-    // Optionally limit the field to a certain length.
-    $maxlength = $this->maxlength();
-    if (!empty($maxlength)) {
-      $form['value']['#description'] .= ' ' . t('This will be truncated to a maximum of %max characters.', array('%max' => $maxlength));
+    // Optionally limit the field to a certain length, and support the Maxlength
+    // module if it is available.
+    $maxlength = (int) $this->maxlength();
+    if (!empty($maxlength) && $maxlength > 0) {
+      $form['value']['#description'] .= ' ' . t('This will be truncated to a maximum of %max characters after any tokens are processsed.', array('%max' => $maxlength));
+
+      // Optional support for the Maxlength module.
+      if (variable_get('metatag_use_maxlength', TRUE)) {
+        $form['value']['#maxlength_js'] = TRUE;
+        $form['value']['#maxlength'] = $maxlength;
+      }
     }
 
     // Optional handling for images.
@@ -486,6 +519,12 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
    * {@inheritdoc}
    */
   public function getValue(array $options = array()) {
+    // If the value wasn't set there's no point in proceeding. Also, this type
+    // of tag should not have arrays passed to it.
+    if (!isset($this->data['value']) || !is_string($this->data['value'])) {
+      return '';
+    }
+
     $options += array(
       'instance' => '',
       'token data' => array(),
@@ -495,9 +534,12 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
       'raw' => FALSE,
     );
 
-    // If the value wasn't set there's no point in proceeding.
-    if (!isset($this->data['value'])) {
-      return '';
+    // If entity_translation_hierarchy is being used then ensure tokens and
+    // strings are generated using the current language rather than the
+    // fallback.
+    if (module_exists('entity_translation_hierarchy')) {
+      global $language;
+      $options['language'] = $language;
     }
 
     $value = $this->data['value'];
@@ -557,7 +599,7 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
         $values = array($values[0]);
       }
 
-      foreach ($values as $key => &$image_value) {
+      foreach ($values as &$image_value) {
         // Remove any unwanted whitespace around the value.
         $image_value = trim($image_value);
 
@@ -598,6 +640,99 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
 }
 
 /**
+ * Robots meta tag controller.
+ */
+class DrupalRobotsMetaTag extends DrupalDefaultMetaTag {
+
+  /**
+   * {@inheritdoc}
+   */
+  function __construct(array $info, array $data = NULL) {
+    // Ensure that the $data['value] argument is an array.
+    if (empty($data['value'])) {
+      $data['value'] = array();
+    }
+    $data['value'] = (array) $data['value'];
+
+    parent::__construct($info, $data);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getForm(array $options = array()) {
+    $form['value'] = isset($this->info['form']) ? $this->info['form'] : array();
+
+    $form['value'] += array(
+      '#type' => 'checkboxes',
+      '#title' => $this->info['label'],
+      '#description' => !empty($this->info['description']) ? $this->info['description'] : '',
+      '#default_value' => isset($this->data['value']) ? $this->data['value'] : array(),
+    );
+
+    if (!empty($this->info['google_directives'])) {
+      foreach ($this->info['google_directives'] as $serving_directive_name => $serving_directive) {
+        switch ($serving_directive['type']) {
+          case 'textfield':
+            $form[$serving_directive_name] = array(
+              '#type' => 'textfield',
+              '#title' => $serving_directive['label'],
+              '#description' => !empty($serving_directive['description']) ? $serving_directive['description'] : '',
+              '#default_value' => isset($this->data[$serving_directive_name]) ? $this->data[$serving_directive_name] : '',
+              '#element_validate' => array('token_element_validate'),
+              '#token_types' => $options['token types'],
+              '#maxlength' => 1024,
+            );
+            break;
+          case 'select':
+            $form[$serving_directive_name] = array(
+              '#type' => 'select',
+              '#title' => $serving_directive['label'],
+              '#options' => $serving_directive['options'],
+              '#empty_option' => t('- Select -'),
+              '#description' => !empty($serving_directive['description']) ? $serving_directive['description'] : '',
+              '#default_value' => isset($this->data[$serving_directive_name]) ? $this->data[$serving_directive_name] : '',
+            );
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getValue(array $options = array()) {
+    $values = array_keys(array_filter($this->data['value']));
+    if (!empty($this->info['google_directives'])) {
+      foreach ($this->info['google_directives'] as $serving_directive_name => $serving_directive) {
+        if (isset($this->data[$serving_directive_name])
+          && $this->data[$serving_directive_name] != '') {
+          // Add an additional value into content of the meta tag.
+          $values[] = $serving_directive_name . ':' . $this->data[$serving_directive_name];
+        }
+      }
+    }
+    sort($values);
+    $value = implode(', ', $values);
+
+    $value = $this->tidyValue($value);
+
+    // Translate the final output string prior to output. Use the
+    // 'output' i18n_string object type, and pass along the meta tag's
+    // options as the context so it can be handled appropriately.
+    $value = metatag_translate_metatag($value, $this->info['name'], $options, NULL, TRUE);
+
+    return $value;
+  }
+
+}
+
+/**
  * Link type meta tag controller.
  */
 class DrupalLinkMetaTag extends DrupalTextMetaTag {
@@ -626,12 +761,16 @@ class DrupalLinkMetaTag extends DrupalTextMetaTag {
       // Also send the generator in the HTTP header.
       // @todo This does not support 'rev' or alternate link headers.
       $element['#attached']['drupal_add_http_header'][] = array(
-        'Link', '<' . $value . '>;' . drupal_http_header_attributes(array('rel' => $element['#name'])), TRUE,
+        'Link',
+        '<' . $value . '>;' . drupal_http_header_attributes(array('rel' => $element['#name'])),
+        TRUE,
       );
     }
 
     return array(
-      '#attached' => array('drupal_add_html_head' => array(array($element, $element['#id']))),
+      '#attached' => array(
+        'drupal_add_html_head' => array(array($element, $element['#id'])),
+      ),
     );
   }
 
@@ -675,7 +814,7 @@ class DrupalListMetaTag extends DrupalDefaultMetaTag {
   /**
    * {@inheritdoc}
    */
-  function __construct(array $info, array $data = NULL) {
+  public function __construct(array $info, array $data = NULL) {
     // Ensure that the $data['value] argument is an array.
     if (empty($data['value'])) {
       $data['value'] = array();

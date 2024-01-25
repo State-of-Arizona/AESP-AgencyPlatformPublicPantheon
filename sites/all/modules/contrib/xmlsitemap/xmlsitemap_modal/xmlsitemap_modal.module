@@ -43,7 +43,7 @@ function xmlsitemap_modal_get_form() {
       }
     }
     print ajax_render($commands);
-    exit;
+    drupal_exit();
   }
   else {
     array_unshift($args, $form_id);

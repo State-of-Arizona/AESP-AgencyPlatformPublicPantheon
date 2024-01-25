@@ -81,7 +81,7 @@ function drush_xmlsitemap_rebuild() {
     $types = array_intersect($types, $option_types);
   }
   if (empty($types)) {
-    return drush_set_error(dt('No link types are rebuildable.'));
+    return drush_log(dt('No link types are rebuildable.'), 'warning');
   }
 
   // Run the batch process.
@@ -128,7 +128,7 @@ function drush_xmlsitemap_queue_rebuild() {
     $types = array_intersect($types, $option_types);
   }
   if (empty($types)) {
-    return drush_set_error(dt('No link types are rebuildable.'));
+    return drush_log(dt('No link types are rebuildable.'), 'warning');
   }
 
   xmlsitemap_rebuild_clear($types, TRUE);

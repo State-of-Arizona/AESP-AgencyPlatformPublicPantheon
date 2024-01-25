@@ -106,11 +106,11 @@ function background_process_permission() {
  * Implements hook_cron().
  */
 function background_process_cron() {
-  // Don't use more than 120 seconds to unlock
+  // Don't use more than 120 seconds to unlock.
   $expire = 120;
   @set_time_limit($expire);
 
-  // Cleanup old handles
+  // Cleanup old handles.
   $time = time();
   $msg = t('Never started (auto unlock due to timeout)');
   do {
@@ -119,11 +119,11 @@ function background_process_cron() {
     }
     $result = db_query_range("SELECT handle, start_stamp FROM {background_process} WHERE start_stamp < :start AND exec_status = :status", 0, 10, array(
       ':start' => $time - variable_get('background_process_cleanup_age', BACKGROUND_PROCESS_CLEANUP_AGE),
-      ':status' => BACKGROUND_PROCESS_STATUS_LOCKED
+      ':status' => BACKGROUND_PROCESS_STATUS_LOCKED,
     ));
     $handles = $result->fetchAllAssoc('handle', PDO::FETCH_ASSOC);
     foreach ($handles as $handle => $process) {
-      // Unlock the process
+      // Unlock the process.
       if (background_process_unlock($handle, $msg, $process['start_stamp'])) {
         drupal_set_message(t("%handle unlocked: !msg", array('%handle' => $handle, '!msg' => $msg)));
       }
@@ -133,20 +133,20 @@ function background_process_cron() {
     }
   } while (!empty($handles));
 
-  // Cleanup stale requests
+  // Cleanup stale requests.
   $time = time();
   $msg = t('Never finished (auto unlock due to long run)');
   do {
     if (time() >= $_SERVER['REQUEST_TIME'] + $expire) {
       break;
     }
-    $result = db_query_range("SELECT handle, start_stamp FROM {background_process} WHERE start_stamp < :start AND exec_status = :status", 0, 10, array( 
+    $result = db_query_range("SELECT handle, start_stamp FROM {background_process} WHERE start_stamp < :start AND exec_status = :status", 0, 10, array(
       ':start' => $time - variable_get('background_process_cleanup_age_running', BACKGROUND_PROCESS_CLEANUP_AGE_RUNNING),
-      ':status' => BACKGROUND_PROCESS_STATUS_RUNNING
+      ':status' => BACKGROUND_PROCESS_STATUS_RUNNING,
     ));
     $handles = $result->fetchAllAssoc('handle', PDO::FETCH_ASSOC);
     foreach ($handles as $handle => $process) {
-      // Unlock the process
+      // Unlock the process.
       if (background_process_unlock($handle, $msg, $process['start_stamp'])) {
         drupal_set_message(t("%handle unlocked: !msg", array('%handle' => $handle, '!msg' => $msg)));
       }
@@ -156,7 +156,7 @@ function background_process_cron() {
     }
   } while (!empty($results));
 
-  // Cleanup queued requests that were never processed 
+  // Cleanup queued requests that were never processed.
   $time = time();
   $msg = t('Never picked up by cron worker (auto unlock due to timeout)');
   do {
@@ -165,11 +165,11 @@ function background_process_cron() {
     }
     $result = db_query_range("SELECT handle, start_stamp FROM {background_process} WHERE start_stamp < :start AND exec_status = :status", 0, 10, array(
       ':start' => $time - variable_get('background_process_cleanup_age_queue', BACKGROUND_PROCESS_CLEANUP_AGE_QUEUE),
-      ':status' => BACKGROUND_PROCESS_STATUS_QUEUED
+      ':status' => BACKGROUND_PROCESS_STATUS_QUEUED,
     ));
     $handles = $result->fetchAllAssoc('handle', PDO::FETCH_ASSOC);
     foreach ($handles as $handle => $process) {
-      // Unlock the process
+      // Unlock the process.
       if (background_process_unlock($handle, $msg, $process['start_stamp'])) {
         drupal_set_message(t("%handle unlocked: !msg", array('%handle' => $handle, '!msg' => $msg)));
       }
@@ -187,7 +187,8 @@ function background_process_cron_alter(&$items) {
   $items['background_process_cron']['override_congestion_protection'] = TRUE;
   // Unlock background if too old.
   // @todo Move to some access handler or pre-execute?
-  if ($process = background_process_get_process('uc:background_process_cron')) {
+  $handle_prefix = variable_get('ultimate_cron_handle_prefix', 'uc:');
+  if ($process = background_process_get_process($handle_prefix . 'background_process_cron')) {
     if ($process->start + 30 < time()) {
       background_process_unlock($process->handle, t('Self unlocking stale lock'), $process->start);
     }
@@ -201,8 +202,10 @@ function background_process_cronapi($op, $job = NULL) {
   switch ($op) {
     case 'list':
       return array('background_process_cron' => t('Cleanup old process handles'));
+
     case 'rule':
       return '* * * * *';
+
     case 'configure':
       return 'admin/config/system/background-process';
   }
@@ -242,10 +245,10 @@ function background_process_service_group_round_robin($service_group) {
 }
 
 /**
- * Access handler for service call
+ * Access handler for service call.
  */
 function background_process_service_access($handle, $token) {
-  // Setup service
+  // Setup service.
   ignore_user_abort(TRUE);
 
   // Damn those slashes!
@@ -267,12 +270,13 @@ function background_process_service_access($handle, $token) {
     return FALSE;
   }
 
-  // Login as the user that requested the call
+  // Login as the user that requested the call.
   global $user;
   if ($process->uid) {
     $load_user = user_load($process->uid);
     if (!$load_user) {
       // Invalid user!
+      watchdog('bg_process', 'Invalid user: %uid for handle: %handle', array('%uid' => $process->uid, '%handle' => $handle));
       return FALSE;
     }
     $user = $load_user;
@@ -287,20 +291,20 @@ function background_process_service_access($handle, $token) {
  * Implements hook_init().
  */
 function background_process_init() {
-  // Only determine if we're told to do so
+  // Only determine if we're told to do so.
   if (empty($_SESSION['background_process_determine_default_service_host'])) {
     return;
   }
-  // Don't determine on check-token page, to avoid infinite loop
+  // Don't determine on check-token page, to avoid infinite loop.
   if (strpos($_GET['q'], 'background-process/check-token') === 0) {
     return;
   }
-  // Only determine when installation of site is finished
+  // Only determine when installation of site is finished.
   if (variable_get('install_task', FALSE) != 'done') {
     return;
   }
 
-  // Determine the default service host
+  // Determine the default service host.
   background_process_determine_and_save_default_service_host();
   unset($_SESSION['background_process_determine_default_service_host']);
 }
@@ -324,7 +328,7 @@ function background_process_cron_queue_info() {
 // ---------- HELPER FUNCTIONS ----------
 
 /**
- * Worker callback for processing queued function call
+ * Worker callback for processing queued function call.
  */
 function _background_process_queue($item) {
   $oldhandle = background_process_current_handle();
@@ -338,7 +342,7 @@ function _background_process_queue($item) {
       background_process_current_handle($oldhandle);
       background_process_update_status(rawurldecode($handle), BACKGROUND_PROCESS_STATUS_QUEUED);
       throw $e;
-    } 
+    }
   }
 }
 
@@ -346,7 +350,10 @@ function _background_process_queue($item) {
  * Get/set current handle.
  *
  * @staticvar $current_handle
- * @param $handle
+ *
+ * @param string $handle
+ *   Background process handle.
+ *
  * @return string
  *   Current handle.
  */
@@ -361,8 +368,9 @@ function background_process_current_handle($handle = NULL) {
 /**
  * Get a unique handle based on a callback.
  *
- * @param $callback
+ * @param callback $callback
  *   Function to generate handle from.
+ *
  * @return string
  *   Handle.
  */
@@ -371,18 +379,19 @@ function background_process_generate_handle($callback) {
 }
 
 /**
- * Start background process
+ * Start background process.
  *
- * Calls the service handler through http passing function arguments as serialized data
- * Be aware that the callback will run in a new request
+ * Calls the service handler through http passing function arguments as
+ * serialized data. Be aware that the callback will run in a new request.
  *
  * @global string $base_url
  *   Base URL for this Drupal request
  *
- * @param $callback
+ * @param callback $callback
  *   Function to call
- * @param $var [, $... ]]
+ * @param mixed $var [, $... ]]
  *   Arbitrary number of variables to pass on to the callback
+ *
  * @return mixed
  *   Handle on success, FALSE on failure
  */
@@ -395,20 +404,21 @@ function background_process_start($callback /* [, $var [, $... ]] */) {
 }
 
 /**
- * Start locked background process
+ * Start locked background process.
  *
- * Calls the service handler through http passing function arguments as serialized data
- * Be aware that the callback will run in a new request
+ * Calls the service handler through http passing function arguments
+ * as serialized data. Be aware that the callback will run in a new request.
  *
  * @global string $base_url
  *   Base URL for this Drupal request
  *
- * @param $handle
+ * @param string $handle
  *   Handle to give background process
- * @param $callback
+ * @param callback $callback
  *   Function to call
- * @param $var [, $... ]]
+ * @param mixed $var [, $... ]]
  *   Arbitrary number of variables to pass on to the callback
+ *
  * @return mixed
  *   Handle on success, FALSE on failure
  */
@@ -421,7 +431,7 @@ function background_process_start_locked($handle, $callback /* [, $var [, $... ]
 }
 
 /**
- * Start background process
+ * Start background process.
  *
  * Queue the function call passing function arguments as serialized data
  * Be aware that the callback will run in a new request
@@ -429,10 +439,11 @@ function background_process_start_locked($handle, $callback /* [, $var [, $... ]
  * @global string $base_url
  *   Base URL for this Drupal request
  *
- * @param $callback
+ * @param callback $callback
  *   Function to call
- * @param $var [, $... ]]
+ * @param mixed $var [, $... ]]
  *   Arbitrary number of variables to pass on to the callback
+ *
  * @return mixed
  *   Handle on success, FALSE on failure
  */
@@ -444,7 +455,7 @@ function background_process_queue($callback /* [, $var [, $... ]] */) {
 }
 
 /**
- * Queue locked background process
+ * Queue locked background process.
  *
  * Queue the function call passing function arguments as serialized data
  * Be aware that the callback will run in a new request
@@ -452,12 +463,13 @@ function background_process_queue($callback /* [, $var [, $... ]] */) {
  * @global string $base_url
  *   Base URL for this Drupal request
  *
- * @param $handle
+ * @param string $handle
  *   Handle to give background process
- * @param $callback
+ * @param callback $callback
  *   Function to call
- * @param $var [, $... ]]
+ * @param mixed $var [, $... ]]
  *   Arbitrary number of variables to pass on to the callback
+ *
  * @return mixed
  *   Handle on success, FALSE on failure
  */
@@ -479,11 +491,11 @@ function _background_process_cleanup_menu($cid) {
 }
 
 /**
- * Call the function requested by the service call
+ * Call the function requested by the service call.
  *
- * @param $handle
+ * @param string $handle
  *   Raw URL encoded handle of process
- * @param $return
+ * @param bool $return
  *   Whether or not the function should return or exit.
  */
 function background_process_service_start($handle, $return = FALSE) {
@@ -493,7 +505,7 @@ function background_process_service_start($handle, $return = FALSE) {
   $cid = 'menu_item:' . hash('sha256', $_GET['q']);
   drupal_register_shutdown_function('_background_process_cleanup_menu', $cid);
 
-  // Setup service
+  // Setup service.
   ignore_user_abort(TRUE);
   @set_time_limit(variable_get('background_process_service_timeout', BACKGROUND_PROCESS_SERVICE_TIMEOUT));
 
@@ -504,15 +516,16 @@ function background_process_service_start($handle, $return = FALSE) {
 }
 
 /**
- * Execute the service
+ * Execute the service.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of process
- * @param $return
+ * @param bool $return
  *   Whether or not the function should return or exit.
  */
 function background_process_service_execute($handle, $return = FALSE) {
-  // @todo Add static caching? We've already loaded this previously in the access handler
+  // @todo Add static caching? We've already loaded this previously in the
+  // access handler.
   $process = background_process_get_process($handle);
   if (!$process) {
     watchdog('bg_process', 'Process not found for handle: %handle', array('%handle' => $handle), WATCHDOG_ERROR);
@@ -556,7 +569,7 @@ function background_process_service_execute($handle, $return = FALSE) {
     throw $e;
   }
 
-  // Make sure the process is removed when we're done
+  // Make sure the process is removed when we're done.
   if (!$return) {
     drupal_register_shutdown_function('background_process_remove_process', $process->handle, $process->start_stamp);
   }
@@ -593,7 +606,7 @@ function background_process_service_execute($handle, $return = FALSE) {
     }
   }
   else {
-    // Function not found
+    // Function not found.
     watchdog('bg_process', 'Callback: %callback not found', array('%callback' => $process->callback), WATCHDOG_ERROR);
   }
   if ($return) {
@@ -605,9 +618,9 @@ function background_process_service_execute($handle, $return = FALSE) {
 }
 
 /**
- * Restart the current background process
+ * Restart the current background process.
  *
- * @return
+ * @throws Exception
  *   Exception on fail, otherwise exit
  */
 function background_process_restart() {
@@ -617,8 +630,10 @@ function background_process_restart() {
 }
 
 /**
+ * Keep process alive.
+ *
  * Keep the current background process alive
- * (meaning restart it when it exits)
+ * (meaning restart it when it exits).
  */
 function background_process_keepalive() {
   $args = func_get_args();
@@ -634,11 +649,12 @@ function background_process_keepalive() {
 }
 
 /**
- * Check if the background process has started
+ * Check if the background process has started.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of openend background process
- * @return boolean
+ *
+ * @return bool
  *   TRUE if started, FALSE if not
  */
 function background_process_is_started($handle) {
@@ -649,11 +665,12 @@ function background_process_is_started($handle) {
 }
 
 /**
- * Check if the background process has finished
+ * Check if the background process has finished.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of openend background process
- * @return boolean
+ *
+ * @return bool
  *   TRUE if finished, FALSE if not
  */
 function background_process_is_finished($handle) {
@@ -664,24 +681,25 @@ function background_process_is_finished($handle) {
 }
 
 /**
- * Set background process
+ * Set background process.
  *
  * @global object $user
  *   Current logged in user
  *
- * @param $handle
+ * @param string $handle
  *   Handle of background process
- * @param $callback
+ * @param callback $callback
  *   Function of background process
- * @return boolean
+ *
+ * @return bool
  *   TRUE if set, FALSE if not
  */
 function background_process_set_process($handle, $callback, $uid, $args, $token) {
-  // Setup parameters
+  // Setup parameters.
   $args = serialize($args);
   $callback = serialize($callback);
 
-  // Get user
+  // Get user.
   if (!isset($uid)) {
     global $user;
     $uid = $user->uid;
@@ -694,7 +712,7 @@ function background_process_set_process($handle, $callback, $uid, $args, $token)
         'callback' => $callback,
         'args' => $args,
         'uid' => $uid,
-        'token' => $token
+        'token' => $token,
       ))
       ->condition('handle', $handle)
       ->execute();
@@ -708,11 +726,12 @@ function background_process_set_process($handle, $callback, $uid, $args, $token)
 }
 
 /**
- * Lock process
+ * Lock process.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of background process
- * @return boolean
+ *
+ * @return bool
  *   TRUE if locked, FALSE if lock could not be obtained
  */
 function background_process_lock_process($handle, $status = BACKGROUND_PROCESS_STATUS_LOCKED) {
@@ -736,7 +755,7 @@ function background_process_lock_process($handle, $status = BACKGROUND_PROCESS_S
 }
 
 /**
- * Set status for background process
+ * Set status for background process.
  */
 function background_process_update_status($handle, $status) {
   db_update('background_process')
@@ -746,10 +765,11 @@ function background_process_update_status($handle, $status) {
 }
 
 /**
- * Get background process
+ * Get background process.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of background process
+ *
  * @return object
  *   Background process
  */
@@ -778,12 +798,13 @@ function background_process_get_process($handle) {
 }
 
 /**
- * Get background process
+ * Get background process.
  *
- * @param $handle
- *   Handle of background process
- * @return object
- *   Background process
+ * @param int $status
+ *   (Optional) Get processes with the specified status.
+ *
+ * @return array
+ *   Background process objects
  */
 function background_process_get_processes($status = NULL) {
   $old_db = db_set_active('background_process');
@@ -807,10 +828,11 @@ function background_process_get_processes($status = NULL) {
 }
 
 /**
- * Remove a background process
+ * Remove a background process.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of background process
+ *
  * @return mixed
  *   Number of handles deleted on success, FALSE on failure.
  */
@@ -834,13 +856,13 @@ function background_process_remove_process($handle, $start = NULL) {
 /**
  * Unlock background process.
  *
- * @param $handle
+ * @param string $handle
  *   Handle of process to unlock
  */
 function background_process_unlock($handle, $msg = NULL, $start = NULL) {
   $process = background_process_get_process($handle);
   if ($process && (!isset($start) || $start === $process->start)) {
-    // Unlock the process
+    // Unlock the process.
     if (background_process_remove_process($process->handle, $process->start)) {
       global $user;
       $username = $user->uid ? $user->name : t('anonymous');
@@ -854,9 +876,9 @@ function background_process_unlock($handle, $msg = NULL, $start = NULL) {
 /**
  * Set a service host for a background process.
  *
- * @param $handle
+ * @param string $handle
  *   Background process handle
- * @param $service_host
+ * @param string $service_host
  *   Name of service host
  */
 function background_process_set_service_host($handle, $service_host) {
@@ -885,8 +907,8 @@ function background_process_get_service_hosts() {
   $service_hosts = variable_get('background_process_service_hosts', array());
   $service_hosts += variable_get('background_process_derived_default_host', array(
     'default' => array(
-      'base_url' => $base_url
-    )
+      'base_url' => $base_url,
+    ),
   ));
   return $service_hosts;
 }
@@ -903,7 +925,7 @@ function background_process_get_service_groups() {
   );
   foreach ($service_groups as &$service_group) {
     $service_group += array(
-      'method' => 'background_process_service_group_round_robin'
+      'method' => 'background_process_service_group_round_robin',
     );
   }
   return $service_groups;
@@ -911,12 +933,14 @@ function background_process_get_service_groups() {
 
 /**
  * Determine host for current installation.
+ *
  * Host is determined in the following order:
  *   <server name>
  *   <localhost>
  *   <server ip>
  * @return array
- *   Array of service host parameters for the default service host. FALSE if none could be determined.
+ *   Array of service host parameters for the default service host.
+ *   FALSE if none could be determined.
  */
 function background_process_determine_default_service_host() {
   $token = md5(session_id() . md5(uniqid(mt_rand(), TRUE)) . md5(uniqid(mt_rand(), TRUE)));
@@ -965,11 +989,13 @@ function background_process_determine_default_service_host() {
 }
 
 /**
- * Build url and headers for http request
- * @param $url
+ * Build url and headers for http request.
+ *
+ * @param string $url
  *   Relative url for the request
- * @param $service_hostname
+ * @param string $service_hostname
  *   Name of service host, e.g. 'default'
+ *
  * @return array
  *   array(url, headers)
  */
@@ -987,9 +1013,10 @@ function background_process_build_request($url, $service_hostname = NULL, $optio
 
   $url = url($url, $options);
   $parsed = parse_url($url);
-  $host = !empty($service_host['http_host']) ? $service_host['http_host'] : (isset($parsed['host']) ? $parsed['host'] : NULL);
+  $host = !empty($service_host['http_host']) ? $service_host['http_host'] : (isset($parsed['host']) ? (isset($parsed['port']) ? ($parsed['host'] . ':' . $parsed['port']) : $parsed['host']) : NULL);
   $headers = _background_process_request_headers();
   $headers = _background_process_filter_headers($headers);
+  $headers['User-Agent'] = variable_get('background_process_user_agent', 'Drupal (+http://drupal.org/)');
   $headers['Host'] = $host;
   $headers['Connection'] = 'close';
 
@@ -1002,10 +1029,12 @@ function background_process_build_request($url, $service_hostname = NULL, $optio
 
 /**
  * Transform header array from key/value to strings.
- * @param $headers
- *   array of headers in key/value style
+ *
+ * @param array $headers
+ *   Headers in key/value style
+ *
  * @return array
- *   array of strings.
+ *   Concatenated http headers.
  */
 function background_process_build_headers($headers) {
   $header = array();
@@ -1017,6 +1046,7 @@ function background_process_build_headers($headers) {
 
 /**
  * Perform an http request.
+ *
  * @see drupal_http_request()
  */
 function background_process_http_request($url, array $options = array()) {
@@ -1040,6 +1070,14 @@ function background_process_http_request($url, array $options = array()) {
     return _background_process_http_request_result($result);
   }
 
+  // Set default context to enable/disable SSL verification.
+  $default_context = stream_context_create(array(
+    'ssl' => array(
+      'verify_peer' => variable_get('background_process_ssl_verification', TRUE),
+      'verify_peer_name' => variable_get('background_process_ssl_verification', TRUE),
+    ),
+  ));
+
   // Merge the default options.
   $options += array(
     'headers' => array(),
@@ -1047,7 +1085,7 @@ function background_process_http_request($url, array $options = array()) {
     'data' => NULL,
     'max_redirects' => 3,
     'timeout' => variable_get('background_process_connection_timeout', BACKGROUND_PROCESS_CONNECTION_TIMEOUT),
-    'context' => NULL,
+    'context' => $default_context,
     'blocking' => FALSE,
     'postpone' => FALSE,
   );
@@ -1065,12 +1103,14 @@ function background_process_http_request($url, array $options = array()) {
       // checking the host that do not take into account the port number.
       $host = $uri['host'] . ($port != 80 ? ':' . $port : '');
       break;
+
     case 'https':
       // Note: Only works when PHP is compiled with OpenSSL support.
       $port = isset($uri['port']) ? $uri['port'] : 443;
       $socket = 'ssl://' . $uri['host'] . ':' . $port;
       $host = $uri['host'] . ($port != 443 ? ':' . $port : '');
       break;
+
     default:
       $result->error = 'invalid schema ' . $uri['scheme'];
       $result->code = -1003;
@@ -1102,6 +1142,8 @@ function background_process_http_request_initiate(&$result) {
   $uri = $result->uri;
   $result->start = microtime(TRUE);
   $result->data_ready = TRUE;
+  $result->response = '';
+
   if (empty($options['context'])) {
     $fp = @stream_socket_client($socket, $errno, $errstr, $options['timeout']);
   }
@@ -1179,7 +1221,6 @@ function background_process_http_request_initiate(&$result) {
     stream_set_blocking($fp, 0);
   }
 
-
   if (!empty($options['blocking'])) {
     return background_process_http_request_get_response($result);
   }
@@ -1187,7 +1228,7 @@ function background_process_http_request_initiate(&$result) {
 }
 
 /**
- * Get response for an http request
+ * Get response for an http request.
  */
 function background_process_http_request_get_response(&$result) {
   if ($result->postponed) {
@@ -1317,12 +1358,12 @@ function background_process_http_request_get_response(&$result) {
   $result->code = $code;
 
   switch ($code) {
-    case 200: // OK
-    case 304: // Not modified
+    case 200: // OK.
+    case 304: // Not modified.
       break;
-    case 301: // Moved permanently
-    case 302: // Moved temporarily
-    case 307: // Moved temporarily
+    case 301: // Moved permanently.
+    case 302: // Moved temporarily.
+    case 307: // Moved temporarily.
       $location = $result->headers['location'];
       $options['timeout'] -= timer_read(__FUNCTION__) / 1000;
       if ($options['timeout'] <= 0) {
@@ -1342,6 +1383,7 @@ function background_process_http_request_get_response(&$result) {
         $result->redirect_url = $location;
       }
       break;
+
     default:
       $result->error = $status_message;
   }
@@ -1349,6 +1391,15 @@ function background_process_http_request_get_response(&$result) {
   return _background_process_http_request_result($result);
 }
 
+/**
+ * Get request result.
+ *
+ * @param object $result
+ *   The result object in question.
+ *
+ * @return object
+ *   The same object.
+ */
 function _background_process_http_request_result($result) {
   if (isset($result->code)) {
     if (empty($result->end)) {
@@ -1421,10 +1472,11 @@ function background_process_determine_and_save_default_service_host() {
 // ---------- INTERNAL FUNCTIONS ----------
 
 /**
- * Ensure lock is removed at end of request
- * @param $handle
+ * Ensure lock is removed at end of request.
+ *
+ * @param string $handle
  *   Handle of background process
- * @param $remove
+ * @param bool $remove
  *   If TRUE, don't remove when shutting down
  */
 function _background_process_ensure_cleanup($handle, $remove = FALSE) {
@@ -1442,7 +1494,7 @@ function _background_process_ensure_cleanup($handle, $remove = FALSE) {
 }
 
 /**
- * Shutdown handler for removing locks
+ * Shutdown handler for removing locks.
  */
 function _background_process_cleanup_locks() {
   $handles = &drupal_static('background_process_handles_locked', NULL);
@@ -1456,10 +1508,12 @@ function _background_process_cleanup_locks() {
 /**
  * Get string name of callback.
  *
- * @param $callback
+ * @param callback $callback
  *   Callback can be either a string or an array.
+ *
  * @return string
- *   The name of the callback, e.g. 'myfunction', 'myclass::mystaticmethod' or 'myclass->mymethod'.
+ *   The name of the callback,
+ *   e.g. 'myfunction', 'myclass::mystaticmethod' or 'myclass->mymethod'.
  */
 function _background_process_callback_name($callback) {
   if (is_array($callback)) {
@@ -1474,12 +1528,16 @@ function _background_process_callback_name($callback) {
 }
 
 /**
- * Get request headers
+ * Get request headers.
  *
- * @return array headers
+ * @return array
+ *   Headers.
  */
 function _background_process_request_headers() {
   foreach ($_SERVER as $key => $value) {
+    if (empty($value)) {
+      continue;
+    }
     if (substr($key, 0, 5) == 'HTTP_') {
       $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
       if (empty($headers[$key])) {
@@ -1496,8 +1554,9 @@ function _background_process_request_headers() {
 /**
  * Remove headers we do not wish to pass on to the next request.
  *
- * @param $headers
+ * @param array $headers
  *   Headers to filter
+ *
  * @return array
  *   Filtered headers
  */
@@ -1517,9 +1576,11 @@ function _background_process_filter_headers($headers) {
 /**
  * Secure a URL by obfuscating the password if present.
  *
- * @param $url
+ * @param string $url
+ *   The URL
+ *
  * @return string
- *   URL
+ *   Secure URL
  */
 function _background_process_secure_url($url) {
   $url = parse_url($url);
@@ -1532,8 +1593,9 @@ function _background_process_secure_url($url) {
 /**
  * Reverse logic of parse_url().
  *
- * @param $parsed_url
- *   Array from parse_url()
+ * @param array $parsed_url
+ *   result of parse_url()
+ *
  * @return string
  *   URL
  */
@@ -1542,7 +1604,7 @@ function _background_process_unparse_url($parsed_url) {
   $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
   $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
   $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
-  $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+  $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass'] : '';
   $pass     = ($user || $pass) ? "$pass@" : '';
   $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
   $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
@@ -1553,10 +1615,10 @@ function _background_process_unparse_url($parsed_url) {
 /**
  * Shutdown handler for restarting background process.
  *
- * @param $process
+ * @param object $process
  *   Background process object
- * @param $args
- *   Array of arguments for callback
+ * @param array $args
+ *   Arguments for callback
  */
 function _background_process_restart($process, $args = array()) {
   $args = empty($args) ? $process->args : $args;

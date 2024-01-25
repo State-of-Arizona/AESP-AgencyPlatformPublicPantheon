@@ -137,7 +137,7 @@ function xmlsitemap_requirements($phase) {
         $requirements['xmlsitemap_generated']['severity'] = REQUIREMENT_WARNING;
       }
       if ($requirements['xmlsitemap_generated']['severity']) {
-        $requirements['xmlsitemap_generated']['description'] = $t('The XML cached files are out of date and need to be regenerated. You can <a href="@link-cron">run cron manually</a> to regenerate the sitemap files.', array('@link-cron' => url('admin/reports/status/run-cron', array('query' => drupal_get_destination()))));
+        $requirements['xmlsitemap_generated']['description'] = $t('The XML cached files are out of date and need to be regenerated. You can <a href="@link-cron">run cron manually</a> to regenerate the sitemap files.', array('@link-cron' => url('admin/reports/status/run-cron', array('query' => drupal_get_destination() + array('token' => drupal_get_token('run-cron'))))));
       }
     }
   }
@@ -368,15 +368,16 @@ function xmlsitemap_enable() {
  * Implements hook_uninstall().
  */
 function xmlsitemap_uninstall() {
-  // Remove variables.
   drupal_load('module', 'xmlsitemap');
+
+  // Remove the file cache directory.
+  xmlsitemap_clear_directory(NULL, TRUE);
+
+  // Remove variables.
   $variables = array_keys(xmlsitemap_variables());
   foreach ($variables as $variable) {
     variable_del($variable);
   }
-
-  // Remove the file cache directory.
-  xmlsitemap_clear_directory(NULL, TRUE);
 
   // Remove the queue.
   /** @var DrupalReliableQueueInterface $queue */
@@ -564,6 +565,13 @@ function xmlsitemap_update_7202() {
  */
 function xmlsitemap_update_7203() {
   xmlsitemap_update_6204();
+  _xmlsitemap_sitemap_rehash_all();
+}
+
+/**
+ * Rehash all sitemaps according to new context sorting.
+ */
+function xmlsitemap_update_7204() {
   _xmlsitemap_sitemap_rehash_all();
 }
 

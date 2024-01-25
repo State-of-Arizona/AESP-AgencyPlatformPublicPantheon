@@ -59,11 +59,25 @@ function metatag_test_metatag_info() {
     ),
   );
 
-  $info['test:foo'] = array(
+  $info['tags']['test:foo'] = array(
     'label' => t('Foo meta tag'),
     'description' => t('Testing metatag.'),
     'class' => 'DrupalTextMetaTag',
     'group' => 'testing',
+  );
+
+  $info['tags']['test:multifoo'] = array(
+    'label' => t('Multi foo meta tag'),
+    'description' => t('Testing metatag.'),
+    'class' => 'DrupalTextMetaTag',
+    'group' => 'testing',
+    'multiple' => TRUE,
+  );
+
+  $info['tags']['test:nodesc'] = array(
+    'label' => t('Meta tag with no description attribute'),
+    'class' => 'DrupalTextMetaTag',
+    'multiple' => TRUE,
   );
 
   return $info;

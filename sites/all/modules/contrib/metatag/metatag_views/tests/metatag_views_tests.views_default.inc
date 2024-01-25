@@ -80,8 +80,6 @@ function metatag_views_tests_views_default_views() {
           'nofollow' => 0,
           'noarchive' => 0,
           'nosnippet' => 0,
-          'noodp' => 0,
-          'noydir' => 0,
           'noimageindex' => 0,
           'notranslate' => 0,
         ),

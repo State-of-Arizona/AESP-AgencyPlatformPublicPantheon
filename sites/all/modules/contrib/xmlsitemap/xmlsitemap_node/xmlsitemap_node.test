@@ -179,8 +179,14 @@ class XMLSitemapNodeFunctionalTest extends XMLSitemapTestHelper {
     $this->assertEqual(count(xmlsitemap_link_load_multiple(array('type' => 'node', 'subtype' => 'page'))), 0);
     $this->assertEqual(count(xmlsitemap_link_load_multiple(array('type' => 'node', 'subtype' => 'page2'))), 2);
 
-    $this->drupalPost('admin/structure/types/manage/page2/delete', array(), t('Delete'));
-    $this->assertText('The content type Basic page has been deleted.');
+    // It is not possible to delete content type if there is a content created,
+    // so we must call the form submit manually.
+    // See https://www.drupal.org/project/drupal/issues/3008170
+    node_types_rebuild();
+    menu_rebuild();
+    $types = node_type_get_types();
+    $form_state['values'] = array('type' => $types['page2']->type, 'name' => $types['page2']->name);
+    drupal_form_submit('node_type_delete_confirm', $form_state, $types['page2']);
     $this->assertFalse(xmlsitemap_link_load_multiple(array('type' => 'node', 'subtype' => 'page2')), 'Nodes with deleted node type removed from {xmlsitemap}.');
   }
 

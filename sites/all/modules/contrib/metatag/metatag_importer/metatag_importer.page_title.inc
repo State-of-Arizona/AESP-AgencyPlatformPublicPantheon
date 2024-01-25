@@ -67,11 +67,6 @@ function metatag_importer_for_page_title() {
     // Load any possible existing meta tags for this object.
     $data = metatag_metatags_load($entity_type, $entity_id);
 
-    // Drop back one level because the results will be keyed by revision_id.
-    if (!empty($data)) {
-      $data = reset($data);
-    }
-
     switch ($entity_type) {
       case 'node':
         $metatag_config_node_type = metatag_config_load('node:' . $entity->type);
@@ -83,7 +78,7 @@ function metatag_importer_for_page_title() {
           $title_setting = $metatag_config_node->config['title']['value'];
         }
         else {
-          $title_setting = $metatag_config_global->config['title']['value'];
+          $title_setting = isset($metatag_config_global->config['title']['value']) ? $metatag_config_global->config['title']['value'] : '';
         }
         $metatag_title = str_replace('[current-page:title]', trim($pt_data->page_title), $title_setting);
         $metatag_title = str_replace('[node:title]', trim($pt_data->page_title), $metatag_title);
@@ -99,7 +94,7 @@ function metatag_importer_for_page_title() {
           $title_setting = $metatag_config_taxonomy_term->config['title']['value'];
         }
         else {
-          $title_setting = $metatag_config_global->config['title']['value'];
+          $title_setting = isset($metatag_config_global->config['title']['value']) ? $metatag_config_global->config['title']['value'] : '';
         }
         $metatag_title = str_replace('[current-page:title]', trim($pt_data->page_title), $title_setting);
         $metatag_title = str_replace('[term:name]', trim($pt_data->page_title), $metatag_title);
@@ -110,7 +105,7 @@ function metatag_importer_for_page_title() {
           $title_setting = $metatag_config_user->config['title']['value'];
         }
         else {
-          $title_setting = $metatag_config_global->config['title']['value'];
+          $title_setting = isset($metatag_config_global->config['title']['value']) ? $metatag_config_global->config['title']['value'] : '';
         }
         $metatag_title = str_replace('[current-page:title]', trim($pt_data->page_title), $title_setting);
         $metatag_title = str_replace('[user:name]', trim($pt_data->page_title), $metatag_title);
@@ -128,7 +123,7 @@ function metatag_importer_for_page_title() {
     $converted += db_delete('page_title')
       ->condition('type', $entity_type)
       ->condition('id', $entity_id)
-        ->execute();
+      ->execute();
   }
 
   // Log any records that were skipped.

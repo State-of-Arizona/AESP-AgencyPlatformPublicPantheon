@@ -81,7 +81,7 @@ function xmlsitemap_i18n_query_xmlsitemap_generate_alter(QueryAlterableInterface
 
   // Get languages to simplify query building.
   $current = $sitemap->context['language'];
-  $default = language_default();
+  $default = language_default('language');
 
   if ($mode == 'mixed' && $current == $default) {
     // If mode is mixed but current = default, is the same as 'simple'.

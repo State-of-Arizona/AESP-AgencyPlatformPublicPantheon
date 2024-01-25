@@ -29,13 +29,19 @@ function metatag_verification_metatag_info() {
 
   $info['tags']['msvalidate.01'] = array(
     'label' => t('Bing'),
-    'description' => t('A string provided by <a href="@bing">Bing</a>, full details are available from the <a href="@verify_url">Bing online help</a>.', array('@bing' => 'http://www.bing.com/', '@verify_url' => 'http://www.bing.com/webmaster/help/how-to-verify-ownership-of-your-site-afcfefc6')),
+    'description' => t('A string provided by <a href="@bing">Bing</a>, full details are available from the <a href="@verify_url">Bing online help</a>.', array('@bing' => 'https://www.bing.com/', '@verify_url' => 'https://www.bing.com/webmaster/help/how-to-verify-ownership-of-your-site-afcfefc6')),
     'weight' => ++$weight,
   ) + $defaults;
 
   $info['tags']['baidu-site-verification'] = array(
     'label' => t('Baidu'),
-    'description' => t('A string provided by <a href="@baidu">Baidu</a>.', array('@baidu' => 'http://www.baidu.com/')),
+    'description' => t('A string provided by <a href="@baidu">Baidu</a>.', array('@baidu' => 'https://www.baidu.com/')),
+    'weight' => ++$weight,
+  ) + $defaults;
+
+  $info['tags']['facebook-domain-verification'] = array(
+    'label' => t('Facebook'),
+    'description' => t('A string provided by <a href="@facebook">Facebook</a>, full details are available from the <a href="@verify_url">Facebook online help</a>.', array('@facebook' => 'https://facebook.com/', '@verify_url' => 'https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain/#meta-tags')),
     'weight' => ++$weight,
   ) + $defaults;
 
@@ -65,7 +71,7 @@ function metatag_verification_metatag_info() {
 
   $info['tags']['yandex-verification'] = array(
     'label' => t('Yandex'),
-    'description' => t('A string provided by <a href="@yandex">Yandex</a>, full details are available from the <a href="@verify_url">Yandex online help</a>.', array('@yandex' => 'http://www.yandex.com/', '@verify_url' => 'http://api.yandex.com/webmaster/doc/dg/reference/hosts-type.xml')),
+    'description' => t('A string provided by <a href="@yandex">Yandex</a>, full details are available from the <a href="@verify_url">Yandex online help</a>.', array('@yandex' => 'https://www.yandex.com/', '@verify_url' => 'https://api.yandex.com/webmaster/doc/dg/reference/hosts-type.xml')),
     'weight' => ++$weight,
   ) + $defaults;
 

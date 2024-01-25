@@ -11,7 +11,7 @@
 function metatag_app_links_metatag_info() {
   $info['groups']['app_links'] = array(
     'label' => t('App Links'),
-    'description' => t('Meta tags used to expose app Links for app deep linking. See <a href="@url">applinks.org</a> for details and documentation.', array('@url' => 'http://applinks.org')),
+    'description' => t('Meta tags used to expose app Links for app deep linking. See <a href="@url">applinks.org</a> for details and documentation.', array('@url' => 'https://applinks.org')),
     'form' => array(
       '#weight' => 90,
     ),

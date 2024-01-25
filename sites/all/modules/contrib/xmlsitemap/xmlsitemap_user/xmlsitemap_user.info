@@ -5,8 +5,8 @@ dependencies[] = xmlsitemap
 core = 7.x
 files[] = xmlsitemap_user.test
 
-; Information added by Drupal.org packaging script on 2018-10-09
-version = "7.x-2.6"
+; Information added by Drupal.org packaging script on 2023-05-08
+version = "7.x-2.7"
 core = "7.x"
 project = "xmlsitemap"
-datestamp = "1539120486"
+datestamp = "1683528260"

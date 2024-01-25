@@ -88,11 +88,6 @@ function metatag_importer_metatags_quick_process(array $quick) {
   // Check for an existing record.
   $data = metatag_metatags_load($entity_type, $entity_id);
 
-  // Drop back one level because the results will be keyed by revision_id.
-  if (!empty($data)) {
-    $data = reset($data);
-  }
-
   // Map the Quick meta tags.
   foreach ($tag_map as $dest => $source) {
     if (!empty($quick['fields'][$source]['value'])) {

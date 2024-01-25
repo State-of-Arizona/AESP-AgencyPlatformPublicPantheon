@@ -53,7 +53,7 @@ class MetatagFaviconsTagsTest extends MetatagTagsTestBase {
   /**
    * {@inheritdoc}
    */
-  function setUp(array $modules = array()) {
+  public function setUp(array $modules = array()) {
     $modules[] = 'metatag_favicons';
     parent::setUp($modules);
   }
@@ -253,9 +253,7 @@ class MetatagFaviconsTagsTest extends MetatagTagsTestBase {
    * Confirm the mask-icon meta tag works correctly.
    */
   public function testMaskIconValue() {
-    // The SVG image is copied from the archive obtained from
-    // https://www.drupal.org/about/media-kit/logos on 6/20/2016.
-    $svg_path = drupal_get_path('module', 'metatag_favicons') . '/tests/druplicon-vector.svg';
+    $svg_path = drupal_get_path('module', 'metatag') . '/metatag-logo.svg';
     $relative_path = url($svg_path, array('absolute' => FALSE));
     $absolute_path = url($svg_path, array('absolute' => TRUE));
 
@@ -346,9 +344,7 @@ class MetatagFaviconsTagsTest extends MetatagTagsTestBase {
    * Confirm the mask-icon meta tag 'color' attribute works correctly.
    */
   public function testMaskIconColor() {
-    // The SVG image is copied from the archive obtained from
-    // https://www.drupal.org/about/media-kit/logos on 6/20/2016.
-    $svg_path = drupal_get_path('module', 'metatag_favicons') . '/tests/druplicon-vector.svg';
+    $svg_path = drupal_get_path('module', 'metatag') . '/metatag-logo.svg';
     $absolute_path = url($svg_path, array('absolute' => TRUE));
 
     // Testbot doesn't have "clean_url" enabled.

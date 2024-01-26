@@ -662,7 +662,7 @@ function _webform_validate_number($element, &$form_state) {
 
       // Step test.
       $starting_number = $element['#min'] ? $element['#min'] : 0;
-      if ($element['#step'] != 0 && webform_modulo($numeric_value - $starting_number, $element['#step']) != 0.0) {
+      if ($element['#step'] > 0 && webform_modulo($numeric_value - $starting_number, $element['#step']) != 0.0) {
         $samples = array(
           $starting_number,
           $starting_number + ($element['#step'] * 1),

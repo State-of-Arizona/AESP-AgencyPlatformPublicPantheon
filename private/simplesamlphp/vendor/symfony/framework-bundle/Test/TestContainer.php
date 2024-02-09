@@ -59,7 +59,7 @@ class TestContainer extends Container
     /**
      * {@inheritdoc}
      *
-     * @return array|bool|float|int|string|\UnitEnum|null
+     * @return array|bool|float|int|string|null
      */
     public function getParameter($name)
     {

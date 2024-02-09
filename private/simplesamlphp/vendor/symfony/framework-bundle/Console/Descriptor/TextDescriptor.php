@@ -87,11 +87,11 @@ class TextDescriptor extends Descriptor
             ['Route Name', $options['name'] ?? ''],
             ['Path', $route->getPath()],
             ['Path Regex', $route->compile()->getRegex()],
-            ['Host', '' !== $route->getHost() ? $route->getHost() : 'ANY'],
-            ['Host Regex', '' !== $route->getHost() ? $route->compile()->getHostRegex() : ''],
-            ['Scheme', $route->getSchemes() ? implode('|', $route->getSchemes()) : 'ANY'],
-            ['Method', $route->getMethods() ? implode('|', $route->getMethods()) : 'ANY'],
-            ['Requirements', $route->getRequirements() ? $this->formatRouterConfig($route->getRequirements()) : 'NO CUSTOM'],
+            ['Host', ('' !== $route->getHost() ? $route->getHost() : 'ANY')],
+            ['Host Regex', ('' !== $route->getHost() ? $route->compile()->getHostRegex() : '')],
+            ['Scheme', ($route->getSchemes() ? implode('|', $route->getSchemes()) : 'ANY')],
+            ['Method', ($route->getMethods() ? implode('|', $route->getMethods()) : 'ANY')],
+            ['Requirements', ($route->getRequirements() ? $this->formatRouterConfig($route->getRequirements()) : 'NO CUSTOM')],
             ['Class', \get_class($route)],
             ['Defaults', $this->formatRouterConfig($route->getDefaults())],
             ['Options', $this->formatRouterConfig($route->getOptions())],
@@ -309,7 +309,7 @@ class TextDescriptor extends Descriptor
                 if ($factory[0] instanceof Reference) {
                     $tableRows[] = ['Factory Service', $factory[0]];
                 } elseif ($factory[0] instanceof Definition) {
-                    $tableRows[] = ['Factory Service', sprintf('inline factory service (%s)', $factory[0]->getClass() ?? 'class not configured')];
+                    throw new \InvalidArgumentException('Factory is not describable.');
                 } else {
                     $tableRows[] = ['Factory Class', $factory[0]];
                 }
@@ -342,8 +342,6 @@ class TextDescriptor extends Descriptor
                     $argumentsInformation[] = sprintf('Service locator (%d element(s))', \count($argument->getValues()));
                 } elseif ($argument instanceof Definition) {
                     $argumentsInformation[] = 'Inlined Service';
-                } elseif ($argument instanceof \UnitEnum) {
-                    $argumentsInformation[] = ltrim(var_export($argument, true), '\\');
                 } else {
                     $argumentsInformation[] = \is_array($argument) ? sprintf('Array (%d element(s))', \count($argument)) : $argument;
                 }
@@ -444,7 +442,7 @@ class TextDescriptor extends Descriptor
 
     protected function describeEventDispatcherListeners(EventDispatcherInterface $eventDispatcher, array $options = [])
     {
-        $event = $options['event'] ?? null;
+        $event = \array_key_exists('event', $options) ? $options['event'] : null;
 
         if (null !== $event) {
             $title = sprintf('Registered Listeners for "%s" Event', $event);
@@ -516,7 +514,7 @@ class TextDescriptor extends Descriptor
                 $r = new \ReflectionMethod($controller, '__invoke');
             } elseif (!\is_string($controller)) {
                 return $anchorText;
-            } elseif (str_contains($controller, '::')) {
+            } elseif (false !== strpos($controller, '::')) {
                 $r = new \ReflectionMethod($controller);
             } else {
                 $r = new \ReflectionFunction($controller);
@@ -549,7 +547,7 @@ class TextDescriptor extends Descriptor
 
         if ($callable instanceof \Closure) {
             $r = new \ReflectionFunction($callable);
-            if (str_contains($r->name, '{closure}')) {
+            if (false !== strpos($r->name, '{closure}')) {
                 return 'Closure()';
             }
             if ($class = $r->getClosureScopeClass()) {

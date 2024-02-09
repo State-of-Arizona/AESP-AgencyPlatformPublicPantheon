@@ -87,7 +87,6 @@ class Key implements \ArrayAccess
      *
      * Type hint not possible due to upstream method signature
      */
-    #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         if (!is_string($offset)) {

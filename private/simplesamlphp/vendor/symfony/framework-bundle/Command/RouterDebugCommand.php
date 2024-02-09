@@ -57,7 +57,7 @@ class RouterDebugCommand extends Command
                 new InputOption('format', null, InputOption::VALUE_REQUIRED, 'The output format (txt, xml, json, or md)', 'txt'),
                 new InputOption('raw', null, InputOption::VALUE_NONE, 'To output raw route(s)'),
             ])
-            ->setDescription('Display current routes for an application')
+            ->setDescription('Displays current routes for an application')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> displays the configured routes:
 
@@ -81,21 +81,7 @@ EOF
         $routes = $this->router->getRouteCollection();
 
         if ($name) {
-            $route = $routes->get($name);
-            $matchingRoutes = $this->findRouteNameContaining($name, $routes);
-
-            if (!$input->isInteractive() && !$route && \count($matchingRoutes) > 1) {
-                $helper->describe($io, $this->findRouteContaining($name, $routes), [
-                    'format' => $input->getOption('format'),
-                    'raw_text' => $input->getOption('raw'),
-                    'show_controllers' => $input->getOption('show-controllers'),
-                    'output' => $io,
-                ]);
-
-                return 0;
-            }
-
-            if (!$route && $matchingRoutes) {
+            if (!($route = $routes->get($name)) && $matchingRoutes = $this->findRouteNameContaining($name, $routes)) {
                 $default = 1 === \count($matchingRoutes) ? $matchingRoutes[0] : null;
                 $name = $io->choice('Select one of the matching routes', $matchingRoutes, $default);
                 $route = $routes->get($name);
@@ -133,17 +119,5 @@ EOF
         }
 
         return $foundRoutesNames;
-    }
-
-    private function findRouteContaining(string $name, RouteCollection $routes): RouteCollection
-    {
-        $foundRoutes = new RouteCollection();
-        foreach ($routes as $routeName => $route) {
-            if (false !== stripos($routeName, $name)) {
-                $foundRoutes->add($routeName, $route);
-            }
-        }
-
-        return $foundRoutes;
     }
 }

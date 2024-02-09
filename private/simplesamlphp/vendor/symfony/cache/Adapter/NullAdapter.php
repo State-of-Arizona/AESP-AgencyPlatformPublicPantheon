@@ -82,7 +82,7 @@ class NullAdapter implements AdapterInterface, CacheInterface
      *
      * @return bool
      */
-    public function clear(/* string $prefix = '' */)
+    public function clear(/*string $prefix = ''*/)
     {
         return true;
     }
@@ -114,7 +114,7 @@ class NullAdapter implements AdapterInterface, CacheInterface
      */
     public function save(CacheItemInterface $item)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -124,7 +124,7 @@ class NullAdapter implements AdapterInterface, CacheInterface
      */
     public function saveDeferred(CacheItemInterface $item)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -134,7 +134,7 @@ class NullAdapter implements AdapterInterface, CacheInterface
      */
     public function commit()
     {
-        return true;
+        return false;
     }
 
     /**

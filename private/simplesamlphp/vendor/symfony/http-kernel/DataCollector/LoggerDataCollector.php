@@ -18,6 +18,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
 
 /**
+ * LogDataCollector.
+ *
  * @author Fabien Potencier <fabien@symfony.com>
  *
  * @final since Symfony 4.4
@@ -44,7 +46,7 @@ class LoggerDataCollector extends DataCollector implements LateDataCollectorInte
      *
      * @param \Throwable|null $exception
      */
-    public function collect(Request $request, Response $response/* , \Throwable $exception = null */)
+    public function collect(Request $request, Response $response/*, \Throwable $exception = null*/)
     {
         $this->currentRequest = $this->requestStack && $this->requestStack->getMasterRequest() !== $request ? $request : null;
     }

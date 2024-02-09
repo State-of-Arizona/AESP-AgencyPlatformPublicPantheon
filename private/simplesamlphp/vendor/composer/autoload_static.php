@@ -4,16 +4,15 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitac24c80e9bd020160b816186f60ee171
+class ComposerStaticInit9bc05b5835a1f4b8baca44382805131b
 {
     public static $files = array (
-        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
-        '25072dd6e2470089de65ae7bf11d3109' => __DIR__ . '/..' . '/symfony/polyfill-php72/bootstrap.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
+        '25072dd6e2470089de65ae7bf11d3109' => __DIR__ . '/..' . '/symfony/polyfill-php72/bootstrap.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
-        '23c18046f52bef3eea034657bafda50f' => __DIR__ . '/..' . '/symfony/polyfill-php81/bootstrap.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
         'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
         '5abda994d126976858eb25d2546ee3c9' => __DIR__ . '/../..' . '/lib/_autoload_modules.php',
@@ -32,7 +31,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         ),
         'S' => 
         array (
-            'Symfony\\Polyfill\\Php81\\' => 23,
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Php73\\' => 23,
             'Symfony\\Polyfill\\Php72\\' => 23,
@@ -71,7 +69,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
             'SimpleSAML\\Module\\riak\\' => 23,
             'SimpleSAML\\Module\\radius\\' => 25,
             'SimpleSAML\\Module\\preprodwarning\\' => 33,
-            'SimpleSAML\\Module\\oauth\\' => 24,
             'SimpleSAML\\Module\\negotiate\\' => 28,
             'SimpleSAML\\Module\\metarefresh\\' => 30,
             'SimpleSAML\\Module\\ldap\\' => 23,
@@ -129,10 +126,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Twig\\' => 
         array (
             0 => __DIR__ . '/..' . '/twig/twig/src',
-        ),
-        'Symfony\\Polyfill\\Php81\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-php81',
         ),
         'Symfony\\Polyfill\\Php80\\' => 
         array (
@@ -248,7 +241,7 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         ),
         'SimpleSAML\\modules\\yubikey\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/modules/authYubiKey/lib',
+            0 => __DIR__ . '/../..' . '/modules/authYubikey/lib',
         ),
         'SimpleSAML\\modules\\discopower\\' => 
         array (
@@ -285,10 +278,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'SimpleSAML\\Module\\preprodwarning\\' => 
         array (
             0 => __DIR__ . '/../..' . '/modules/preprodwarning/lib',
-        ),
-        'SimpleSAML\\Module\\oauth\\' => 
-        array (
-            0 => __DIR__ . '/../..' . '/modules/oauth/lib',
         ),
         'SimpleSAML\\Module\\negotiate\\' => 
         array (
@@ -580,7 +569,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Gettext\\Languages\\Exporter\\Php' => __DIR__ . '/..' . '/gettext/languages/src/Exporter/Php.php',
         'Gettext\\Languages\\Exporter\\Po' => __DIR__ . '/..' . '/gettext/languages/src/Exporter/Po.php',
         'Gettext\\Languages\\Exporter\\Prettyjson' => __DIR__ . '/..' . '/gettext/languages/src/Exporter/Prettyjson.php',
-        'Gettext\\Languages\\Exporter\\Ruby' => __DIR__ . '/..' . '/gettext/languages/src/Exporter/Ruby.php',
         'Gettext\\Languages\\Exporter\\Xml' => __DIR__ . '/..' . '/gettext/languages/src/Exporter/Xml.php',
         'Gettext\\Languages\\FormulaConverter' => __DIR__ . '/..' . '/gettext/languages/src/FormulaConverter.php',
         'Gettext\\Languages\\Language' => __DIR__ . '/..' . '/gettext/languages/src/Language.php',
@@ -604,11 +592,9 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Normalizer' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/Resources/stubs/Normalizer.php',
         'PHPMailer\\PHPMailer\\Exception' => __DIR__ . '/..' . '/phpmailer/phpmailer/src/Exception.php',
         'PHPMailer\\PHPMailer\\OAuth' => __DIR__ . '/..' . '/phpmailer/phpmailer/src/OAuth.php',
-        'PHPMailer\\PHPMailer\\OAuthTokenProvider' => __DIR__ . '/..' . '/phpmailer/phpmailer/src/OAuthTokenProvider.php',
         'PHPMailer\\PHPMailer\\PHPMailer' => __DIR__ . '/..' . '/phpmailer/phpmailer/src/PHPMailer.php',
         'PHPMailer\\PHPMailer\\POP3' => __DIR__ . '/..' . '/phpmailer/phpmailer/src/POP3.php',
         'PHPMailer\\PHPMailer\\SMTP' => __DIR__ . '/..' . '/phpmailer/phpmailer/src/SMTP.php',
-        'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'Psr\\Cache\\CacheException' => __DIR__ . '/..' . '/psr/cache/src/CacheException.php',
         'Psr\\Cache\\CacheItemInterface' => __DIR__ . '/..' . '/psr/cache/src/CacheItemInterface.php',
         'Psr\\Cache\\CacheItemPoolInterface' => __DIR__ . '/..' . '/psr/cache/src/CacheItemPoolInterface.php',
@@ -627,7 +613,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Psr\\Log\\Test\\DummyTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/DummyTest.php',
         'Psr\\Log\\Test\\LoggerInterfaceTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
         'Psr\\Log\\Test\\TestLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/TestLogger.php',
-        'ReturnTypeWillChange' => __DIR__ . '/..' . '/symfony/polyfill-php81/Resources/stubs/ReturnTypeWillChange.php',
         'RobRichards\\XMLSecLibs\\Utils\\XPath' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/Utils/XPath.php',
         'RobRichards\\XMLSecLibs\\XMLSecEnc' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/XMLSecEnc.php',
         'RobRichards\\XMLSecLibs\\XMLSecurityDSig' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/XMLSecurityDSig.php',
@@ -692,27 +677,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'SAML2\\DOMDocumentFactory' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/DOMDocumentFactory.php',
         'SAML2\\EncryptedAssertion' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/EncryptedAssertion.php',
         'SAML2\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/InvalidArgumentException.php',
-        'SAML2\\Exception\\MetadataExpiredException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/MetadataExpiredException.php',
-        'SAML2\\Exception\\ProtocolViolationException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/ProtocolViolationException.php',
-        'SAML2\\Exception\\Protocol\\AuthnFailedException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/AuthnFailedException.php',
-        'SAML2\\Exception\\Protocol\\InvalidAttrNameOrValueException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/InvalidAttrNameOrValueException.php',
-        'SAML2\\Exception\\Protocol\\InvalidNameIDPolicyException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/InvalidNameIDPolicyException.php',
-        'SAML2\\Exception\\Protocol\\NoAuthnContextException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/NoAuthnContextException.php',
-        'SAML2\\Exception\\Protocol\\NoAvailableIDPException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/NoAvailableIDPException.php',
-        'SAML2\\Exception\\Protocol\\NoPassiveException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/NoPassiveException.php',
-        'SAML2\\Exception\\Protocol\\NoSupportedIDPException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/NoSupportedIDPException.php',
-        'SAML2\\Exception\\Protocol\\PartialLogoutException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/PartialLogoutException.php',
-        'SAML2\\Exception\\Protocol\\ProxyCountExceededException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/ProxyCountExceededException.php',
-        'SAML2\\Exception\\Protocol\\RequestDeniedException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/RequestDeniedException.php',
-        'SAML2\\Exception\\Protocol\\RequestUnsupportedException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/RequestUnsupportedException.php',
-        'SAML2\\Exception\\Protocol\\RequestVersionDeprecatedException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/RequestVersionDeprecatedException.php',
-        'SAML2\\Exception\\Protocol\\RequestVersionTooHighException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/RequestVersionTooHighException.php',
-        'SAML2\\Exception\\Protocol\\RequestVersionTooLowException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/RequestVersionTooLowException.php',
-        'SAML2\\Exception\\Protocol\\ResourceNotRecognizedException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/ResourceNotRecognizedException.php',
-        'SAML2\\Exception\\Protocol\\TooManyResponsesException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/TooManyResponsesException.php',
-        'SAML2\\Exception\\Protocol\\UnknownAttrProfileException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/UnknownAttrProfileException.php',
-        'SAML2\\Exception\\Protocol\\UnknownPrincipalException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/UnknownPrincipalException.php',
-        'SAML2\\Exception\\Protocol\\UnsupportedBindingException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Protocol/UnsupportedBindingException.php',
         'SAML2\\Exception\\RuntimeException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/RuntimeException.php',
         'SAML2\\Exception\\Throwable' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/Throwable.php',
         'SAML2\\Exception\\UnparseableXmlException' => __DIR__ . '/..' . '/simplesamlphp/saml2/src/SAML2/Exception/UnparseableXmlException.php',
@@ -868,6 +832,7 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'SimpleSAML\\Metadata\\Signer' => __DIR__ . '/../..' . '/lib/SimpleSAML/Metadata/Signer.php',
         'SimpleSAML\\Metadata\\Sources\\MDQ' => __DIR__ . '/../..' . '/lib/SimpleSAML/Metadata/Sources/MDQ.php',
         'SimpleSAML\\Module' => __DIR__ . '/../..' . '/lib/SimpleSAML/Module.php',
+        'SimpleSAML\\Module\\adfs\\AdfsController' => __DIR__ . '/../..' . '/modules/adfs/lib/AdfsController.php',
         'SimpleSAML\\Module\\adfs\\IdP\\ADFS' => __DIR__ . '/../..' . '/modules/adfs/lib/IdP/ADFS.php',
         'SimpleSAML\\Module\\adfs\\SAML2\\XML\\fed\\Constants' => __DIR__ . '/../..' . '/modules/adfs/lib/SAML2/XML/fed/Constants.php',
         'SimpleSAML\\Module\\adfs\\SAML2\\XML\\fed\\Endpoint' => __DIR__ . '/../..' . '/modules/adfs/lib/SAML2/XML/fed/Endpoint.php',
@@ -902,12 +867,7 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'SimpleSAML\\Module\\metarefresh\\ARP' => __DIR__ . '/../..' . '/modules/metarefresh/lib/ARP.php',
         'SimpleSAML\\Module\\metarefresh\\MetaLoader' => __DIR__ . '/../..' . '/modules/metarefresh/lib/MetaLoader.php',
         'SimpleSAML\\Module\\negotiate\\Auth\\Source\\Negotiate' => __DIR__ . '/../..' . '/modules/negotiate/lib/Auth/Source/Negotiate.php',
-        'SimpleSAML\\Module\\oauth\\Consumer' => __DIR__ . '/../..' . '/modules/oauth/lib/Consumer.php',
-        'SimpleSAML\\Module\\oauth\\OAuthServer' => __DIR__ . '/../..' . '/modules/oauth/lib/OAuthServer.php',
-        'SimpleSAML\\Module\\oauth\\OAuthStore' => __DIR__ . '/../..' . '/modules/oauth/lib/OAuthStore.php',
-        'SimpleSAML\\Module\\oauth\\Registry' => __DIR__ . '/../..' . '/modules/oauth/lib/Registry.php',
         'SimpleSAML\\Module\\preprodwarning\\Auth\\Process\\Warning' => __DIR__ . '/../..' . '/modules/preprodwarning/lib/Auth/Process/Warning.php',
-        'SimpleSAML\\Module\\preprodwarning\\Controller\\PreProdWarning' => __DIR__ . '/../..' . '/modules/preprodwarning/lib/Controller/PreProdWarning.php',
         'SimpleSAML\\Module\\radius\\Auth\\Source\\Radius' => __DIR__ . '/../..' . '/modules/radius/lib/Auth/Source/Radius.php',
         'SimpleSAML\\Module\\riak\\Store\\Riak' => __DIR__ . '/../..' . '/modules/riak/lib/Store/Riak.php',
         'SimpleSAML\\Module\\smartattributes\\Auth\\Process\\SmartID' => __DIR__ . '/../..' . '/modules/smartattributes/lib/Auth/Process/SmartID.php',
@@ -1162,7 +1122,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Symfony\\Component\\Cache\\Traits\\PhpArrayTrait' => __DIR__ . '/..' . '/symfony/cache/Traits/PhpArrayTrait.php',
         'Symfony\\Component\\Cache\\Traits\\PhpFilesTrait' => __DIR__ . '/..' . '/symfony/cache/Traits/PhpFilesTrait.php',
         'Symfony\\Component\\Cache\\Traits\\ProxyTrait' => __DIR__ . '/..' . '/symfony/cache/Traits/ProxyTrait.php',
-        'Symfony\\Component\\Cache\\Traits\\RedisClusterNodeProxy' => __DIR__ . '/..' . '/symfony/cache/Traits/RedisClusterNodeProxy.php',
         'Symfony\\Component\\Cache\\Traits\\RedisClusterProxy' => __DIR__ . '/..' . '/symfony/cache/Traits/RedisClusterProxy.php',
         'Symfony\\Component\\Cache\\Traits\\RedisProxy' => __DIR__ . '/..' . '/symfony/cache/Traits/RedisProxy.php',
         'Symfony\\Component\\Cache\\Traits\\RedisTrait' => __DIR__ . '/..' . '/symfony/cache/Traits/RedisTrait.php',
@@ -1940,7 +1899,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Symfony\\Component\\VarDumper\\Caster\\IntlCaster' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/IntlCaster.php',
         'Symfony\\Component\\VarDumper\\Caster\\LinkStub' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/LinkStub.php',
         'Symfony\\Component\\VarDumper\\Caster\\MemcachedCaster' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/MemcachedCaster.php',
-        'Symfony\\Component\\VarDumper\\Caster\\MysqliCaster' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/MysqliCaster.php',
         'Symfony\\Component\\VarDumper\\Caster\\PdoCaster' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/PdoCaster.php',
         'Symfony\\Component\\VarDumper\\Caster\\PgSqlCaster' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/PgSqlCaster.php',
         'Symfony\\Component\\VarDumper\\Caster\\ProxyManagerCaster' => __DIR__ . '/..' . '/symfony/var-dumper/Caster/ProxyManagerCaster.php',
@@ -2038,8 +1996,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Symfony\\Polyfill\\Php72\\Php72' => __DIR__ . '/..' . '/symfony/polyfill-php72/Php72.php',
         'Symfony\\Polyfill\\Php73\\Php73' => __DIR__ . '/..' . '/symfony/polyfill-php73/Php73.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
-        'Symfony\\Polyfill\\Php80\\PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/PhpToken.php',
-        'Symfony\\Polyfill\\Php81\\Php81' => __DIR__ . '/..' . '/symfony/polyfill-php81/Php81.php',
         'Twig\\Cache\\CacheInterface' => __DIR__ . '/..' . '/twig/twig/src/Cache/CacheInterface.php',
         'Twig\\Cache\\FilesystemCache' => __DIR__ . '/..' . '/twig/twig/src/Cache/FilesystemCache.php',
         'Twig\\Cache\\NullCache' => __DIR__ . '/..' . '/twig/twig/src/Cache/NullCache.php',
@@ -2092,7 +2048,6 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
         'Twig\\Node\\BlockNode' => __DIR__ . '/..' . '/twig/twig/src/Node/BlockNode.php',
         'Twig\\Node\\BlockReferenceNode' => __DIR__ . '/..' . '/twig/twig/src/Node/BlockReferenceNode.php',
         'Twig\\Node\\BodyNode' => __DIR__ . '/..' . '/twig/twig/src/Node/BodyNode.php',
-        'Twig\\Node\\CheckSecurityCallNode' => __DIR__ . '/..' . '/twig/twig/src/Node/CheckSecurityCallNode.php',
         'Twig\\Node\\CheckSecurityNode' => __DIR__ . '/..' . '/twig/twig/src/Node/CheckSecurityNode.php',
         'Twig\\Node\\CheckToStringNode' => __DIR__ . '/..' . '/twig/twig/src/Node/CheckToStringNode.php',
         'Twig\\Node\\DeprecatedNode' => __DIR__ . '/..' . '/twig/twig/src/Node/DeprecatedNode.php',
@@ -2435,10 +2390,10 @@ class ComposerStaticInitac24c80e9bd020160b816186f60ee171
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitac24c80e9bd020160b816186f60ee171::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitac24c80e9bd020160b816186f60ee171::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitac24c80e9bd020160b816186f60ee171::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitac24c80e9bd020160b816186f60ee171::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit9bc05b5835a1f4b8baca44382805131b::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit9bc05b5835a1f4b8baca44382805131b::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit9bc05b5835a1f4b8baca44382805131b::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit9bc05b5835a1f4b8baca44382805131b::$classMap;
 
         }, null, ClassLoader::class);
     }

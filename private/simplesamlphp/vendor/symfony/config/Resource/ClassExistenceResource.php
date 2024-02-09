@@ -38,10 +38,13 @@ class ClassExistenceResource implements SelfCheckingResourceInterface
     {
         $this->resource = $resource;
         if (null !== $exists) {
-            $this->exists = [$exists, null];
+            $this->exists = [(bool) $exists, null];
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function __toString()
     {
         return $this->resource;

@@ -430,19 +430,19 @@ class SymfonyStyle extends OutputStyle
         $chars = substr(str_replace(\PHP_EOL, "\n", $this->bufferedOutput->fetch()), -2);
 
         if (!isset($chars[0])) {
-            $this->newLine(); // empty history, so we should start with a new line.
+            $this->newLine(); //empty history, so we should start with a new line.
 
             return;
         }
-        // Prepend new line for each non LF chars (This means no blank line was output before)
+        //Prepend new line for each non LF chars (This means no blank line was output before)
         $this->newLine(2 - substr_count($chars, "\n"));
     }
 
     private function autoPrependText(): void
     {
         $fetched = $this->bufferedOutput->fetch();
-        // Prepend new line if last char isn't EOL:
-        if (!str_ends_with($fetched, "\n")) {
+        //Prepend new line if last char isn't EOL:
+        if ("\n" !== substr($fetched, -1)) {
             $this->newLine();
         }
     }
@@ -471,12 +471,7 @@ class SymfonyStyle extends OutputStyle
                 $message = OutputFormatter::escape($message);
             }
 
-            $decorationLength = Helper::strlen($message) - Helper::strlenWithoutDecoration($this->getFormatter(), $message);
-            $messageLineLength = min($this->lineLength - $prefixLength - $indentLength + $decorationLength, $this->lineLength);
-            $messageLines = explode(\PHP_EOL, wordwrap($message, $messageLineLength, \PHP_EOL, true));
-            foreach ($messageLines as $messageLine) {
-                $lines[] = $messageLine;
-            }
+            $lines = array_merge($lines, explode(\PHP_EOL, wordwrap($message, $this->lineLength - $prefixLength - $indentLength, \PHP_EOL, true)));
 
             if (\count($messages) > 1 && $key < \count($messages) - 1) {
                 $lines[] = '';
@@ -496,7 +491,7 @@ class SymfonyStyle extends OutputStyle
             }
 
             $line = $prefix.$line;
-            $line .= str_repeat(' ', max($this->lineLength - Helper::strlenWithoutDecoration($this->getFormatter(), $line), 0));
+            $line .= str_repeat(' ', $this->lineLength - Helper::strlenWithoutDecoration($this->getFormatter(), $line));
 
             if ($style) {
                 $line = sprintf('<%s>%s</>', $style, $line);

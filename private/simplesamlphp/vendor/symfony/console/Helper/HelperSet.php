@@ -98,9 +98,8 @@ class HelperSet implements \IteratorAggregate
     }
 
     /**
-     * @return \Traversable<Helper>
+     * @return Helper[]
      */
-    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         return new \ArrayIterator($this->helpers);

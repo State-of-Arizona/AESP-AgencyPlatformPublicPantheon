@@ -35,7 +35,7 @@ class SMTP
      *
      * @var string
      */
-    const VERSION = '6.7';
+    const VERSION = '6.3.0';
 
     /**
      * SMTP line break constant.
@@ -186,8 +186,6 @@ class SMTP
         'Amazon_SES' => '/[\d]{3} Ok (.*)/',
         'SendGrid' => '/[\d]{3} Ok: queued as (.*)/',
         'CampaignMonitor' => '/[\d]{3} 2.0.0 OK:([a-zA-Z\d]{48})/',
-        'Haraka' => '/[\d]{3} Message Queued \((.*)\)/',
-        'Mailjet' => '/[\d]{3} OK queued as (.*)/',
     ];
 
     /**
@@ -393,6 +391,7 @@ class SMTP
                 STREAM_CLIENT_CONNECT,
                 $socket_context
             );
+            restore_error_handler();
         } else {
             //Fall back to fsockopen which should work in more places, but is missing some features
             $this->edebug(
@@ -407,8 +406,8 @@ class SMTP
                 $errstr,
                 $timeout
             );
+            restore_error_handler();
         }
-        restore_error_handler();
 
         //Verify we connected properly
         if (!is_resource($connection)) {
@@ -483,7 +482,7 @@ class SMTP
      * @param string $username The user name
      * @param string $password The password
      * @param string $authtype The auth type (CRAM-MD5, PLAIN, LOGIN, XOAUTH2)
-     * @param OAuthTokenProvider $OAuth An optional OAuthTokenProvider instance for XOAUTH2 authentication
+     * @param OAuth  $OAuth    An optional OAuth instance for XOAUTH2 authentication
      *
      * @return bool True if successfully authenticated
      */
@@ -554,8 +553,6 @@ class SMTP
                 }
                 //Send encoded username and password
                 if (
-                    //Format from https://tools.ietf.org/html/rfc4616#section-2
-                    //We skip the first field (it's forgery), so the string starts with a null byte
                     !$this->sendCommand(
                         'User & Password',
                         base64_encode("\0" . $username . "\0" . $password),
@@ -682,6 +679,7 @@ class SMTP
      */
     public function close()
     {
+        $this->setError('');
         $this->server_caps = null;
         $this->helo_rply = null;
         if (is_resource($this->smtp_conn)) {
@@ -695,7 +693,7 @@ class SMTP
     /**
      * Send an SMTP DATA command.
      * Issues a data command and sends the msg_data to the server,
-     * finalizing the mail transaction. $msg_data is the message
+     * finializing the mail transaction. $msg_data is the message
      * that is to be send with the headers. Each header needs to be
      * on a single line followed by a <CRLF> with the message headers
      * and the message body being separated by an additional <CRLF>.
@@ -1036,10 +1034,7 @@ class SMTP
             return false;
         }
 
-        //Don't clear the error store when using keepalive
-        if ($command !== 'RSET') {
-            $this->setError('');
-        }
+        $this->setError('');
 
         return true;
     }
@@ -1172,7 +1167,7 @@ class SMTP
         if (!$this->server_caps) {
             $this->setError('No HELO/EHLO was sent');
 
-            return null;
+            return;
         }
 
         if (!array_key_exists($name, $this->server_caps)) {
@@ -1184,7 +1179,7 @@ class SMTP
             }
             $this->setError('HELO handshake was used; No information about server extensions available');
 
-            return null;
+            return;
         }
 
         return $this->server_caps[$name];

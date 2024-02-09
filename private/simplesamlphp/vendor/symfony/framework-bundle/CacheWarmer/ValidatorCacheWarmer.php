@@ -80,9 +80,7 @@ class ValidatorCacheWarmer extends AbstractPhpFileCacheWarmer
     protected function warmUpPhpArrayAdapter(PhpArrayAdapter $phpArrayAdapter, array $values)
     {
         // make sure we don't cache null values
-        $values = array_filter($values, function ($val) { return null !== $val; });
-
-        parent::warmUpPhpArrayAdapter($phpArrayAdapter, $values);
+        parent::warmUpPhpArrayAdapter($phpArrayAdapter, array_filter($values));
     }
 
     /**

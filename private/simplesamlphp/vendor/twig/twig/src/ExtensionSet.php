@@ -149,6 +149,8 @@ final class ExtensionSet
             throw new \LogicException(sprintf('Unable to register extension "%s" as it is already registered.', $class));
         }
 
+        // For BC/FC with namespaced aliases
+        $class = (new \ReflectionClass($class))->name;
         $this->extensions[$class] = $extension;
     }
 

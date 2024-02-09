@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\FrameworkBundle\DependencyInjection\Compiler;
 
-use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -35,11 +34,8 @@ class AddAnnotationsCachedReaderPass implements CompilerPassInterface
                 $provider = $properties['cacheProviderBackup']->getValues()[0];
                 unset($properties['cacheProviderBackup']);
                 $reader->setProperties($properties);
-                $reader->replaceArgument(1, $provider);
-            } elseif (4 <= \count($arguments = $reader->getArguments()) && $arguments[3] instanceof ServiceClosureArgument) {
-                $arguments[1] = $arguments[3]->getValues()[0];
-                unset($arguments[3]);
-                $reader->setArguments($arguments);
+                $container->set($id, null);
+                $container->setDefinition($id, $reader->replaceArgument(1, $provider));
             }
         }
     }

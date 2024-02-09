@@ -66,8 +66,8 @@ class HTTPArtifact extends Binding
         if ($destination === null) {
             throw new \Exception('Cannot get redirect URL, no destination set in the message.');
         }
-        $httpUtils = new HTTP();
-        return $httpUtils->addURLparameters($destination, $params);
+        /** @psalm-suppress UndefinedClass */
+        return HTTP::addURLparameters($destination, $params);
     }
 
 
@@ -145,8 +145,8 @@ class HTTPArtifact extends Binding
         $soap = new SOAPClient();
 
         // Send message through SoapClient
-        /** @var \SimpleSAML\SAML2\XML\samlp\ArtifactResponse $artifactResponse */
-        $artifactResponse = $soap->send($ar, $this->spMetadata, $idpMetadata);
+        /** @var \SAML2\ArtifactResponse $artifactResponse */
+        $artifactResponse = $soap->send($ar, $this->spMetadata);
 
         if (!$artifactResponse->isSuccess()) {
             throw new \Exception('Received error from ArtifactResolutionService.');

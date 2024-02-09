@@ -6,7 +6,6 @@ namespace SAML2;
 
 use DOMDocument;
 
-use SAML2\Exception\Protocol\UnsupportedBindingException;
 use SAML2\XML\ecp\Response as ECPResponse;
 
 /**
@@ -102,8 +101,8 @@ SOAP;
     {
         $postText = $this->getInputStream();
 
-        if (empty($postText)) {
-            throw new UnsupportedBindingException('Invalid message received at AssertionConsumerService endpoint.');
+        if ($postText === false) {
+            throw new \Exception('Invalid message received to AssertionConsumerService endpoint.');
         }
 
         $document = DOMDocumentFactory::fromString($postText);

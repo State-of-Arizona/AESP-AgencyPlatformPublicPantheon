@@ -79,24 +79,24 @@ abstract class AbstractConfigCommand extends ContainerDebugCommand
                 $guess = $bundle->getName();
                 $minScore = $distance;
             }
-        }
 
-        $container = $this->getContainerBuilder();
+            $extension = $bundle->getContainerExtension();
 
-        if ($container->hasExtension($name)) {
-            return $container->getExtension($name);
-        }
+            if ($extension) {
+                if ($name === $extension->getAlias()) {
+                    return $extension;
+                }
 
-        foreach ($container->getExtensions() as $extension) {
-            $distance = levenshtein($name, $extension->getAlias());
+                $distance = levenshtein($name, $extension->getAlias());
 
-            if ($distance < $minScore) {
-                $guess = $extension->getAlias();
-                $minScore = $distance;
+                if ($distance < $minScore) {
+                    $guess = $extension->getAlias();
+                    $minScore = $distance;
+                }
             }
         }
 
-        if (!str_ends_with($name, 'Bundle')) {
+        if ('Bundle' !== substr($name, -6)) {
             $message = sprintf('No extensions with configuration available for "%s".', $name);
         } else {
             $message = sprintf('No extension with alias "%s" is enabled.', $name);

@@ -36,7 +36,7 @@ class CodeHelper extends Helper
      */
     public function __construct($fileLinkFormat, string $projectDir, string $charset)
     {
-        $this->fileLinkFormat = $fileLinkFormat ?: \ini_get('xdebug.file_link_format') ?: get_cfg_var('xdebug.file_link_format');
+        $this->fileLinkFormat = $fileLinkFormat ?: ini_get('xdebug.file_link_format') ?: get_cfg_var('xdebug.file_link_format');
         $this->rootDir = str_replace('\\', '/', $projectDir).'/';
         $this->charset = $charset;
     }
@@ -63,7 +63,7 @@ class CodeHelper extends Helper
 
     public function abbrMethod($method)
     {
-        if (str_contains($method, '::')) {
+        if (false !== strpos($method, '::')) {
             [$class, $method] = explode('::', $method, 2);
             $result = sprintf('%s::%s()', $this->abbrClass($class), $method);
         } elseif ('Closure' === $method) {
@@ -164,7 +164,7 @@ class CodeHelper extends Helper
         if (null === $text) {
             $file = trim($file);
             $fileStr = $file;
-            if (str_starts_with($fileStr, $this->rootDir)) {
+            if (0 === strpos($fileStr, $this->rootDir)) {
                 $fileStr = str_replace(['\\', $this->rootDir], ['/', ''], $fileStr);
                 $fileStr = htmlspecialchars($fileStr, $flags, $this->charset);
                 $fileStr = sprintf('<abbr title="%s">kernel.project_dir</abbr>/%s', htmlspecialchars($this->rootDir, $flags, $this->charset), $fileStr);

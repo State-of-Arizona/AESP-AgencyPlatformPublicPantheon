@@ -13,8 +13,6 @@ namespace Symfony\Component\Cache\Simple;
 
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Cache\Marshaller\MarshallerInterface;
-use Symfony\Component\Cache\Traits\RedisClusterProxy;
-use Symfony\Component\Cache\Traits\RedisProxy;
 use Symfony\Component\Cache\Traits\RedisTrait;
 use Symfony\Contracts\Cache\CacheInterface;
 
@@ -28,10 +26,10 @@ class RedisCache extends AbstractCache
     use RedisTrait;
 
     /**
-     * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface|RedisProxy|RedisClusterProxy $redis
+     * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface $redisClient
      */
-    public function __construct($redis, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+    public function __construct($redisClient, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
     {
-        $this->init($redis, $namespace, $defaultLifetime, $marshaller);
+        $this->init($redisClient, $namespace, $defaultLifetime, $marshaller);
     }
 }

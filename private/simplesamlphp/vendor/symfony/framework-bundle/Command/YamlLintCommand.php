@@ -36,7 +36,7 @@ class YamlLintCommand extends BaseLintCommand
         };
 
         $isReadableProvider = function ($fileOrDirectory, $default) {
-            return str_starts_with($fileOrDirectory, '@') || $default($fileOrDirectory);
+            return 0 === strpos($fileOrDirectory, '@') || $default($fileOrDirectory);
         };
 
         parent::__construct(null, $directoryIteratorProvider, $isReadableProvider);

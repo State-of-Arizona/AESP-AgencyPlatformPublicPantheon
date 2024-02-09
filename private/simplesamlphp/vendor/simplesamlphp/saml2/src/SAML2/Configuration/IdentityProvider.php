@@ -7,7 +7,7 @@ namespace SAML2\Configuration;
 /**
  * Basic configuration wrapper
  */
-class IdentityProvider extends ArrayAdapter implements CertificateProvider, DecryptionProvider, EntityIdProvider
+final class IdentityProvider extends ArrayAdapter implements CertificateProvider, DecryptionProvider, EntityIdProvider
 {
     /**
      * @return array|\Traversable|null

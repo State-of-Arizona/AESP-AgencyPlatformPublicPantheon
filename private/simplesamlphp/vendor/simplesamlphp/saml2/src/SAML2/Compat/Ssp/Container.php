@@ -19,25 +19,6 @@ class Container extends AbstractContainer
      */
     protected $logger;
 
-    /**
-     * @var \SimpleSAML\Utils\HTTP
-     */
-    protected $utilsHttp;
-
-    /**
-     * @var \SimpleSAML\Utils\Random
-     */
-    protected $utilsRandom;
-
-    /**
-     * @var \SimpleSAML\Utils\System
-     */
-    protected $utilsSystem;
-
-    /**
-     * @var \SimpleSAML\Utils\XML
-     */
-    protected $utilsXml;
 
     /**
      * Create a new SimpleSAMLphp compatible container.
@@ -45,10 +26,6 @@ class Container extends AbstractContainer
     public function __construct()
     {
         $this->logger = new Logger();
-        $this->utilsHttp = new HTTP();
-        $this->utilsRandom = new Random();
-        $this->utilsSystem = new System();
-        $this->utilsXml = new XML();
     }
 
 
@@ -68,7 +45,8 @@ class Container extends AbstractContainer
      */
     public function generateId() : string
     {
-        return $this->utilsRandom->generateID();
+        /** @psalm-suppress UndefinedClass */
+        return Random::generateID();
     }
 
 
@@ -80,7 +58,8 @@ class Container extends AbstractContainer
      */
     public function debugMessage($message, string $type) : void
     {
-        $this->utilsXml->debugSAMLMessage($message, $type);
+        /** @psalm-suppress UndefinedClass */
+        XML::debugSAMLMessage($message, $type);
     }
 
 
@@ -92,7 +71,8 @@ class Container extends AbstractContainer
      */
     public function redirect(string $url, array $data = []) : void
     {
-        $this->utilsHttp->redirectTrustedURL($url, $data);
+        /** @psalm-suppress UndefinedClass */
+        HTTP::redirectTrustedURL($url, $data);
     }
 
 
@@ -104,7 +84,8 @@ class Container extends AbstractContainer
      */
     public function postRedirect(string $url, array $data = []) : void
     {
-        $this->utilsHttp->submitPOSTData($url, $data);
+        /** @psalm-suppress UndefinedClass */
+        HTTP::submitPOSTData($url, $data);
     }
 
 
@@ -114,7 +95,8 @@ class Container extends AbstractContainer
      */
     public function getTempDir() : string
     {
-        return $this->utilsSystem->getTempDir();
+        /** @psalm-suppress UndefinedClass */
+        return System::getTempDir();
     }
 
 
@@ -130,6 +112,7 @@ class Container extends AbstractContainer
         if ($mode === null) {
             $mode = 0600;
         }
-        $this->utilsSystem->writeFile($filename, $data, $mode);
+        /** @psalm-suppress UndefinedClass */
+        System::writeFile($filename, $data, $mode);
     }
 }

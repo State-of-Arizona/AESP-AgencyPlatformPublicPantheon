@@ -14,7 +14,6 @@ namespace Symfony\Component\Cache\DependencyInjection;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\ChainAdapter;
-use Symfony\Component\Cache\Adapter\NullAdapter;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -131,7 +130,7 @@ class CachePoolPass implements CompilerPassInterface
                         $chainedPool->replaceArgument($i++, new Reference(static::getServiceProvider($container, $chainedTags[0]['provider'])));
                     }
 
-                    if (isset($tags[0]['namespace']) && !\in_array($adapter->getClass(), [ArrayAdapter::class, NullAdapter::class], true)) {
+                    if (isset($tags[0]['namespace']) && ArrayAdapter::class !== $adapter->getClass()) {
                         $chainedPool->replaceArgument($i++, $tags[0]['namespace']);
                     }
 
@@ -156,7 +155,7 @@ class CachePoolPass implements CompilerPassInterface
                     if ($tags[0][$attr]) {
                         $pool->addTag($this->kernelResetTag, ['method' => $tags[0][$attr]]);
                     }
-                } elseif ('namespace' !== $attr || !\in_array($class, [ArrayAdapter::class, NullAdapter::class], true)) {
+                } elseif ('namespace' !== $attr || ArrayAdapter::class !== $class) {
                     $pool->replaceArgument($i++, $tags[0][$attr]);
                 }
                 unset($tags[0][$attr]);

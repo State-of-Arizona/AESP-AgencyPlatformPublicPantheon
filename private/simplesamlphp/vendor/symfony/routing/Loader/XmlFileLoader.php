@@ -182,7 +182,7 @@ class XmlFileLoader extends FileLoader
         $this->setCurrentDir(\dirname($path));
 
         /** @var RouteCollection[] $imported */
-        $imported = $this->import($resource, '' !== $type ? $type : null, false, $file, $exclude) ?: [];
+        $imported = $this->import($resource, ('' !== $type ? $type : null), false, $file, $exclude) ?: [];
 
         if (!\is_array($imported)) {
             $imported = [$imported];
@@ -370,7 +370,7 @@ class XmlFileLoader extends FileLoader
     /**
      * Recursively parses the value of a "default" element.
      *
-     * @return array|bool|float|int|string|null The parsed value
+     * @return array|bool|float|int|string The parsed value
      *
      * @throws \InvalidArgumentException when the XML is invalid
      */

@@ -1,7 +1,14 @@
 SimpleSAMLphp Identity Provider QuickStart
 ===========================================
 
-[TOC]
+<!-- 
+	This file is written in Markdown syntax. 
+	For more information about how to use the Markdown syntax, read here:
+	http://daringfireball.net/projects/markdown/syntax
+-->
+
+
+<!-- {{TOC}} -->
 
 This guide will describe how to configure SimpleSAMLphp as an identity provider (IdP). You should previously have installed SimpleSAMLphp as described in [the SimpleSAMLphp installation instructions](simplesamlphp-install)
 
@@ -19,13 +26,13 @@ Authentication module
 
 The next step is to configure the way users authenticate on your IdP. Various modules in the `modules/` directory provides methods for authenticating your users. This is an overview of those that are included in the SimpleSAMLphp distribution:
 
-[`authcrypt:Hash`](/docs/contrib_modules/authcrypt/authcrypt.html)
+[`authcrypt:Hash`](./authcrypt:authcrypt)
 : Username & password authentication with hashed passwords.
 
-[`authcrypt:Htpasswd`](/docs/contrib_modules/authcrypt/authcrypt.html)
+[`authcrypt:Htpasswd`](./authcrypt:authcrypt)
 : Username & password authentication against .htpasswd file.
 
-[`authX509:authX509userCert`](/docs/contrib_modules/authX509/authX509.html)
+[`authX509:authX509userCert`](./authX509:authX509)
 : Authenticate against a LDAP database with a SSL client certificate.
 
 `exampleauth:UserPass`
@@ -34,32 +41,41 @@ The next step is to configure the way users authenticate on your IdP. Various mo
 `exampleauth:Static`
 : Automatically log in as a user with a set of attributes.
 
-[`ldap:LDAP`](/docs/contrib_modules/ldap/ldap.html)
+[`ldap:LDAP`](./ldap:ldap)
 : Authenticates an user to a LDAP server.
 
-[`ldap:LDAPMulti`](/docs/contrib_modules/ldap/ldap.html)
+[`ldap:LDAPMulti`](./ldap:ldap)
 : Authenticates an user to one of several LDAP server.
   The user can choose the LDAP server from a dropdown list.
 
-[`sqlauth:SQL`](/docs/contrib_modules/sqlauth/sql.html)
+[`sqlauth:SQL`](./sqlauth:sql)
 : Authenticate an user against a database.
 
-[`radius:Radius`](/docs/contrib_modules/radius/radius.html)
+[`radius:Radius`](./radius:radius)
 : Authenticates an user to a Radius server.
+
+[`InfoCard:ICAuth`](https://github.com/simplesamlphp/simplesamlphp-module-infocard/blob/master/README.md)
+: Authenticate with an InfoCard.
 
 [`multiauth:MultiAuth`](./multiauth:multiauth)
 : Allow the user to select from a list of authentication sources.
+
+`openid:OpenIDConsumer`
+: Authenticate against an OpenID provider.
 
 [`saml:SP`](./saml:sp)
 : Authenticate against a SAML IdP. Can be used for bridging.
 
 `authYubiKey:YubiKey`
-: Authenticate with [a YubiKey](https://www.yubico.com/products/yubikey/).
+: Authenticate with [an YubiKey](http://www.yubico.com/products/yubikey/).
 
-[`authtwitter:Twitter`](/docs/contrib_modules/authtwitter/oauthtwitter.html)
+[`authfacebook:Facebook`](./authfacebook:authfacebook)
+: Authenticate with a Facebook ID.
+
+[`authtwitter:Twitter`](./authtwitter:oauthtwitter)
 : Authenticate with your Twitter account using the Twitter OAuth API.
 
-[`papi:PAPI`](https://github.com/rediris-es/simplesamlphp-module-papi/blob/master/README.md)
+[`papi:PAPI`](https://github.com/rediris-es/simplesamlphp-module-papi/blog/master/README.md)
 : Authenticate by means of the PAPI protocol.
 
 In this guide, we will use the `exampleauth:UserPass` authentication module. This module does not have any dependencies, and is therefore simple to set up.

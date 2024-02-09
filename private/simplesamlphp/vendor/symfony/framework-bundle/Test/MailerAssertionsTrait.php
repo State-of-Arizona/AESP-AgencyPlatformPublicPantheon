@@ -91,7 +91,7 @@ trait MailerAssertionsTrait
     }
 
     /**
-     * @return MessageEvent[]
+     * @return MessageEvents[]
      */
     public static function getMailerEvents(string $transport = null): array
     {

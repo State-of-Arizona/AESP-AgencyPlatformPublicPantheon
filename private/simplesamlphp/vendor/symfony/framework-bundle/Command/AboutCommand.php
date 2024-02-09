@@ -37,7 +37,7 @@ class AboutCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Display information about the current project')
+            ->setDescription('Displays information about the current project')
             ->setHelp(<<<'EOT'
 The <info>%command.name%</info> command displays information about the current Symfony project.
 
@@ -84,8 +84,8 @@ EOT
             ['Architecture', (\PHP_INT_SIZE * 8).' bits'],
             ['Intl locale', class_exists(\Locale::class, false) && \Locale::getDefault() ? \Locale::getDefault() : 'n/a'],
             ['Timezone', date_default_timezone_get().' (<comment>'.(new \DateTime())->format(\DateTime::W3C).'</>)'],
-            ['OPcache', \extension_loaded('Zend OPcache') && filter_var(\ini_get('opcache.enable'), \FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false'],
-            ['APCu', \extension_loaded('apcu') && filter_var(\ini_get('apc.enabled'), \FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false'],
+            ['OPcache', \extension_loaded('Zend OPcache') && filter_var(ini_get('opcache.enable'), \FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false'],
+            ['APCu', \extension_loaded('apcu') && filter_var(ini_get('apc.enabled'), \FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false'],
             ['Xdebug', \extension_loaded('xdebug') ? 'true' : 'false'],
         ];
 
@@ -116,9 +116,7 @@ EOT
         } else {
             $size = 0;
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS | \RecursiveDirectoryIterator::FOLLOW_SYMLINKS)) as $file) {
-                if ($file->isReadable()) {
-                    $size += $file->getSize();
-                }
+                $size += $file->getSize();
             }
         }
 

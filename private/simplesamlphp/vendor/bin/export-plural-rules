@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 
 use Gettext\Languages\Exporter\Exporter;
@@ -8,11 +7,54 @@ use Gettext\Languages\Language;
 // This is a really life-saving approach.
 error_reporting(E_ALL);
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-    fwrite(STDERR, "{$errstr}\nFile: {$errfile}\nLine: {$errline}\nCode: {$errno}\n");
-    exit(5);
+    fprintf(STDERR, "${errstr}\nFile: ${errfile}\nLine: ${errline}\nCode: ${errno}\n");
+    die(5);
 });
 
 require_once dirname(__DIR__) . '/src/autoloader.php';
+
+// Parse the command line options
+Enviro::initialize();
+
+try {
+    if (isset(Enviro::$languages)) {
+        $languages = array();
+        foreach (Enviro::$languages as $languageId) {
+            $language = Language::getById($languageId);
+            if (!isset($language)) {
+                throw new Exception("Unable to find the language with id '${languageId}'");
+            }
+            $languages[] = $language;
+        }
+    } else {
+        $languages = Language::getAll();
+    }
+    if (Enviro::$reduce) {
+        $languages = Enviro::reduce($languages);
+    }
+    if (Enviro::$noExtraParenthesis) {
+        $languages = array_map(
+            function (Language $language) {
+                $language->formula = $language->buildFormula(true);
+
+                return $language;
+            },
+            $languages
+        );
+    }
+    if (isset(Enviro::$outputFilename)) {
+        echo call_user_func(array(Exporter::getExporterClassName(Enviro::$outputFormat), 'toFile'), $languages, Enviro::$outputFilename, array('us-ascii' => Enviro::$outputUSAscii));
+    } else {
+        echo call_user_func(array(Exporter::getExporterClassName(Enviro::$outputFormat), 'toString'), $languages, array('us-ascii' => Enviro::$outputUSAscii));
+    }
+} catch (Exception $x) {
+    fprintf(STDERR, $x->getMessage() . "\n");
+    fprintf(STDERR, "Trace:\n");
+    fprintf(STDERR, $x->getTraceAsString() . "\n");
+    die(4);
+}
+
+die(0);
 
 /**
  * Helper class to handle command line options.
@@ -85,7 +127,7 @@ class Enviro
                         case '-h':
                         case '--help':
                             self::showSyntax();
-                            exit(0);
+                            die(0);
                         case '--us-ascii':
                             self::$outputUSAscii = true;
                             break;
@@ -104,9 +146,9 @@ class Enviro
                         default:
                             if (preg_match('/^--output=.+$/', $argLC)) {
                                 if (isset(self::$outputFilename)) {
-                                    fwrite(STDERR, "The output file name has been specified more than once!\n");
+                                    fprintf(STDERR, "The output file name has been specified more than once!\n");
                                     self::showSyntax();
-                                    exit(3);
+                                    die(3);
                                 }
                                 list(, self::$outputFilename) = explode('=', $arg, 2);
                                 self::$outputFilename = trim(self::$outputFilename);
@@ -120,15 +162,15 @@ class Enviro
                                 }
                             } elseif (isset($exporters[$argLC])) {
                                 if (isset(self::$outputFormat)) {
-                                    fwrite(STDERR, "The output format has been specified more than once!\n");
+                                    fprintf(STDERR, "The output format has been specified more than once!\n");
                                     self::showSyntax();
-                                    exit(3);
+                                    die(3);
                                 }
                                 self::$outputFormat = $argLC;
                             } else {
-                                fwrite(STDERR, "Unknown option: {$arg}\n");
+                                fprintf(STDERR, "Unknown option: ${arg}\n");
                                 self::showSyntax();
-                                exit(2);
+                                die(2);
                             }
                             break;
                     }
@@ -137,7 +179,7 @@ class Enviro
         }
         if (!isset(self::$outputFormat)) {
             self::showSyntax();
-            exit(1);
+            die(1);
         }
         if (isset(self::$languages)) {
             self::$languages = array_values(array_unique(self::$languages));
@@ -155,11 +197,9 @@ class Enviro
         $basename = basename(__FILE__);
         $exporters = array_keys(Exporter::getExporters(true));
         $exporterList = implode('|', $exporters);
-        fwrite(
-            STDERR,
-            <<<EOT
+        fprintf(STDERR, <<<EOT
 Syntax:
-    {$basename} [-h|--help] [--us-ascii] [--languages=<LanguageId>[,<LanguageId>,...]] [--reduce=yes|no] [--parenthesis=yes|no] [--output=<file name>] <{$exporterList}>
+    ${basename} [-h|--help] [--us-ascii] [--languages=<LanguageId>[,<LanguageId>,...]] [--reduce=yes|no] [--parenthesis=yes|no] [--output=<file name>] <${exporterList}>
 
 Where:
     --help
@@ -196,9 +236,9 @@ EOT
         );
         $len = max(array_map('strlen', $exporters));
         foreach ($exporters as $exporter) {
-            fwrite(STDERR, '    ' . str_pad($exporter, $len) . ': ' . Exporter::getExporterDescription($exporter) . "\n");
+            fprintf(STDERR, '    ' . str_pad($exporter, $len) . ': ' . Exporter::getExporterDescription($exporter) . "\n");
         }
-        fwrite(STDERR, "\n");
+        fprintf(STDERR, "\n");
     }
 
     /**
@@ -215,7 +255,7 @@ EOT
             foreach ($languages as $language) {
                 $chunks = explode('_', $language->id);
                 $compatibleFound = false;
-                if ($numChunks === count($chunks)) {
+                if (count($chunks) === $numChunks) {
                     $categoriesHash = serialize($language->categories);
                     $otherIds = array();
                     $otherIds[] = $chunks[0];
@@ -225,7 +265,7 @@ EOT
 
                     foreach ($languages as $check) {
                         foreach ($otherIds as $otherId) {
-                            if ($check->id === $otherId && $check->formula === $language->formula && $categoriesHash === serialize($check->categories)) {
+                            if (($check->id === $otherId) && ($check->formula === $language->formula) && (serialize($check->categories) === $categoriesHash)) {
                                 $compatibleFound = true;
                                 break;
                             }
@@ -245,46 +285,3 @@ EOT
         return $languages;
     }
 }
-
-// Parse the command line options
-Enviro::initialize();
-
-try {
-    if (isset(Enviro::$languages)) {
-        $languages = array();
-        foreach (Enviro::$languages as $languageId) {
-            $language = Language::getById($languageId);
-            if (!isset($language)) {
-                throw new Exception("Unable to find the language with id '{$languageId}'");
-            }
-            $languages[] = $language;
-        }
-    } else {
-        $languages = Language::getAll();
-    }
-    if (Enviro::$reduce) {
-        $languages = Enviro::reduce($languages);
-    }
-    if (Enviro::$noExtraParenthesis) {
-        $languages = array_map(
-            function (Language $language) {
-                $language->formula = $language->buildFormula(true);
-
-                return $language;
-            },
-            $languages
-        );
-    }
-    if (isset(Enviro::$outputFilename)) {
-        echo call_user_func(array(Exporter::getExporterClassName(Enviro::$outputFormat), 'toFile'), $languages, Enviro::$outputFilename, array('us-ascii' => Enviro::$outputUSAscii));
-    } else {
-        echo call_user_func(array(Exporter::getExporterClassName(Enviro::$outputFormat), 'toString'), $languages, array('us-ascii' => Enviro::$outputUSAscii));
-    }
-} catch (Exception $x) {
-    fwrite(STDERR, $x->getMessage() . "\n");
-    fwrite(STDERR, "Trace:\n");
-    fwrite(STDERR, $x->getTraceAsString() . "\n");
-    exit(4);
-}
-
-exit(0);

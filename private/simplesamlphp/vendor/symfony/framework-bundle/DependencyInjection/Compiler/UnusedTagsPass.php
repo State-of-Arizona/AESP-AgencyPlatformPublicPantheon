@@ -28,7 +28,6 @@ class UnusedTagsPass implements CompilerPassInterface
         'cache.pool.clearer',
         'config_cache.resource_checker',
         'console.command',
-        'container.do_not_inline',
         'container.env_var_loader',
         'container.env_var_processor',
         'container.hot_path',
@@ -100,7 +99,7 @@ class UnusedTagsPass implements CompilerPassInterface
                     continue;
                 }
 
-                if (str_contains($definedTag, $tag) || levenshtein($tag, $definedTag) <= \strlen($tag) / 3) {
+                if (false !== strpos($definedTag, $tag) || levenshtein($tag, $definedTag) <= \strlen($tag) / 3) {
                     $candidates[] = $definedTag;
                 }
             }

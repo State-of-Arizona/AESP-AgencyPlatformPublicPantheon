@@ -30,10 +30,9 @@ final class DOMDocumentFactory
     {
         if (trim($xml) === '') {
             throw InvalidArgumentException::invalidType('non-empty string', $xml);
-        } elseif (PHP_VERSION_ID < 80000) {
-            $entityLoader = libxml_disable_entity_loader(true);
         }
 
+        $entityLoader = libxml_disable_entity_loader(true);
         $internalErrors = libxml_use_internal_errors(true);
         libxml_clear_errors();
 
@@ -44,12 +43,9 @@ final class DOMDocumentFactory
         }
 
         $loaded = $domDocument->loadXML($xml, $options);
-        libxml_use_internal_errors($internalErrors);
 
-        if (PHP_VERSION_ID < 80000) {
-            /** @psalm-suppress PossiblyUndefinedVariable */
-            libxml_disable_entity_loader($entityLoader);
-        }
+        libxml_use_internal_errors($internalErrors);
+        libxml_disable_entity_loader($entityLoader);
 
         if (!$loaded) {
             $error = libxml_get_last_error();

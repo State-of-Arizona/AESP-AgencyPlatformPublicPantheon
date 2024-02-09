@@ -7,18 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Previous releases are documented in [github releases](https://github.com/oscarotero/Gettext/releases)
 
-## [4.8.7] - 2022-08-02
-### Fixed
-- Suppress deprecation error on PHP 8.1 [#280]
-
-## [4.8.6] - 2021-10-19
-### Fixed
-- Parse PO files with multiline disabled entries [#274]
-
-## [4.8.5] - 2021-07-13
-### Fixed
-- Prevent adding the same translator comment to multiple functions [#271]
-
 ## [4.8.4] - 2021-03-10
 ### Fixed
 - PHP 8 compatibilty [#266]
@@ -125,7 +113,7 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 ### Fixed
 - Improved the code style including php_codesniffer in development
 
-## [4.3.0] - 2017-03-04
+## 4.3.0 - 2017-03-04
 ### Added
 - Added support for named placeholders (using `strtr`). For example:
   ```php
@@ -177,13 +165,7 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 [#242]: https://github.com/oscarotero/Gettext/issues/242
 [#261]: https://github.com/oscarotero/Gettext/issues/261
 [#266]: https://github.com/oscarotero/Gettext/issues/266
-[#271]: https://github.com/oscarotero/Gettext/issues/271
-[#274]: https://github.com/oscarotero/Gettext/issues/274
-[#280]: https://github.com/oscarotero/Gettext/issues/280
 
-[4.8.7]: https://github.com/oscarotero/Gettext/compare/v4.8.6...v4.8.7
-[4.8.6]: https://github.com/oscarotero/Gettext/compare/v4.8.5...v4.8.6
-[4.8.5]: https://github.com/oscarotero/Gettext/compare/v4.8.4...v4.8.5
 [4.8.4]: https://github.com/oscarotero/Gettext/compare/v4.8.3...v4.8.4
 [4.8.3]: https://github.com/oscarotero/Gettext/compare/v4.8.2...v4.8.3
 [4.8.2]: https://github.com/oscarotero/Gettext/compare/v4.8.1...v4.8.2
@@ -200,4 +182,3 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 [4.4.2]: https://github.com/oscarotero/Gettext/compare/v4.4.1...v4.4.2
 [4.4.1]: https://github.com/oscarotero/Gettext/compare/v4.4.0...v4.4.1
 [4.4.0]: https://github.com/oscarotero/Gettext/compare/v4.3.0...v4.4.0
-[4.3.0]: https://github.com/oscarotero/Gettext/releases/tag/v4.3.0

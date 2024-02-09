@@ -127,9 +127,7 @@ abstract class NodeDefinition implements NodeParentInterface
         }
 
         $node = $this->createNode();
-        if ($node instanceof BaseNode) {
-            $node->setAttributes($this->attributes);
-        }
+        $node->setAttributes($this->attributes);
 
         return $node;
     }

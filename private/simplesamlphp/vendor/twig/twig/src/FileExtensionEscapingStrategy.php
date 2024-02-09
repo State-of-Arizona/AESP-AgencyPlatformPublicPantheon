@@ -31,13 +31,13 @@ class FileExtensionEscapingStrategy
      *
      * @return string|false The escaping strategy name to use or false to disable
      */
-    public static function guess(string $name)
+    public static function guess($name)
     {
         if (\in_array(substr($name, -1), ['/', '\\'])) {
             return 'html'; // return html for directories
         }
 
-        if (str_ends_with($name, '.twig')) {
+        if ('.twig' === substr($name, -5)) {
             $name = substr($name, 0, -5);
         }
 
@@ -58,3 +58,5 @@ class FileExtensionEscapingStrategy
         }
     }
 }
+
+class_alias('Twig\FileExtensionEscapingStrategy', 'Twig_FileExtensionEscapingStrategy');

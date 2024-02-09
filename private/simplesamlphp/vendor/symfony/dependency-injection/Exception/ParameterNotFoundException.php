@@ -20,11 +20,11 @@ use Psr\Container\NotFoundExceptionInterface;
  */
 class ParameterNotFoundException extends InvalidArgumentException implements NotFoundExceptionInterface
 {
-    private string $key;
-    private ?string $sourceId;
-    private ?string $sourceKey;
-    private array $alternatives;
-    private ?string $nonNestedAlternative;
+    private $key;
+    private $sourceId;
+    private $sourceKey;
+    private $alternatives;
+    private $nonNestedAlternative;
 
     /**
      * @param string          $key                  The requested parameter key
@@ -84,14 +84,14 @@ class ParameterNotFoundException extends InvalidArgumentException implements Not
         return $this->sourceKey;
     }
 
-    public function setSourceId(?string $sourceId)
+    public function setSourceId($sourceId)
     {
         $this->sourceId = $sourceId;
 
         $this->updateRepr();
     }
 
-    public function setSourceKey(?string $sourceKey)
+    public function setSourceKey($sourceKey)
     {
         $this->sourceKey = $sourceKey;
 

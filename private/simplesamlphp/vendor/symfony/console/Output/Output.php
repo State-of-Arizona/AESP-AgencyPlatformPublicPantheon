@@ -29,17 +29,17 @@ use Symfony\Component\Console\Formatter\OutputFormatterInterface;
  */
 abstract class Output implements OutputInterface
 {
-    private int $verbosity;
+    private $verbosity;
     private $formatter;
 
     /**
-     * @param int|null                      $verbosity The verbosity level (one of the VERBOSITY constants in OutputInterface)
+     * @param int                           $verbosity The verbosity level (one of the VERBOSITY constants in OutputInterface)
      * @param bool                          $decorated Whether to decorate messages
      * @param OutputFormatterInterface|null $formatter Output formatter instance (null to use default OutputFormatter)
      */
     public function __construct(?int $verbosity = self::VERBOSITY_NORMAL, bool $decorated = false, OutputFormatterInterface $formatter = null)
     {
-        $this->verbosity = $verbosity ?? self::VERBOSITY_NORMAL;
+        $this->verbosity = null === $verbosity ? self::VERBOSITY_NORMAL : $verbosity;
         $this->formatter = $formatter ?? new OutputFormatter();
         $this->formatter->setDecorated($decorated);
     }
@@ -55,7 +55,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function getFormatter(): OutputFormatterInterface
+    public function getFormatter()
     {
         return $this->formatter;
     }
@@ -63,7 +63,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function setDecorated(bool $decorated)
+    public function setDecorated($decorated)
     {
         $this->formatter->setDecorated($decorated);
     }
@@ -71,7 +71,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function isDecorated(): bool
+    public function isDecorated()
     {
         return $this->formatter->isDecorated();
     }
@@ -79,15 +79,15 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function setVerbosity(int $level)
+    public function setVerbosity($level)
     {
-        $this->verbosity = $level;
+        $this->verbosity = (int) $level;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getVerbosity(): int
+    public function getVerbosity()
     {
         return $this->verbosity;
     }
@@ -95,7 +95,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function isQuiet(): bool
+    public function isQuiet()
     {
         return self::VERBOSITY_QUIET === $this->verbosity;
     }
@@ -103,7 +103,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function isVerbose(): bool
+    public function isVerbose()
     {
         return self::VERBOSITY_VERBOSE <= $this->verbosity;
     }
@@ -111,7 +111,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function isVeryVerbose(): bool
+    public function isVeryVerbose()
     {
         return self::VERBOSITY_VERY_VERBOSE <= $this->verbosity;
     }
@@ -119,7 +119,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function isDebug(): bool
+    public function isDebug()
     {
         return self::VERBOSITY_DEBUG <= $this->verbosity;
     }
@@ -127,7 +127,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function writeln(string|iterable $messages, int $options = self::OUTPUT_NORMAL)
+    public function writeln($messages, $options = self::OUTPUT_NORMAL)
     {
         $this->write($messages, true, $options);
     }
@@ -135,7 +135,7 @@ abstract class Output implements OutputInterface
     /**
      * {@inheritdoc}
      */
-    public function write(string|iterable $messages, bool $newline = false, int $options = self::OUTPUT_NORMAL)
+    public function write($messages, $newline = false, $options = self::OUTPUT_NORMAL)
     {
         if (!is_iterable($messages)) {
             $messages = [$messages];
@@ -169,6 +169,9 @@ abstract class Output implements OutputInterface
 
     /**
      * Writes a message to the output.
+     *
+     * @param string $message A message to write to the output
+     * @param bool   $newline Whether to add a newline or not
      */
-    abstract protected function doWrite(string $message, bool $newline);
+    abstract protected function doWrite($message, $newline);
 }

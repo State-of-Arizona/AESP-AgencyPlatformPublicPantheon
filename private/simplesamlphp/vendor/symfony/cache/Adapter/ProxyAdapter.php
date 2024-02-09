@@ -28,26 +28,22 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     use ContractsTrait;
     use ProxyTrait;
 
-    private string $namespace = '';
-    private int $namespaceLen;
-    private string $poolHash;
-    private int $defaultLifetime;
-
-    private static \Closure $createCacheItem;
-    private static \Closure $setInnerItem;
+    private $namespace;
+    private $namespaceLen;
+    private $createCacheItem;
+    private $setInnerItem;
+    private $poolHash;
+    private $defaultLifetime;
 
     public function __construct(CacheItemPoolInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
         $this->pool = $pool;
-        $this->poolHash = spl_object_hash($pool);
-        if ('' !== $namespace) {
-            \assert('' !== CacheItem::validateKey($namespace));
-            $this->namespace = $namespace;
-        }
+        $this->poolHash = $poolHash = spl_object_hash($pool);
+        $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace);
         $this->namespaceLen = \strlen($namespace);
         $this->defaultLifetime = $defaultLifetime;
-        self::$createCacheItem ?? self::$createCacheItem = \Closure::bind(
-            static function ($key, $innerItem, $poolHash) {
+        $this->createCacheItem = \Closure::bind(
+            static function ($key, $innerItem) use ($poolHash) {
                 $item = new CacheItem();
                 $item->key = $key;
 
@@ -78,7 +74,7 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
             null,
             CacheItem::class
         );
-        self::$setInnerItem ?? self::$setInnerItem = \Closure::bind(
+        $this->setInnerItem = \Closure::bind(
             /**
              * @param array $item A CacheItem cast to (array); accessing protected properties requires adding the "\0*\0" PHP prefix
              */
@@ -102,16 +98,16 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     /**
      * {@inheritdoc}
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed
+    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
     {
         if (!$this->pool instanceof CacheInterface) {
             return $this->doGet($this, $key, $callback, $beta, $metadata);
         }
 
         return $this->pool->get($this->getId($key), function ($innerItem, bool &$save) use ($key, $callback) {
-            $item = (self::$createCacheItem)($key, $innerItem, $this->poolHash);
+            $item = ($this->createCacheItem)($key, $innerItem);
             $item->set($value = $callback($item, $save));
-            (self::$setInnerItem)($innerItem, (array) $item);
+            ($this->setInnerItem)($innerItem, (array) $item);
 
             return $value;
         }, $beta, $metadata);
@@ -120,17 +116,18 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     /**
      * {@inheritdoc}
      */
-    public function getItem(mixed $key): CacheItem
+    public function getItem($key)
     {
+        $f = $this->createCacheItem;
         $item = $this->pool->getItem($this->getId($key));
 
-        return (self::$createCacheItem)($key, $item, $this->poolHash);
+        return $f($key, $item);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getItems(array $keys = []): iterable
+    public function getItems(array $keys = [])
     {
         if ($this->namespaceLen) {
             foreach ($keys as $i => $key) {
@@ -143,17 +140,25 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
-    public function hasItem(mixed $key): bool
+    public function hasItem($key)
     {
         return $this->pool->hasItem($this->getId($key));
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $prefix
+     *
+     * @return bool
      */
-    public function clear(string $prefix = ''): bool
+    public function clear(/* string $prefix = '' */)
     {
+        $prefix = 0 < \func_num_args() ? (string) func_get_arg(0) : '';
+
         if ($this->pool instanceof AdapterInterface) {
             return $this->pool->clear($this->namespace.$prefix);
         }
@@ -163,16 +168,20 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
-    public function deleteItem(mixed $key): bool
+    public function deleteItem($key)
     {
         return $this->pool->deleteItem($this->getId($key));
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
-    public function deleteItems(array $keys): bool
+    public function deleteItems(array $keys)
     {
         if ($this->namespaceLen) {
             foreach ($keys as $i => $key) {
@@ -185,29 +194,35 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
-    public function save(CacheItemInterface $item): bool
+    public function save(CacheItemInterface $item)
     {
         return $this->doSave($item, __FUNCTION__);
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
-    public function saveDeferred(CacheItemInterface $item): bool
+    public function saveDeferred(CacheItemInterface $item)
     {
         return $this->doSave($item, __FUNCTION__);
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @return bool
      */
-    public function commit(): bool
+    public function commit()
     {
         return $this->pool->commit();
     }
 
-    private function doSave(CacheItemInterface $item, string $method): bool
+    private function doSave(CacheItemInterface $item, string $method)
     {
         if (!$item instanceof CacheItem) {
             return false;
@@ -222,32 +237,33 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         } elseif ($this->pool instanceof AdapterInterface) {
             // this is an optimization specific for AdapterInterface implementations
             // so we can save a round-trip to the backend by just creating a new item
-            $innerItem = (self::$createCacheItem)($this->namespace.$item["\0*\0key"], null, $this->poolHash);
+            $f = $this->createCacheItem;
+            $innerItem = $f($this->namespace.$item["\0*\0key"], null);
         } else {
             $innerItem = $this->pool->getItem($this->namespace.$item["\0*\0key"]);
         }
 
-        (self::$setInnerItem)($innerItem, $item);
+        ($this->setInnerItem)($innerItem, $item);
 
         return $this->pool->$method($innerItem);
     }
 
-    private function generateItems(iterable $items): \Generator
+    private function generateItems(iterable $items)
     {
-        $f = self::$createCacheItem;
+        $f = $this->createCacheItem;
 
         foreach ($items as $key => $item) {
             if ($this->namespaceLen) {
                 $key = substr($key, $this->namespaceLen);
             }
 
-            yield $key => $f($key, $item, $this->poolHash);
+            yield $key => $f($key, $item);
         }
     }
 
-    private function getId(mixed $key): string
+    private function getId($key): string
     {
-        \assert('' !== CacheItem::validateKey($key));
+        CacheItem::validateKey($key);
 
         return $this->namespace.$key;
     }

@@ -27,9 +27,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceExce
  */
 class ResolveChildDefinitionsPass extends AbstractRecursivePass
 {
-    private array $currentPath;
+    private $currentPath;
 
-    protected function processValue(mixed $value, bool $isRoot = false): mixed
+    protected function processValue($value, $isRoot = false)
     {
         if (!$value instanceof Definition) {
             return parent::processValue($value, $isRoot);
@@ -102,8 +102,7 @@ class ResolveChildDefinitionsPass extends AbstractRecursivePass
         $def->setMethodCalls($parentDef->getMethodCalls());
         $def->setProperties($parentDef->getProperties());
         if ($parentDef->isDeprecated()) {
-            $deprecation = $parentDef->getDeprecation('%service_id%');
-            $def->setDeprecated($deprecation['package'], $deprecation['version'], $deprecation['message']);
+            $def->setDeprecated(true, $parentDef->getDeprecationMessage('%service_id%'));
         }
         $def->setFactory($parentDef->getFactory());
         $def->setConfigurator($parentDef->getConfigurator());
@@ -134,14 +133,13 @@ class ResolveChildDefinitionsPass extends AbstractRecursivePass
         if (isset($changes['public'])) {
             $def->setPublic($definition->isPublic());
         } else {
-            $def->setPublic($parentDef->isPublic());
+            $def->setPrivate($definition->isPrivate() || $parentDef->isPrivate());
         }
         if (isset($changes['lazy'])) {
             $def->setLazy($definition->isLazy());
         }
-        if (isset($changes['deprecated']) && $definition->isDeprecated()) {
-            $deprecation = $definition->getDeprecation('%service_id%');
-            $def->setDeprecated($deprecation['package'], $deprecation['version'], $deprecation['message']);
+        if (isset($changes['deprecated'])) {
+            $def->setDeprecated($definition->isDeprecated(), $definition->getDeprecationMessage('%service_id%'));
         }
         if (isset($changes['autowired'])) {
             $def->setAutowired($definition->isAutowired());

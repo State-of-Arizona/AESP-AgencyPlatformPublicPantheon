@@ -1,8 +1,6 @@
 #!/usr/bin/env php
 <?php
 
-declare(strict_types=1);
-
 /*
  * This script can be used to invoke cron jobs from cli.
  * You most likely want to execute as the user running your webserver.
@@ -10,15 +8,15 @@ declare(strict_types=1);
  */
 
 // This is the base directory of the SimpleSAMLphp installation
-$baseDir = dirname(__FILE__, 4);
+$baseDir = dirname(dirname(dirname(dirname(__FILE__))));
 
 // Add library autoloader.
-require_once($baseDir . '/src/_autoload.php');
+require_once($baseDir . '/lib/_autoload.php');
 
 if (!SimpleSAML\Module::isModuleEnabled('cron')) {
     echo "You need to enable the cron module before this script can be used.\n";
-    echo "You can enable it by editing your config.php file. Example:\n";
-    echo '  echo \'$config["module.enable"]["cron"] = true;\' >> "' . $baseDir . '/config/config.php' . "\"\n";
+    echo "You can enable it by running the following command:\n";
+    echo '  echo >"' . $baseDir . '/modules/cron/enable' . "\"\n";
     exit(1);
 }
 

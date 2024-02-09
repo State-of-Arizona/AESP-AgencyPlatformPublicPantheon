@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\Exception\EnvParameterException;
 class Compiler
 {
     private $passConfig;
-    private array $log = [];
+    private $log = [];
     private $serviceReferenceGraph;
 
     public function __construct()
@@ -31,17 +31,33 @@ class Compiler
         $this->serviceReferenceGraph = new ServiceReferenceGraph();
     }
 
-    public function getPassConfig(): PassConfig
+    /**
+     * Returns the PassConfig.
+     *
+     * @return PassConfig The PassConfig instance
+     */
+    public function getPassConfig()
     {
         return $this->passConfig;
     }
 
-    public function getServiceReferenceGraph(): ServiceReferenceGraph
+    /**
+     * Returns the ServiceReferenceGraph.
+     *
+     * @return ServiceReferenceGraph The ServiceReferenceGraph instance
+     */
+    public function getServiceReferenceGraph()
     {
         return $this->serviceReferenceGraph;
     }
 
-    public function addPass(CompilerPassInterface $pass, string $type = PassConfig::TYPE_BEFORE_OPTIMIZATION, int $priority = 0)
+    /**
+     * Adds a pass to the PassConfig.
+     *
+     * @param string $type     The type of the pass
+     * @param int    $priority Used to sort the passes
+     */
+    public function addPass(CompilerPassInterface $pass, $type = PassConfig::TYPE_BEFORE_OPTIMIZATION, int $priority = 0)
     {
         $this->passConfig->addPass($pass, $type, $priority);
     }
@@ -58,7 +74,12 @@ class Compiler
         $this->log[] = \get_class($pass).': '.$message;
     }
 
-    public function getLog(): array
+    /**
+     * Returns the log.
+     *
+     * @return array Log array
+     */
+    public function getLog()
     {
         return $this->log;
     }

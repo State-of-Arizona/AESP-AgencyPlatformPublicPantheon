@@ -1,4 +1,5 @@
-# Upgrade notes for SimpleSAMLphp 1.15
+Upgrade notes for SimpleSAMLphp 1.15
+====================================
 
 The minimum required PHP version is now 5.4. The dependency on mcrypt has been
 dropped.

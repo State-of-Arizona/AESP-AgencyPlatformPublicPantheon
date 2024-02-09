@@ -26,17 +26,13 @@ use Symfony\Component\Routing\RequestContext;
  */
 trait CompiledUrlMatcherTrait
 {
-    private bool $matchHost = false;
-    private array $staticRoutes = [];
-    private array $regexpList = [];
-    private array $dynamicRoutes = [];
-
-    /**
-     * @var callable|null
-     */
+    private $matchHost = false;
+    private $staticRoutes = [];
+    private $regexpList = [];
+    private $dynamicRoutes = [];
     private $checkCondition;
 
-    public function match(string $pathinfo): array
+    public function match($pathinfo): array
     {
         $allow = $allowSchemes = [];
         if ($ret = $this->doMatch($pathinfo, $allow, $allowSchemes)) {
@@ -97,10 +93,10 @@ trait CompiledUrlMatcherTrait
             }
 
             if ($requiredHost) {
-                if ('{' !== $requiredHost[0] ? $requiredHost !== $host : !preg_match($requiredHost, $host, $hostMatches)) {
+                if ('#' !== $requiredHost[0] ? $requiredHost !== $host : !preg_match($requiredHost, $host, $hostMatches)) {
                     continue;
                 }
-                if ('{' === $requiredHost[0] && $hostMatches) {
+                if ('#' === $requiredHost[0] && $hostMatches) {
                     $hostMatches['_route'] = $ret['_route'];
                     $ret = $this->mergeDefaults($hostMatches, $ret);
                 }

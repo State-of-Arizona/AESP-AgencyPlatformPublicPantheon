@@ -12,9 +12,9 @@
 namespace Symfony\Bundle\FrameworkBundle\CacheWarmer;
 
 use Psr\Container\ContainerInterface;
+use Symfony\Bundle\FrameworkBundle\DependencyInjection\CompatibilityServiceSubscriberInterface as ServiceSubscriberInterface;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
 use Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface;
-use Symfony\Contracts\Service\ServiceSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -35,24 +35,22 @@ class TranslationsCacheWarmer implements CacheWarmerInterface, ServiceSubscriber
 
     /**
      * {@inheritdoc}
-     *
-     * @return string[]
      */
-    public function warmUp(string $cacheDir): array
+    public function warmUp($cacheDir)
     {
-        $this->translator ??= $this->container->get('translator');
-
-        if ($this->translator instanceof WarmableInterface) {
-            return (array) $this->translator->warmUp($cacheDir);
+        if (null === $this->translator) {
+            $this->translator = $this->container->get('translator');
         }
 
-        return [];
+        if ($this->translator instanceof WarmableInterface) {
+            $this->translator->warmUp($cacheDir);
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function isOptional(): bool
+    public function isOptional()
     {
         return true;
     }
@@ -60,7 +58,7 @@ class TranslationsCacheWarmer implements CacheWarmerInterface, ServiceSubscriber
     /**
      * {@inheritdoc}
      */
-    public static function getSubscribedServices(): array
+    public static function getSubscribedServices()
     {
         return [
             'translator' => TranslatorInterface::class,

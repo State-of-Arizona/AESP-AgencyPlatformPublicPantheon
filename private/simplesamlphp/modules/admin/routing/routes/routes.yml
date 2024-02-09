@@ -1,72 +1,24 @@
----
-
 admin-main:
-  path: /
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Config::main'
-  }
-  methods: [GET]
-
+    path:       /
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Config::main' }
 admin-diagnostics:
-  path: /diagnostics
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Config::diagnostics'
-  }
-  methods: [GET]
-
+    path:       /diagnostics
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Config::diagnostics' }
 admin-phpinfo:
-  path: /phpinfo
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Config::phpinfo'
-  }
-  methods: [GET]
-
-admin-sandbox:
-  path: /sandbox
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Sandbox::main'
-  }
-  methods: [GET]
-
+    path:       /phpinfo
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Config::phpinfo' }
 admin-test:
-  path: /test/{as}
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Test::main',
-    as: null
-  }
-  methods: [GET]
-
-core-logout:
-  path: /logout
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Test::logout'
-  }
-  methods: [GET]
-
+    path:       /test/{as}
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Test::main', as: null }
 admin-fed:
-  path: /federation
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Federation::main'
-  }
-  methods: [GET]
-
+    path:       /federation
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Federation::main' }
 admin-fed-cert:
-  path: /federation/cert
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Federation::downloadCert'
-  }
-  methods: [GET]
-
+    path:       /federation/cert
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Federation::downloadCert' }
 admin-fed-show:
-  path: /federation/show
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Federation::showRemoteEntity'
-  }
-  methods: [GET]
-
+    path:       /federation/show
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Federation::showRemoteEntity' }
 admin-fed-converter:
-  path: /federation/metadata-converter
-  defaults: {
-    _controller: 'SimpleSAML\Module\admin\Controller\Federation::metadataConverter'
-  }
-  methods: [GET, POST]
+    path:       /federation/metadata-converter
+    defaults:   { _controller: 'SimpleSAML\Module\admin\Controller\Federation::metadataConverter' }

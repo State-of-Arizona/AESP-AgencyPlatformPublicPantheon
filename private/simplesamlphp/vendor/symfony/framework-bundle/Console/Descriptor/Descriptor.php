@@ -38,7 +38,7 @@ abstract class Descriptor implements DescriptorInterface
     /**
      * {@inheritdoc}
      */
-    public function describe(OutputInterface $output, mixed $object, array $options = [])
+    public function describe(OutputInterface $output, $object, array $options = [])
     {
         $this->output = $output;
 
@@ -64,9 +64,6 @@ abstract class Descriptor implements DescriptorInterface
             case $object instanceof ContainerBuilder && isset($options['parameter']):
                 $this->describeContainerParameter($object->resolveEnvPlaceholders($object->getParameter($options['parameter'])), $options);
                 break;
-            case $object instanceof ContainerBuilder && isset($options['deprecations']):
-                $this->describeContainerDeprecations($object, $options);
-                break;
             case $object instanceof ContainerBuilder:
                 $this->describeContainerServices($object, $options);
                 break;
@@ -83,7 +80,7 @@ abstract class Descriptor implements DescriptorInterface
                 $this->describeCallable($object, $options);
                 break;
             default:
-                throw new \InvalidArgumentException(sprintf('Object of type "%s" is not describable.', get_debug_type($object)));
+                throw new \InvalidArgumentException(sprintf('Object of type "%s" is not describable.', \get_class($object)));
         }
     }
 
@@ -113,7 +110,7 @@ abstract class Descriptor implements DescriptorInterface
      *
      * @param Definition|Alias|object $service
      */
-    abstract protected function describeContainerService(object $service, array $options = [], ContainerBuilder $builder = null);
+    abstract protected function describeContainerService($service, array $options = [], ContainerBuilder $builder = null);
 
     /**
      * Describes container services.
@@ -123,13 +120,11 @@ abstract class Descriptor implements DescriptorInterface
      */
     abstract protected function describeContainerServices(ContainerBuilder $builder, array $options = []);
 
-    abstract protected function describeContainerDeprecations(ContainerBuilder $builder, array $options = []): void;
-
     abstract protected function describeContainerDefinition(Definition $definition, array $options = []);
 
     abstract protected function describeContainerAlias(Alias $alias, array $options = [], ContainerBuilder $builder = null);
 
-    abstract protected function describeContainerParameter(mixed $parameter, array $options = []);
+    abstract protected function describeContainerParameter($parameter, array $options = []);
 
     abstract protected function describeContainerEnvVars(array $envs, array $options = []);
 
@@ -141,9 +136,19 @@ abstract class Descriptor implements DescriptorInterface
      */
     abstract protected function describeEventDispatcherListeners(EventDispatcherInterface $eventDispatcher, array $options = []);
 
-    abstract protected function describeCallable(mixed $callable, array $options = []);
+    /**
+     * Describes a callable.
+     *
+     * @param mixed $callable
+     */
+    abstract protected function describeCallable($callable, array $options = []);
 
-    protected function formatValue(mixed $value): string
+    /**
+     * Formats a value as string.
+     *
+     * @param mixed $value
+     */
+    protected function formatValue($value): string
     {
         if ($value instanceof \UnitEnum) {
             return ltrim(var_export($value, true), '\\');
@@ -160,7 +165,12 @@ abstract class Descriptor implements DescriptorInterface
         return preg_replace("/\n\s*/s", '', var_export($value, true));
     }
 
-    protected function formatParameter(mixed $value): string
+    /**
+     * Formats a parameter.
+     *
+     * @param mixed $value
+     */
+    protected function formatParameter($value): string
     {
         if ($value instanceof \UnitEnum) {
             return ltrim(var_export($value, true), '\\');
@@ -189,7 +199,10 @@ abstract class Descriptor implements DescriptorInterface
         return (string) $value;
     }
 
-    protected function resolveServiceDefinition(ContainerBuilder $builder, string $serviceId): mixed
+    /**
+     * @return mixed
+     */
+    protected function resolveServiceDefinition(ContainerBuilder $builder, string $serviceId)
     {
         if ($builder->hasDefinition($serviceId)) {
             return $builder->getDefinition($serviceId);

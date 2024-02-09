@@ -15,43 +15,43 @@ Examples
 
 Attribute maps embedded as parameters:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeMap',
             'mail' => 'email',
             'uid' => 'user'
-            'cn' => ['name', 'displayName'],
-        ],
-    ],
+            'cn' => array('name', 'displayName'),
+        ),
+    ),
 
 Attribute map in separate file:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeMap',
             'name2oid',
-        ],
-    ],
+        ),
+    ),
 
 This filter will use the map file from `simplesamlphp/attributemap/name2oid.php`.
 
 Attribute map in a file contained in a module:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeMap',
             'module:src2dst'
-        ],
-    ],
+        ),
+    ),
 
 This filter will use the map file from `simplesamlphp/modules/module/attributemap/src2dst.php`.
 
 Duplicate attributes based on a map file:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeMap',
             'name2urn', 'name2oid',
             '%duplicate',
-        ],
-    ],
+        ),
+    ),

@@ -19,8 +19,8 @@ namespace Symfony\Component\Cache\Traits;
 class RedisProxy
 {
     private $redis;
-    private \Closure $initializer;
-    private bool $ready = false;
+    private $initializer;
+    private $ready = false;
 
     public function __construct(\Redis $redis, \Closure $initializer)
     {
@@ -28,7 +28,7 @@ class RedisProxy
         $this->initializer = $initializer;
     }
 
-    public function __call(string $method, array $args)
+    public function __call($method, array $args)
     {
         $this->ready ?: $this->ready = $this->initializer->__invoke($this->redis);
 

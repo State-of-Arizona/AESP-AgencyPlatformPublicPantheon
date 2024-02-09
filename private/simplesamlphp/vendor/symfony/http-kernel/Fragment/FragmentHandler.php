@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Controller\ControllerReference;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Renders a URI that represents a resource fragment.
@@ -29,8 +28,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class FragmentHandler
 {
-    private bool $debug;
-    private array $renderers = [];
+    private $debug;
+    private $renderers = [];
     private $requestStack;
 
     /**
@@ -61,10 +60,15 @@ class FragmentHandler
      *
      *  * ignore_errors: true to return an empty string in case of an error
      *
+     * @param string|ControllerReference $uri      A URI as a string or a ControllerReference instance
+     * @param string                     $renderer The renderer name
+     *
+     * @return string|null The Response content or null when the Response is streamed
+     *
      * @throws \InvalidArgumentException when the renderer does not exist
-     * @throws \LogicException           when no main request is being handled
+     * @throws \LogicException           when no master request is being handled
      */
-    public function render(string|ControllerReference $uri, string $renderer = 'inline', array $options = []): ?string
+    public function render($uri, $renderer = 'inline', array $options = [])
     {
         if (!isset($options['ignore_errors'])) {
             $options['ignore_errors'] = !$this->debug;
@@ -91,11 +95,10 @@ class FragmentHandler
      *
      * @throws \RuntimeException when the Response is not successful
      */
-    protected function deliver(Response $response): ?string
+    protected function deliver(Response $response)
     {
         if (!$response->isSuccessful()) {
-            $responseStatusCode = $response->getStatusCode();
-            throw new \RuntimeException(sprintf('Error when rendering "%s" (Status code is %d).', $this->requestStack->getCurrentRequest()->getUri(), $responseStatusCode), 0, new HttpException($responseStatusCode));
+            throw new \RuntimeException(sprintf('Error when rendering "%s" (Status code is %d).', $this->requestStack->getCurrentRequest()->getUri(), $response->getStatusCode()));
         }
 
         if (!$response instanceof StreamedResponse) {

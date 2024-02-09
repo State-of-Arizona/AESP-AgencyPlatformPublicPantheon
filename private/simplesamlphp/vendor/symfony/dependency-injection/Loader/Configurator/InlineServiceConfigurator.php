@@ -21,20 +21,17 @@ class InlineServiceConfigurator extends AbstractConfigurator
     use Traits\ArgumentTrait;
     use Traits\AutowireTrait;
     use Traits\BindTrait;
-    use Traits\CallTrait;
-    use Traits\ConfiguratorTrait;
     use Traits\FactoryTrait;
     use Traits\FileTrait;
     use Traits\LazyTrait;
     use Traits\ParentTrait;
-    use Traits\PropertyTrait;
     use Traits\TagTrait;
 
-    public const FACTORY = 'service';
+    public const FACTORY = 'inline';
 
-    private string $id = '[inline]';
-    private bool $allowParent = true;
-    private ?string $path = null;
+    private $id = '[inline]';
+    private $allowParent = true;
+    private $path = null;
 
     public function __construct(Definition $definition)
     {

@@ -12,10 +12,7 @@
 namespace Symfony\Bundle\FrameworkBundle\Command;
 
 use Symfony\Bundle\FrameworkBundle\Console\Helper\DescriptorHelper;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Completion\CompletionInput;
-use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,11 +31,9 @@ use Symfony\Component\Routing\RouterInterface;
  *
  * @final
  */
-#[AsCommand(name: 'debug:router', description: 'Display current routes for an application')]
 class RouterDebugCommand extends Command
 {
-    use BuildDebugContainerTrait;
-
+    protected static $defaultName = 'debug:router';
     private $router;
     private $fileLinkFormatter;
 
@@ -62,6 +57,7 @@ class RouterDebugCommand extends Command
                 new InputOption('format', null, InputOption::VALUE_REQUIRED, 'The output format (txt, xml, json, or md)', 'txt'),
                 new InputOption('raw', null, InputOption::VALUE_NONE, 'To output raw route(s)'),
             ])
+            ->setDescription('Display current routes for an application')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> displays the configured routes:
 
@@ -83,12 +79,6 @@ EOF
         $name = $input->getArgument('name');
         $helper = new DescriptorHelper($this->fileLinkFormatter);
         $routes = $this->router->getRouteCollection();
-        $container = null;
-        if ($this->fileLinkFormatter) {
-            $container = function () {
-                return $this->getContainerBuilder($this->getApplication()->getKernel());
-            };
-        }
 
         if ($name) {
             $route = $routes->get($name);
@@ -120,7 +110,6 @@ EOF
                 'raw_text' => $input->getOption('raw'),
                 'name' => $name,
                 'output' => $io,
-                'container' => $container,
             ]);
         } else {
             $helper->describe($io, $routes, [
@@ -128,7 +117,6 @@ EOF
                 'raw_text' => $input->getOption('raw'),
                 'show_controllers' => $input->getOption('show-controllers'),
                 'output' => $io,
-                'container' => $container,
             ]);
         }
 
@@ -145,20 +133,6 @@ EOF
         }
 
         return $foundRoutesNames;
-    }
-
-    public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
-    {
-        if ($input->mustSuggestArgumentValuesFor('name')) {
-            $suggestions->suggestValues(array_keys($this->router->getRouteCollection()->all()));
-
-            return;
-        }
-
-        if ($input->mustSuggestOptionValuesFor('format')) {
-            $helper = new DescriptorHelper();
-            $suggestions->suggestValues($helper->getFormats());
-        }
     }
 
     private function findRouteContaining(string $name, RouteCollection $routes): RouteCollection

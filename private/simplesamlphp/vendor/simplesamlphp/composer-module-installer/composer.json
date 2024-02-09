@@ -4,21 +4,13 @@
     "license": "LGPL-2.1-only",
     "type": "composer-plugin",
     "autoload": {
-        "psr-4": {
-            "SimpleSAML\\Composer\\": "src/"
-        }
+        "psr-0": {"SimpleSamlPhp\\Composer": "src/"}
     },
     "extra": {
-        "class": "SimpleSAML\\Composer\\ModuleInstallerPlugin"
+        "class": "SimpleSamlPhp\\Composer\\ModuleInstallerPlugin"
     },
     "require": {
-        "php": "^7.4 || ^8.0",
-
-        "composer-plugin-api": "^1.1 || ^2.0",
-        "simplesamlphp/assert": "^0.8.0 || ^1.0"
-    },
-    "require-dev": {
-        "composer/composer": "^2.4",
-        "simplesamlphp/simplesamlphp-test-framework": "^1.2.1"
+        "composer-plugin-api": "^1.1|^2.0",
+        "simplesamlphp/simplesamlphp": "*"
     }
 }

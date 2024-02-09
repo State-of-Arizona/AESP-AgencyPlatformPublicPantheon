@@ -28,17 +28,17 @@ use Symfony\Component\DependencyInjection\Reference;
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class AnalyzeServiceReferencesPass extends AbstractRecursivePass
+class AnalyzeServiceReferencesPass extends AbstractRecursivePass implements RepeatablePassInterface
 {
     private $graph;
-    private $currentDefinition = null;
-    private bool $onlyConstructorArguments;
-    private bool $hasProxyDumper;
-    private bool $lazy;
-    private bool $byConstructor;
-    private bool $byFactory;
-    private array $definitions;
-    private array $aliases;
+    private $currentDefinition;
+    private $onlyConstructorArguments;
+    private $hasProxyDumper;
+    private $lazy;
+    private $byConstructor;
+    private $byFactory;
+    private $definitions;
+    private $aliases;
 
     /**
      * @param bool $onlyConstructorArguments Sets this Service Reference pass to ignore method calls
@@ -48,6 +48,14 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass
         $this->onlyConstructorArguments = $onlyConstructorArguments;
         $this->hasProxyDumper = $hasProxyDumper;
         $this->enableExpressionProcessing();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setRepeatedPass(RepeatedPass $repeatedPass)
+    {
+        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
     }
 
     /**
@@ -76,7 +84,7 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass
         }
     }
 
-    protected function processValue(mixed $value, bool $isRoot = false): mixed
+    protected function processValue($value, $isRoot = false)
     {
         $lazy = $this->lazy;
         $inExpression = $this->inExpression();

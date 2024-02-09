@@ -20,39 +20,50 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  */
 class Profile
 {
-    private string $token;
+    private $token;
 
     /**
      * @var DataCollectorInterface[]
      */
-    private array $collectors = [];
+    private $collectors = [];
 
-    private ?string $ip = null;
-    private ?string $method = null;
-    private ?string $url = null;
-    private ?int $time = null;
-    private ?int $statusCode = null;
-    private ?self $parent = null;
+    private $ip;
+    private $method;
+    private $url;
+    private $time;
+    private $statusCode;
+
+    /**
+     * @var Profile
+     */
+    private $parent;
 
     /**
      * @var Profile[]
      */
-    private array $children = [];
+    private $children = [];
 
     public function __construct(string $token)
     {
         $this->token = $token;
     }
 
-    public function setToken(string $token)
+    /**
+     * Sets the token.
+     *
+     * @param string $token The token
+     */
+    public function setToken($token)
     {
         $this->token = $token;
     }
 
     /**
      * Gets the token.
+     *
+     * @return string The token
      */
-    public function getToken(): string
+    public function getToken()
     {
         return $this->token;
     }
@@ -67,75 +78,107 @@ class Profile
 
     /**
      * Returns the parent profile.
+     *
+     * @return self
      */
-    public function getParent(): ?self
+    public function getParent()
     {
         return $this->parent;
     }
 
     /**
      * Returns the parent token.
+     *
+     * @return string|null The parent token
      */
-    public function getParentToken(): ?string
+    public function getParentToken()
     {
         return $this->parent ? $this->parent->getToken() : null;
     }
 
     /**
      * Returns the IP.
+     *
+     * @return string|null The IP
      */
-    public function getIp(): ?string
+    public function getIp()
     {
         return $this->ip;
     }
 
-    public function setIp(?string $ip)
+    /**
+     * Sets the IP.
+     *
+     * @param string $ip
+     */
+    public function setIp($ip)
     {
         $this->ip = $ip;
     }
 
     /**
      * Returns the request method.
+     *
+     * @return string|null The request method
      */
-    public function getMethod(): ?string
+    public function getMethod()
     {
         return $this->method;
     }
 
-    public function setMethod(string $method)
+    public function setMethod($method)
     {
         $this->method = $method;
     }
 
     /**
      * Returns the URL.
+     *
+     * @return string|null The URL
      */
-    public function getUrl(): ?string
+    public function getUrl()
     {
         return $this->url;
     }
 
-    public function setUrl(?string $url)
+    /**
+     * @param string $url
+     */
+    public function setUrl($url)
     {
         $this->url = $url;
     }
 
-    public function getTime(): int
+    /**
+     * Returns the time.
+     *
+     * @return int The time
+     */
+    public function getTime()
     {
         return $this->time ?? 0;
     }
 
-    public function setTime(int $time)
+    /**
+     * @param int $time The time
+     */
+    public function setTime($time)
     {
         $this->time = $time;
     }
 
-    public function setStatusCode(int $statusCode)
+    /**
+     * @param int $statusCode
+     */
+    public function setStatusCode($statusCode)
     {
         $this->statusCode = $statusCode;
     }
 
-    public function getStatusCode(): ?int
+    /**
+     * @return int|null
+     */
+    public function getStatusCode()
     {
         return $this->statusCode;
     }
@@ -145,7 +188,7 @@ class Profile
      *
      * @return self[]
      */
-    public function getChildren(): array
+    public function getChildren()
     {
         return $this->children;
     }
@@ -186,9 +229,13 @@ class Profile
     /**
      * Gets a Collector by name.
      *
+     * @param string $name A collector name
+     *
+     * @return DataCollectorInterface A DataCollectorInterface instance
+     *
      * @throws \InvalidArgumentException if the collector does not exist
      */
-    public function getCollector(string $name): DataCollectorInterface
+    public function getCollector($name)
     {
         if (!isset($this->collectors[$name])) {
             throw new \InvalidArgumentException(sprintf('Collector "%s" does not exist.', $name));
@@ -202,7 +249,7 @@ class Profile
      *
      * @return DataCollectorInterface[]
      */
-    public function getCollectors(): array
+    public function getCollectors()
     {
         return $this->collectors;
     }
@@ -228,12 +275,22 @@ class Profile
         $this->collectors[$collector->getName()] = $collector;
     }
 
-    public function hasCollector(string $name): bool
+    /**
+     * Returns true if a Collector for the given name exists.
+     *
+     * @param string $name A collector name
+     *
+     * @return bool
+     */
+    public function hasCollector($name)
     {
         return isset($this->collectors[$name]);
     }
 
-    public function __sleep(): array
+    /**
+     * @return array
+     */
+    public function __sleep()
     {
         return ['token', 'parent', 'children', 'collectors', 'ip', 'method', 'url', 'time', 'statusCode'];
     }

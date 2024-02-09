@@ -20,8 +20,8 @@ class LinkStub extends ConstStub
 {
     public $inVendor = false;
 
-    private static array $vendorRoots;
-    private static array $composerRoots = [];
+    private static $vendorRoots;
+    private static $composerRoots;
 
     public function __construct(string $label, int $line = 0, string $href = null)
     {
@@ -43,7 +43,7 @@ class LinkStub extends ConstStub
 
             return;
         }
-        if (!is_file($href)) {
+        if (!file_exists($href)) {
             return;
         }
         if ($line) {
@@ -65,14 +65,14 @@ class LinkStub extends ConstStub
 
     private function getComposerRoot(string $file, bool &$inVendor)
     {
-        if (!isset(self::$vendorRoots)) {
+        if (null === self::$vendorRoots) {
             self::$vendorRoots = [];
 
             foreach (get_declared_classes() as $class) {
                 if ('C' === $class[0] && str_starts_with($class, 'ComposerAutoloaderInit')) {
                     $r = new \ReflectionClass($class);
                     $v = \dirname($r->getFileName(), 2);
-                    if (is_file($v.'/composer/installed.json')) {
+                    if (file_exists($v.'/composer/installed.json')) {
                         self::$vendorRoots[] = $v.\DIRECTORY_SEPARATOR;
                     }
                 }
@@ -91,7 +91,7 @@ class LinkStub extends ConstStub
         }
 
         $parent = $dir;
-        while (!@is_file($parent.'/composer.json')) {
+        while (!@file_exists($parent.'/composer.json')) {
             if (!@file_exists($parent)) {
                 // open_basedir restriction in effect
                 break;

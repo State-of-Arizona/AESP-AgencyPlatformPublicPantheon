@@ -12,11 +12,13 @@ Endpoint                       | Indexed | Default binding
 `SingleLogoutService`          | N       | HTTP-Redirect
 `SingleSignOnService`          | N       | HTTP-Redirect
 
+
 The various endpoints can be specified in three different ways:
 
-* A single string.
-* Array of strings.
-* Array of arrays.
+  * A single string.
+  * Array of strings.
+  * Array of arrays.
+
 
 A single string
 ---------------
@@ -25,6 +27,7 @@ A single string
 
 This is the simplest endpoint format.
 It can be used when there is only a single endpoint that uses the default binding.
+
 
 Array of strings
 ----------------
@@ -36,13 +39,14 @@ Array of strings
 
 This endpoint format can be used to represent multiple endpoints, all of which use the default binding.
 
+
 Array of arrays
 ---------------
 
     'AssertionConsumerService' => [
         [
             'index' => 1,
-            'isDefault' => true,
+            'isDefault' => TRUE,
             'Location' => 'https://sp.example.org/ACS',
             'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
         ],
@@ -63,3 +67,4 @@ It can also be used to specify the ResponseLocation attribute on endpoints, e.g.
             'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
         ],
     ],
+

@@ -20,17 +20,17 @@ use Symfony\Component\Console\Exception\InvalidArgumentException;
  */
 class ChoiceQuestion extends Question
 {
-    private array $choices;
-    private bool $multiselect = false;
-    private string $prompt = ' > ';
-    private string $errorMessage = 'Value "%s" is invalid';
+    private $choices;
+    private $multiselect = false;
+    private $prompt = ' > ';
+    private $errorMessage = 'Value "%s" is invalid';
 
     /**
      * @param string $question The question to ask to the user
      * @param array  $choices  The list of available choices
      * @param mixed  $default  The default answer to return
      */
-    public function __construct(string $question, array $choices, mixed $default = null)
+    public function __construct(string $question, array $choices, $default = null)
     {
         if (!$choices) {
             throw new \LogicException('Choice question must have at least 1 choice available.');
@@ -45,8 +45,10 @@ class ChoiceQuestion extends Question
 
     /**
      * Returns available choices.
+     *
+     * @return array
      */
-    public function getChoices(): array
+    public function getChoices()
     {
         return $this->choices;
     }
@@ -56,9 +58,11 @@ class ChoiceQuestion extends Question
      *
      * When multiselect is set to true, multiple choices can be answered.
      *
+     * @param bool $multiselect
+     *
      * @return $this
      */
-    public function setMultiselect(bool $multiselect): static
+    public function setMultiselect($multiselect)
     {
         $this->multiselect = $multiselect;
         $this->setValidator($this->getDefaultValidator());
@@ -68,16 +72,20 @@ class ChoiceQuestion extends Question
 
     /**
      * Returns whether the choices are multiselect.
+     *
+     * @return bool
      */
-    public function isMultiselect(): bool
+    public function isMultiselect()
     {
         return $this->multiselect;
     }
 
     /**
      * Gets the prompt for choices.
+     *
+     * @return string
      */
-    public function getPrompt(): string
+    public function getPrompt()
     {
         return $this->prompt;
     }
@@ -85,9 +93,11 @@ class ChoiceQuestion extends Question
     /**
      * Sets the prompt for choices.
      *
+     * @param string $prompt
+     *
      * @return $this
      */
-    public function setPrompt(string $prompt): static
+    public function setPrompt($prompt)
     {
         $this->prompt = $prompt;
 
@@ -99,9 +109,11 @@ class ChoiceQuestion extends Question
      *
      * The error message has a string placeholder (%s) for the invalid value.
      *
+     * @param string $errorMessage
+     *
      * @return $this
      */
-    public function setErrorMessage(string $errorMessage): static
+    public function setErrorMessage($errorMessage)
     {
         $this->errorMessage = $errorMessage;
         $this->setValidator($this->getDefaultValidator());
@@ -163,8 +175,7 @@ class ChoiceQuestion extends Question
                     throw new InvalidArgumentException(sprintf($errorMessage, $value));
                 }
 
-                // For associative choices, consistently return the key as string:
-                $multiselectChoices[] = $isAssoc ? (string) $result : $result;
+                $multiselectChoices[] = (string) $result;
             }
 
             if ($multiselect) {

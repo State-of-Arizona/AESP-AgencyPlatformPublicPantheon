@@ -18,7 +18,7 @@ namespace Symfony\Component\Console\Exception;
  */
 class CommandNotFoundException extends \InvalidArgumentException implements ExceptionInterface
 {
-    private array $alternatives;
+    private $alternatives;
 
     /**
      * @param string          $message      Exception message to throw
@@ -34,9 +34,9 @@ class CommandNotFoundException extends \InvalidArgumentException implements Exce
     }
 
     /**
-     * @return string[]
+     * @return string[] A list of similar defined names
      */
-    public function getAlternatives(): array
+    public function getAlternatives()
     {
         return $this->alternatives;
     }

@@ -32,9 +32,9 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     protected $removeExtraKeys = true;
     protected $normalizeKeys = true;
 
-    public function setNormalizeKeys(bool $normalizeKeys)
+    public function setNormalizeKeys($normalizeKeys)
     {
-        $this->normalizeKeys = $normalizeKeys;
+        $this->normalizeKeys = (bool) $normalizeKeys;
     }
 
     /**
@@ -46,7 +46,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * If you have a mixed key like foo-bar_moo, it will not be altered.
      * The key will also not be altered if the target key already exists.
      */
-    protected function preNormalize(mixed $value): mixed
+    protected function preNormalize($value)
     {
         if (!$this->normalizeKeys || !\is_array($value)) {
             return $value;
@@ -70,7 +70,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @return array<string, NodeInterface>
      */
-    public function getChildren(): array
+    public function getChildren()
     {
         return $this->children;
     }
@@ -90,7 +90,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @return array an array of the form [[string, string]]
      */
-    public function getXmlRemappings(): array
+    public function getXmlRemappings()
     {
         return $this->xmlRemappings;
     }
@@ -98,34 +98,42 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     /**
      * Sets whether to add default values for this array if it has not been
      * defined in any of the configuration files.
+     *
+     * @param bool $boolean
      */
-    public function setAddIfNotSet(bool $boolean)
+    public function setAddIfNotSet($boolean)
     {
-        $this->addIfNotSet = $boolean;
+        $this->addIfNotSet = (bool) $boolean;
     }
 
     /**
      * Sets whether false is allowed as value indicating that the array should be unset.
+     *
+     * @param bool $allow
      */
-    public function setAllowFalse(bool $allow)
+    public function setAllowFalse($allow)
     {
-        $this->allowFalse = $allow;
+        $this->allowFalse = (bool) $allow;
     }
 
     /**
      * Sets whether new keys can be defined in subsequent configurations.
+     *
+     * @param bool $allow
      */
-    public function setAllowNewKeys(bool $allow)
+    public function setAllowNewKeys($allow)
     {
-        $this->allowNewKeys = $allow;
+        $this->allowNewKeys = (bool) $allow;
     }
 
     /**
      * Sets if deep merging should occur.
+     *
+     * @param bool $boolean
      */
-    public function setPerformDeepMerging(bool $boolean)
+    public function setPerformDeepMerging($boolean)
     {
-        $this->performDeepMerging = $boolean;
+        $this->performDeepMerging = (bool) $boolean;
     }
 
     /**
@@ -134,24 +142,16 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * @param bool $boolean To allow extra keys
      * @param bool $remove  To remove extra keys
      */
-    public function setIgnoreExtraKeys(bool $boolean, bool $remove = true)
+    public function setIgnoreExtraKeys($boolean, $remove = true)
     {
-        $this->ignoreExtraKeys = $boolean;
+        $this->ignoreExtraKeys = (bool) $boolean;
         $this->removeExtraKeys = $this->ignoreExtraKeys && $remove;
-    }
-
-    /**
-     * Returns true when extra keys should be ignored without an exception.
-     */
-    public function shouldIgnoreExtraKeys(): bool
-    {
-        return $this->ignoreExtraKeys;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setName(string $name)
+    public function setName($name)
     {
         $this->name = $name;
     }
@@ -159,7 +159,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     /**
      * {@inheritdoc}
      */
-    public function hasDefaultValue(): bool
+    public function hasDefaultValue()
     {
         return $this->addIfNotSet;
     }
@@ -167,7 +167,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     /**
      * {@inheritdoc}
      */
-    public function getDefaultValue(): mixed
+    public function getDefaultValue()
     {
         if (!$this->hasDefaultValue()) {
             throw new \RuntimeException(sprintf('The node at path "%s" has no default value.', $this->getPath()));
@@ -208,22 +208,16 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * @throws UnsetKeyException
      * @throws InvalidConfigurationException if the node doesn't have enough children
      */
-    protected function finalizeValue(mixed $value): mixed
+    protected function finalizeValue($value)
     {
         if (false === $value) {
-            throw new UnsetKeyException(sprintf('Unsetting key for path "%s", value: %s.', $this->getPath(), json_encode($value)));
+            throw new UnsetKeyException(sprintf('Unsetting key for path "%s", value: "%s".', $this->getPath(), json_encode($value)));
         }
 
         foreach ($this->children as $name => $child) {
             if (!\array_key_exists($name, $value)) {
                 if ($child->isRequired()) {
-                    $message = sprintf('The child config "%s" under "%s" must be configured', $name, $this->getPath());
-                    if ($child->getInfo()) {
-                        $message .= sprintf(': %s', $child->getInfo());
-                    } else {
-                        $message .= '.';
-                    }
-                    $ex = new InvalidConfigurationException($message);
+                    $ex = new InvalidConfigurationException(sprintf('The child node "%s" at path "%s" must be configured.', $name, $this->getPath()));
                     $ex->setPath($this->getPath());
 
                     throw $ex;
@@ -237,8 +231,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
             }
 
             if ($child->isDeprecated()) {
-                $deprecation = $child->getDeprecation($name, $this->getPath());
-                trigger_deprecation($deprecation['package'], $deprecation['version'], $deprecation['message']);
+                @trigger_error($child->getDeprecationMessage($name, $this->getPath()), \E_USER_DEPRECATED);
             }
 
             try {
@@ -254,10 +247,10 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     /**
      * {@inheritdoc}
      */
-    protected function validateType(mixed $value)
+    protected function validateType($value)
     {
         if (!\is_array($value) && (!$this->allowFalse || false !== $value)) {
-            $ex = new InvalidTypeException(sprintf('Invalid type for path "%s". Expected "array", but got "%s"', $this->getPath(), get_debug_type($value)));
+            $ex = new InvalidTypeException(sprintf('Invalid type for path "%s". Expected array, but got %s', $this->getPath(), \gettype($value)));
             if ($hint = $this->getInfo()) {
                 $ex->addHint($hint);
             }
@@ -272,7 +265,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @throws InvalidConfigurationException
      */
-    protected function normalizeValue(mixed $value): mixed
+    protected function normalizeValue($value)
     {
         if (false === $value) {
             return $value;
@@ -330,8 +323,12 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
 
     /**
      * Remaps multiple singular values to a single plural value.
+     *
+     * @param array $value The source values
+     *
+     * @return array The remapped values
      */
-    protected function remapXml(array $value): array
+    protected function remapXml($value)
     {
         foreach ($this->xmlRemappings as [$singular, $plural]) {
             if (!isset($value[$singular])) {
@@ -351,7 +348,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * @throws InvalidConfigurationException
      * @throws \RuntimeException
      */
-    protected function mergeValues(mixed $leftSide, mixed $rightSide): mixed
+    protected function mergeValues($leftSide, $rightSide)
     {
         if (false === $rightSide) {
             // if this is still false after the last config has been merged the

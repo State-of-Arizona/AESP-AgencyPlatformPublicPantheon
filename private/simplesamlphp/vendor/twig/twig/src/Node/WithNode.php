@@ -30,13 +30,9 @@ class WithNode extends Node
         parent::__construct($nodes, ['only' => $only], $lineno, $tag);
     }
 
-    public function compile(Compiler $compiler): void
+    public function compile(Compiler $compiler)
     {
         $compiler->addDebugInfo($this);
-
-        $parentContextName = $compiler->getVarName();
-
-        $compiler->write(sprintf("\$%s = \$context;\n", $parentContextName));
 
         if ($this->hasNode('variables')) {
             $node = $this->getNode('variables');
@@ -45,7 +41,7 @@ class WithNode extends Node
                 ->write(sprintf('$%s = ', $varsName))
                 ->subcompile($node)
                 ->raw(";\n")
-                ->write(sprintf("if (!is_iterable(\$%s)) {\n", $varsName))
+                ->write(sprintf("if (!twig_test_iterable(\$%s)) {\n", $varsName))
                 ->indent()
                 ->write("throw new RuntimeError('Variables passed to the \"with\" tag must be a hash.', ")
                 ->repr($node->getTemplateLine())
@@ -56,15 +52,21 @@ class WithNode extends Node
             ;
 
             if ($this->getAttribute('only')) {
-                $compiler->write("\$context = [];\n");
+                $compiler->write("\$context = ['_parent' => \$context];\n");
+            } else {
+                $compiler->write("\$context['_parent'] = \$context;\n");
             }
 
             $compiler->write(sprintf("\$context = \$this->env->mergeGlobals(array_merge(\$context, \$%s));\n", $varsName));
+        } else {
+            $compiler->write("\$context['_parent'] = \$context;\n");
         }
 
         $compiler
             ->subcompile($this->getNode('body'))
-            ->write(sprintf("\$context = \$%s;\n", $parentContextName))
+            ->write("\$context = \$context['_parent'];\n")
         ;
     }
 }
+
+class_alias('Twig\Node\WithNode', 'Twig_Node_With');

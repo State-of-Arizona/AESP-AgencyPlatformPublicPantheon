@@ -20,11 +20,29 @@ use Symfony\Component\VarDumper\Caster\ClassStub;
 /**
  * @author Fabien Potencier <fabien@symfony.com>
  *
- * @final
+ * @final since Symfony 4.4
  */
 class ConfigDataCollector extends DataCollector implements LateDataCollectorInterface
 {
+    /**
+     * @var KernelInterface
+     */
     private $kernel;
+    private $name;
+    private $version;
+
+    public function __construct(string $name = null, string $version = null)
+    {
+        if (1 <= \func_num_args()) {
+            @trigger_error(sprintf('The "$name" argument in method "%s()" is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
+        }
+        if (2 <= \func_num_args()) {
+            @trigger_error(sprintf('The "$version" argument in method "%s()" is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
+        }
+
+        $this->name = $name;
+        $this->version = $version;
+    }
 
     /**
      * Sets the Kernel associated with this Request.
@@ -36,13 +54,17 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
 
     /**
      * {@inheritdoc}
+     *
+     * @param \Throwable|null $exception
      */
-    public function collect(Request $request, Response $response, \Throwable $exception = null)
+    public function collect(Request $request, Response $response/* , \Throwable $exception = null */)
     {
         $eom = \DateTime::createFromFormat('d/m/Y', '01/'.Kernel::END_OF_MAINTENANCE);
         $eol = \DateTime::createFromFormat('d/m/Y', '01/'.Kernel::END_OF_LIFE);
 
         $this->data = [
+            'app_name' => $this->name,
+            'app_version' => $this->version,
             'token' => $response->headers->get('X-Debug-Token'),
             'symfony_version' => Kernel::VERSION,
             'symfony_minor_version' => sprintf('%s.%s', Kernel::MAJOR_VERSION, Kernel::MINOR_VERSION),
@@ -89,26 +111,51 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
     }
 
     /**
-     * Gets the token.
+     * @deprecated since Symfony 4.2
      */
-    public function getToken(): ?string
+    public function getApplicationName()
+    {
+        @trigger_error(sprintf('The method "%s()" is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
+
+        return $this->data['app_name'];
+    }
+
+    /**
+     * @deprecated since Symfony 4.2
+     */
+    public function getApplicationVersion()
+    {
+        @trigger_error(sprintf('The method "%s()" is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
+
+        return $this->data['app_version'];
+    }
+
+    /**
+     * Gets the token.
+     *
+     * @return string|null The token
+     */
+    public function getToken()
     {
         return $this->data['token'];
     }
 
     /**
      * Gets the Symfony version.
+     *
+     * @return string The Symfony version
      */
-    public function getSymfonyVersion(): string
+    public function getSymfonyVersion()
     {
         return $this->data['symfony_version'];
     }
 
     /**
-     * Returns the state of the current Symfony release
-     * as one of: unknown, dev, stable, eom, eol.
+     * Returns the state of the current Symfony release.
+     *
+     * @return string One of: unknown, dev, stable, eom, eol
      */
-    public function getSymfonyState(): string
+    public function getSymfonyState()
     {
         return $this->data['symfony_state'];
     }
@@ -116,12 +163,17 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
     /**
      * Returns the minor Symfony version used (without patch numbers of extra
      * suffix like "RC", "beta", etc.).
+     *
+     * @return string
      */
-    public function getSymfonyMinorVersion(): string
+    public function getSymfonyMinorVersion()
     {
         return $this->data['symfony_minor_version'];
     }
 
+    /**
+     * Returns if the current Symfony version is a Long-Term Support one.
+     */
     public function isSymfonyLts(): bool
     {
         return $this->data['symfony_lts'];
@@ -130,8 +182,10 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
     /**
      * Returns the human readable date when this Symfony version ends its
      * maintenance period.
+     *
+     * @return string
      */
-    public function getSymfonyEom(): string
+    public function getSymfonyEom()
     {
         return $this->data['symfony_eom'];
     }
@@ -139,47 +193,78 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
     /**
      * Returns the human readable date when this Symfony version reaches its
      * "end of life" and won't receive bugs or security fixes.
+     *
+     * @return string
      */
-    public function getSymfonyEol(): string
+    public function getSymfonyEol()
     {
         return $this->data['symfony_eol'];
     }
 
     /**
      * Gets the PHP version.
+     *
+     * @return string The PHP version
      */
-    public function getPhpVersion(): string
+    public function getPhpVersion()
     {
         return $this->data['php_version'];
     }
 
     /**
      * Gets the PHP version extra part.
+     *
+     * @return string|null The extra part
      */
-    public function getPhpVersionExtra(): ?string
+    public function getPhpVersionExtra()
     {
         return $this->data['php_version_extra'] ?? null;
     }
 
-    public function getPhpArchitecture(): int
+    /**
+     * @return int The PHP architecture as number of bits (e.g. 32 or 64)
+     */
+    public function getPhpArchitecture()
     {
         return $this->data['php_architecture'];
     }
 
-    public function getPhpIntlLocale(): string
+    /**
+     * @return string
+     */
+    public function getPhpIntlLocale()
     {
         return $this->data['php_intl_locale'];
     }
 
-    public function getPhpTimezone(): string
+    /**
+     * @return string
+     */
+    public function getPhpTimezone()
     {
         return $this->data['php_timezone'];
     }
 
     /**
-     * Gets the environment.
+     * Gets the application name.
+     *
+     * @return string The application name
+     *
+     * @deprecated since Symfony 4.2
      */
-    public function getEnv(): string
+    public function getAppName()
+    {
+        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.2.', __METHOD__), \E_USER_DEPRECATED);
+
+        return 'n/a';
+    }
+
+    /**
+     * Gets the environment.
+     *
+     * @return string The environment
+     */
+    public function getEnv()
     {
         return $this->data['env'];
     }
@@ -187,33 +272,39 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
     /**
      * Returns true if the debug is enabled.
      *
-     * @return bool|string true if debug is enabled, false otherwise or a string if no kernel was set
+     * @return bool true if debug is enabled, false otherwise
      */
-    public function isDebug(): bool|string
+    public function isDebug()
     {
         return $this->data['debug'];
     }
 
     /**
      * Returns true if the XDebug is enabled.
+     *
+     * @return bool true if XDebug is enabled, false otherwise
      */
-    public function hasXDebug(): bool
+    public function hasXDebug()
     {
         return $this->data['xdebug_enabled'];
     }
 
     /**
      * Returns true if APCu is enabled.
+     *
+     * @return bool true if APCu is enabled, false otherwise
      */
-    public function hasApcu(): bool
+    public function hasApcu()
     {
         return $this->data['apcu_enabled'];
     }
 
     /**
      * Returns true if Zend OPcache is enabled.
+     *
+     * @return bool true if Zend OPcache is enabled, false otherwise
      */
-    public function hasZendOpcache(): bool
+    public function hasZendOpcache()
     {
         return $this->data['zend_opcache_enabled'];
     }
@@ -225,8 +316,10 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
 
     /**
      * Gets the PHP SAPI name.
+     *
+     * @return string The environment
      */
-    public function getSapiName(): string
+    public function getSapiName()
     {
         return $this->data['sapi_name'];
     }
@@ -234,11 +327,16 @@ class ConfigDataCollector extends DataCollector implements LateDataCollectorInte
     /**
      * {@inheritdoc}
      */
-    public function getName(): string
+    public function getName()
     {
         return 'config';
     }
 
+    /**
+     * Tries to retrieve information about the current Symfony version.
+     *
+     * @return string One of: dev, stable, eom, eol
+     */
     private function determineSymfonyState(): string
     {
         $now = new \DateTime();

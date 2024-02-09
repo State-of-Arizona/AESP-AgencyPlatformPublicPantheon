@@ -20,18 +20,16 @@ use Symfony\Component\Cache\Exception\CacheException;
  */
 class DefaultMarshaller implements MarshallerInterface
 {
-    private bool $useIgbinarySerialize = true;
-    private bool $throwOnSerializationFailure = false;
+    private $useIgbinarySerialize = true;
 
-    public function __construct(bool $useIgbinarySerialize = null, bool $throwOnSerializationFailure = false)
+    public function __construct(bool $useIgbinarySerialize = null)
     {
         if (null === $useIgbinarySerialize) {
-            $useIgbinarySerialize = \extension_loaded('igbinary') && version_compare('3.1.6', phpversion('igbinary'), '<=');
-        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || version_compare('3.1.6', phpversion('igbinary'), '>'))) {
-            throw new CacheException(\extension_loaded('igbinary') ? 'Please upgrade the "igbinary" PHP extension to v3.1.6 or higher.' : 'The "igbinary" PHP extension is not loaded.');
+            $useIgbinarySerialize = \extension_loaded('igbinary') && (\PHP_VERSION_ID < 70400 || version_compare('3.1.6', phpversion('igbinary'), '<='));
+        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || (\PHP_VERSION_ID >= 70400 && version_compare('3.1.6', phpversion('igbinary'), '>')))) {
+            throw new CacheException(\extension_loaded('igbinary') && \PHP_VERSION_ID >= 70400 ? 'Please upgrade the "igbinary" PHP extension to v3.1.6 or higher.' : 'The "igbinary" PHP extension is not loaded.');
         }
         $this->useIgbinarySerialize = $useIgbinarySerialize;
-        $this->throwOnSerializationFailure = $throwOnSerializationFailure;
     }
 
     /**
@@ -49,9 +47,6 @@ class DefaultMarshaller implements MarshallerInterface
                     $serialized[$id] = serialize($value);
                 }
             } catch (\Exception $e) {
-                if ($this->throwOnSerializationFailure) {
-                    throw new \ValueError($e->getMessage(), 0, $e);
-                }
                 $failed[] = $id;
             }
         }
@@ -62,7 +57,7 @@ class DefaultMarshaller implements MarshallerInterface
     /**
      * {@inheritdoc}
      */
-    public function unmarshall(string $value): mixed
+    public function unmarshall(string $value)
     {
         if ('b:0;' === $value) {
             return false;
@@ -97,7 +92,7 @@ class DefaultMarshaller implements MarshallerInterface
     /**
      * @internal
      */
-    public static function handleUnserializeCallback(string $class)
+    public static function handleUnserializeCallback($class)
     {
         throw new \DomainException('Class not found: '.$class);
     }

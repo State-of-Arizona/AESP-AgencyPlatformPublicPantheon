@@ -21,21 +21,19 @@ class GlobFileLoader extends FileLoader
     /**
      * {@inheritdoc}
      */
-    public function load(mixed $resource, string $type = null): mixed
+    public function load($resource, $type = null)
     {
         foreach ($this->glob($resource, false, $globResource) as $path => $info) {
             $this->import($path);
         }
 
         $this->container->addResource($globResource);
-
-        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function supports(mixed $resource, string $type = null): bool
+    public function supports($resource, $type = null)
     {
         return 'glob' === $type;
     }

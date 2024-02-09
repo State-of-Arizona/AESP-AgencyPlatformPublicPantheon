@@ -36,32 +36,24 @@ class Translator extends BaseTranslator implements WarmableInterface
     ];
 
     /**
-     * @var list<string>
+     * @var array
      */
-    private array $resourceLocales;
+    private $resourceLocales;
 
     /**
      * Holds parameters from addResource() calls so we can defer the actual
      * parent::addResource() calls until initialize() is executed.
      *
-     * @var array[]
+     * @var array
      */
-    private array $resources = [];
+    private $resources = [];
 
-    /**
-     * @var string[][]
-     */
-    private array $resourceFiles;
+    private $resourceFiles;
 
     /**
      * @var string[]
      */
-    private array $scannedDirectories;
-
-    /**
-     * @var string[]
-     */
-    private array $enabledLocales;
+    private $scannedDirectories;
 
     /**
      * Constructor.
@@ -75,11 +67,10 @@ class Translator extends BaseTranslator implements WarmableInterface
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(ContainerInterface $container, MessageFormatterInterface $formatter, string $defaultLocale, array $loaderIds = [], array $options = [], array $enabledLocales = [])
+    public function __construct(ContainerInterface $container, MessageFormatterInterface $formatter, string $defaultLocale, array $loaderIds = [], array $options = [])
     {
         $this->container = $container;
         $this->loaderIds = $loaderIds;
-        $this->enabledLocales = $enabledLocales;
 
         // check option names
         if ($diff = array_diff(array_keys($options), array_keys($this->options))) {
@@ -96,19 +87,16 @@ class Translator extends BaseTranslator implements WarmableInterface
 
     /**
      * {@inheritdoc}
-     *
-     * @return string[]
      */
-    public function warmUp(string $cacheDir): array
+    public function warmUp($cacheDir)
     {
         // skip warmUp when translator doesn't use cache
         if (null === $this->options['cache_dir']) {
-            return [];
+            return;
         }
 
-        $localesToWarmUp = $this->enabledLocales ?: array_merge($this->getFallbackLocales(), [$this->getLocale()], $this->resourceLocales);
-
-        foreach (array_unique($localesToWarmUp) as $locale) {
+        $locales = array_merge($this->getFallbackLocales(), [$this->getLocale()], $this->resourceLocales);
+        foreach (array_unique($locales) as $locale) {
             // reset catalogue in case it's already loaded during the dump of the other locales.
             if (isset($this->catalogues[$locale])) {
                 unset($this->catalogues[$locale]);
@@ -116,11 +104,9 @@ class Translator extends BaseTranslator implements WarmableInterface
 
             $this->loadCatalogue($locale);
         }
-
-        return [];
     }
 
-    public function addResource(string $format, mixed $resource, string $locale, string $domain = null)
+    public function addResource($format, $resource, $locale, $domain = null)
     {
         if ($this->resourceFiles) {
             $this->addResourceFiles();
@@ -131,7 +117,7 @@ class Translator extends BaseTranslator implements WarmableInterface
     /**
      * {@inheritdoc}
      */
-    protected function initializeCatalogue(string $locale)
+    protected function initializeCatalogue($locale)
     {
         $this->initialize();
         parent::initializeCatalogue($locale);
@@ -155,7 +141,7 @@ class Translator extends BaseTranslator implements WarmableInterface
         if ($this->resourceFiles) {
             $this->addResourceFiles();
         }
-        foreach ($this->resources as $params) {
+        foreach ($this->resources as $key => $params) {
             [$format, $resource, $locale, $domain] = $params;
             parent::addResource($format, $resource, $locale, $domain);
         }
@@ -168,13 +154,13 @@ class Translator extends BaseTranslator implements WarmableInterface
         }
     }
 
-    private function addResourceFiles(): void
+    private function addResourceFiles()
     {
         $filesByLocale = $this->resourceFiles;
         $this->resourceFiles = [];
 
-        foreach ($filesByLocale as $files) {
-            foreach ($files as $file) {
+        foreach ($filesByLocale as $locale => $files) {
+            foreach ($files as $key => $file) {
                 // filename is domain.locale.format
                 $fileNameParts = explode('.', basename($file));
                 $format = array_pop($fileNameParts);

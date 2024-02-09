@@ -51,7 +51,7 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function all(): array
+    public function all()
     {
         return $this->parameters;
     }
@@ -59,8 +59,10 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function get(string $name): array|bool|string|int|float|\UnitEnum|null
+    public function get($name)
     {
+        $name = (string) $name;
+
         if (!\array_key_exists($name, $this->parameters)) {
             if (!$name) {
                 throw new ParameterNotFoundException($name);
@@ -99,25 +101,25 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function set(string $name, array|bool|string|int|float|\UnitEnum|null $value)
+    public function set($name, $value)
     {
-        $this->parameters[$name] = $value;
+        $this->parameters[(string) $name] = $value;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function has(string $name): bool
+    public function has($name)
     {
-        return \array_key_exists($name, $this->parameters);
+        return \array_key_exists((string) $name, $this->parameters);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function remove(string $name)
+    public function remove($name)
     {
-        unset($this->parameters[$name]);
+        unset($this->parameters[(string) $name]);
     }
 
     /**
@@ -148,13 +150,16 @@ class ParameterBag implements ParameterBagInterface
     /**
      * Replaces parameter placeholders (%name%) by their values.
      *
+     * @param mixed $value     A value
      * @param array $resolving An array of keys that are being resolved (used internally to detect circular references)
+     *
+     * @return mixed The resolved value
      *
      * @throws ParameterNotFoundException          if a placeholder references a parameter that does not exist
      * @throws ParameterCircularReferenceException if a circular reference if detected
      * @throws RuntimeException                    when a given parameter has a type problem
      */
-    public function resolveValue(mixed $value, array $resolving = []): mixed
+    public function resolveValue($value, array $resolving = [])
     {
         if (\is_array($value)) {
             $args = [];
@@ -175,13 +180,16 @@ class ParameterBag implements ParameterBagInterface
     /**
      * Resolves parameters inside a string.
      *
-     * @param array $resolving An array of keys that are being resolved (used internally to detect circular references)
+     * @param string $value     The string to resolve
+     * @param array  $resolving An array of keys that are being resolved (used internally to detect circular references)
+     *
+     * @return mixed The resolved string
      *
      * @throws ParameterNotFoundException          if a placeholder references a parameter that does not exist
      * @throws ParameterCircularReferenceException if a circular reference if detected
      * @throws RuntimeException                    when a given parameter has a type problem
      */
-    public function resolveString(string $value, array $resolving = []): mixed
+    public function resolveString($value, array $resolving = [])
     {
         // we do this to deal with non string values (Boolean, integer, ...)
         // as the preg_replace_callback throw an exception when trying
@@ -212,7 +220,7 @@ class ParameterBag implements ParameterBagInterface
             $resolved = $this->get($key);
 
             if (!\is_string($resolved) && !is_numeric($resolved)) {
-                throw new RuntimeException(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, get_debug_type($resolved), $value));
+                throw new RuntimeException(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, \gettype($resolved), $value));
             }
 
             $resolved = (string) $resolved;
@@ -230,7 +238,7 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function escapeValue(mixed $value): mixed
+    public function escapeValue($value)
     {
         if (\is_string($value)) {
             return str_replace('%', '%%', $value);
@@ -251,7 +259,7 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function unescapeValue(mixed $value): mixed
+    public function unescapeValue($value)
     {
         if (\is_string($value)) {
             return str_replace('%%', '%', $value);

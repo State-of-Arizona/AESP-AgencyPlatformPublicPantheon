@@ -21,22 +21,21 @@ use Symfony\Component\Console\Exception\LogicException;
  */
 class Question
 {
-    private string $question;
-    private ?int $attempts = null;
-    private bool $hidden = false;
-    private bool $hiddenFallback = true;
-    private ?\Closure $autocompleterCallback = null;
-    private ?\Closure $validator = null;
-    private string|int|bool|null|float $default;
-    private ?\Closure $normalizer = null;
-    private bool $trimmable = true;
-    private bool $multiline = false;
+    private $question;
+    private $attempts;
+    private $hidden = false;
+    private $hiddenFallback = true;
+    private $autocompleterCallback;
+    private $validator;
+    private $default;
+    private $normalizer;
+    private $trimmable = true;
 
     /**
      * @param string                     $question The question to ask to the user
      * @param string|bool|int|float|null $default  The default answer to return if the user enters nothing
      */
-    public function __construct(string $question, string|bool|int|float $default = null)
+    public function __construct(string $question, $default = null)
     {
         $this->question = $question;
         $this->default = $default;
@@ -44,44 +43,30 @@ class Question
 
     /**
      * Returns the question.
+     *
+     * @return string
      */
-    public function getQuestion(): string
+    public function getQuestion()
     {
         return $this->question;
     }
 
     /**
      * Returns the default answer.
+     *
+     * @return string|bool|int|float|null
      */
-    public function getDefault(): string|bool|int|float|null
+    public function getDefault()
     {
         return $this->default;
     }
 
     /**
-     * Returns whether the user response accepts newline characters.
-     */
-    public function isMultiline(): bool
-    {
-        return $this->multiline;
-    }
-
-    /**
-     * Sets whether the user response should accept newline characters.
-     *
-     * @return $this
-     */
-    public function setMultiline(bool $multiline): static
-    {
-        $this->multiline = $multiline;
-
-        return $this;
-    }
-
-    /**
      * Returns whether the user response must be hidden.
+     *
+     * @return bool
      */
-    public function isHidden(): bool
+    public function isHidden()
     {
         return $this->hidden;
     }
@@ -89,45 +74,53 @@ class Question
     /**
      * Sets whether the user response must be hidden or not.
      *
+     * @param bool $hidden
+     *
      * @return $this
      *
      * @throws LogicException In case the autocompleter is also used
      */
-    public function setHidden(bool $hidden): static
+    public function setHidden($hidden)
     {
         if ($this->autocompleterCallback) {
             throw new LogicException('A hidden question cannot use the autocompleter.');
         }
 
-        $this->hidden = $hidden;
+        $this->hidden = (bool) $hidden;
 
         return $this;
     }
 
     /**
-     * In case the response cannot be hidden, whether to fallback on non-hidden question or not.
+     * In case the response can not be hidden, whether to fallback on non-hidden question or not.
+     *
+     * @return bool
      */
-    public function isHiddenFallback(): bool
+    public function isHiddenFallback()
     {
         return $this->hiddenFallback;
     }
 
     /**
-     * Sets whether to fallback on non-hidden question if the response cannot be hidden.
+     * Sets whether to fallback on non-hidden question if the response can not be hidden.
+     *
+     * @param bool $fallback
      *
      * @return $this
      */
-    public function setHiddenFallback(bool $fallback): static
+    public function setHiddenFallback($fallback)
     {
-        $this->hiddenFallback = $fallback;
+        $this->hiddenFallback = (bool) $fallback;
 
         return $this;
     }
 
     /**
      * Gets values for the autocompleter.
+     *
+     * @return iterable|null
      */
-    public function getAutocompleterValues(): ?iterable
+    public function getAutocompleterValues()
     {
         $callback = $this->getAutocompleterCallback();
 
@@ -137,11 +130,14 @@ class Question
     /**
      * Sets values for the autocompleter.
      *
+     * @param iterable|null $values
+     *
      * @return $this
      *
+     * @throws InvalidArgumentException
      * @throws LogicException
      */
-    public function setAutocompleterValues(?iterable $values): static
+    public function setAutocompleterValues($values)
     {
         if (\is_array($values)) {
             $values = $this->isAssoc($values) ? array_merge(array_keys($values), array_values($values)) : array_values($values);
@@ -154,8 +150,10 @@ class Question
             $callback = static function () use ($values, &$valueCache) {
                 return $valueCache ?? $valueCache = iterator_to_array($values, false);
             };
-        } else {
+        } elseif (null === $values) {
             $callback = null;
+        } else {
+            throw new InvalidArgumentException('Autocompleter values can be either an array, "null" or a "Traversable" object.');
         }
 
         return $this->setAutocompleterCallback($callback);
@@ -176,13 +174,13 @@ class Question
      *
      * @return $this
      */
-    public function setAutocompleterCallback(callable $callback = null): static
+    public function setAutocompleterCallback(callable $callback = null): self
     {
         if ($this->hidden && null !== $callback) {
             throw new LogicException('A hidden question cannot use the autocompleter.');
         }
 
-        $this->autocompleterCallback = null === $callback || $callback instanceof \Closure ? $callback : \Closure::fromCallable($callback);
+        $this->autocompleterCallback = $callback;
 
         return $this;
     }
@@ -192,17 +190,19 @@ class Question
      *
      * @return $this
      */
-    public function setValidator(callable $validator = null): static
+    public function setValidator(callable $validator = null)
     {
-        $this->validator = null === $validator || $validator instanceof \Closure ? $validator : \Closure::fromCallable($validator);
+        $this->validator = $validator;
 
         return $this;
     }
 
     /**
      * Gets the validator for the question.
+     *
+     * @return callable|null
      */
-    public function getValidator(): ?callable
+    public function getValidator()
     {
         return $this->validator;
     }
@@ -212,14 +212,19 @@ class Question
      *
      * Null means an unlimited number of attempts.
      *
+     * @param int|null $attempts
+     *
      * @return $this
      *
      * @throws InvalidArgumentException in case the number of attempts is invalid
      */
-    public function setMaxAttempts(?int $attempts): static
+    public function setMaxAttempts($attempts)
     {
-        if (null !== $attempts && $attempts < 1) {
-            throw new InvalidArgumentException('Maximum number of attempts must be a positive value.');
+        if (null !== $attempts) {
+            $attempts = (int) $attempts;
+            if ($attempts < 1) {
+                throw new InvalidArgumentException('Maximum number of attempts must be a positive value.');
+            }
         }
 
         $this->attempts = $attempts;
@@ -231,8 +236,10 @@ class Question
      * Gets the maximum number of attempts.
      *
      * Null means an unlimited number of attempts.
+     *
+     * @return int|null
      */
-    public function getMaxAttempts(): ?int
+    public function getMaxAttempts()
     {
         return $this->attempts;
     }
@@ -244,9 +251,9 @@ class Question
      *
      * @return $this
      */
-    public function setNormalizer(callable $normalizer): static
+    public function setNormalizer(callable $normalizer)
     {
-        $this->normalizer = $normalizer instanceof \Closure ? $normalizer : \Closure::fromCallable($normalizer);
+        $this->normalizer = $normalizer;
 
         return $this;
     }
@@ -255,13 +262,15 @@ class Question
      * Gets the normalizer for the response.
      *
      * The normalizer can ba a callable (a string), a closure or a class implementing __invoke.
+     *
+     * @return callable|null
      */
-    public function getNormalizer(): ?callable
+    public function getNormalizer()
     {
         return $this->normalizer;
     }
 
-    protected function isAssoc(array $array)
+    protected function isAssoc($array)
     {
         return (bool) \count(array_filter(array_keys($array), 'is_string'));
     }
@@ -274,7 +283,7 @@ class Question
     /**
      * @return $this
      */
-    public function setTrimmable(bool $trimmable): static
+    public function setTrimmable(bool $trimmable): self
     {
         $this->trimmable = $trimmable;
 

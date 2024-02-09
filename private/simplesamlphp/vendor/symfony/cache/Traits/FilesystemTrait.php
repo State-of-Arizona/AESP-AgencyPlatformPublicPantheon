@@ -25,7 +25,10 @@ trait FilesystemTrait
 
     private $marshaller;
 
-    public function prune(): bool
+    /**
+     * @return bool
+     */
+    public function prune()
     {
         $time = time();
         $pruned = true;
@@ -49,14 +52,14 @@ trait FilesystemTrait
     /**
      * {@inheritdoc}
      */
-    protected function doFetch(array $ids): iterable
+    protected function doFetch(array $ids)
     {
         $values = [];
         $now = time();
 
         foreach ($ids as $id) {
             $file = $this->getFile($id);
-            if (!is_file($file) || !$h = @fopen($file, 'r')) {
+            if (!file_exists($file) || !$h = @fopen($file, 'r')) {
                 continue;
             }
             if (($expiresAt = (int) fgets($h)) && $now >= $expiresAt) {
@@ -78,17 +81,17 @@ trait FilesystemTrait
     /**
      * {@inheritdoc}
      */
-    protected function doHave(string $id): bool
+    protected function doHave($id)
     {
         $file = $this->getFile($id);
 
-        return is_file($file) && (@filemtime($file) > time() || $this->doFetch([$id]));
+        return file_exists($file) && (@filemtime($file) > time() || $this->doFetch([$id]));
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doSave(array $values, int $lifetime): array|bool
+    protected function doSave(array $values, int $lifetime)
     {
         $expiresAt = $lifetime ? (time() + $lifetime) : 0;
         $values = $this->marshaller->marshall($values, $failed);

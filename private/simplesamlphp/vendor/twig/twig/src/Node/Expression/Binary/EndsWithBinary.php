@@ -15,7 +15,7 @@ use Twig\Compiler;
 
 class EndsWithBinary extends AbstractBinary
 {
-    public function compile(Compiler $compiler): void
+    public function compile(Compiler $compiler)
     {
         $left = $compiler->getVarName();
         $right = $compiler->getVarName();
@@ -24,12 +24,14 @@ class EndsWithBinary extends AbstractBinary
             ->subcompile($this->getNode('left'))
             ->raw(sprintf(') && is_string($%s = ', $right))
             ->subcompile($this->getNode('right'))
-            ->raw(sprintf(') && str_ends_with($%1$s, $%2$s))', $left, $right))
+            ->raw(sprintf(') && (\'\' === $%2$s || $%2$s === substr($%1$s, -strlen($%2$s))))', $left, $right))
         ;
     }
 
-    public function operator(Compiler $compiler): Compiler
+    public function operator(Compiler $compiler)
     {
         return $compiler->raw('');
     }
 }
+
+class_alias('Twig\Node\Expression\Binary\EndsWithBinary', 'Twig_Node_Expression_Binary_EndsWith');

@@ -18,17 +18,15 @@ trait DeprecateTrait
     /**
      * Whether this definition is deprecated, that means it should not be called anymore.
      *
-     * @param string $package The name of the composer package that is triggering the deprecation
-     * @param string $version The version of the package that introduced the deprecation
-     * @param string $message The deprecation message to use
+     * @param string $template Template message to use if the definition is deprecated
      *
      * @return $this
      *
      * @throws InvalidArgumentException when the message template is invalid
      */
-    final public function deprecate(string $package, string $version, string $message): static
+    final public function deprecate(string $template = null): self
     {
-        $this->definition->setDeprecated($package, $version, $message);
+        $this->definition->setDeprecated(true, $template);
 
         return $this;
     }

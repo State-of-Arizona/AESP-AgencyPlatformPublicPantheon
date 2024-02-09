@@ -4,45 +4,46 @@
 Filter that adds attributes to the user.
 
 If the attribute already exists, the values added will be merged into a multi-valued attribute.
-If you instead want to replace the existing attribute, you may add the `%replace` option.
+If you instead want to replace the existing attribute, you may add the `'%replace'` option.
+
 
 Examples
 --------
 
 Add a single-valued attributes:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeAdd',
-            'source' => ['myidp'],
-        ],
-    ],
+            'source' => array('myidp'),
+        ),
+    ),
 
 Add a multi-valued attribute:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeAdd',
-            'groups' => ['users', 'members'],
-        ],
-    ],
+            'groups' => array('users', 'members'),
+        ),
+    ),
 
 Add multiple attributes:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeAdd',
-            'eduPersonPrimaryAffiliation' => 'student',
-            'eduPersonAffiliation' => ['student', 'employee', 'members'],
-        ],
-    ],
+	    'eduPersonPrimaryAffiliation' => 'student',
+            'eduPersonAffiliation' => array('student', 'employee', 'members'),
+        ),
+    ),
 
 Replace an existing attributes:
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeAdd',
             '%replace',
-            'uid' => ['guest'],
-        ],
-    ],
+            'uid' => array('guest'),
+        ),
+    ),

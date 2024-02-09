@@ -23,18 +23,27 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class CachePoolPrunerPass implements CompilerPassInterface
 {
+    private $cacheCommandServiceId;
+    private $cachePoolTag;
+
+    public function __construct(string $cacheCommandServiceId = 'console.command.cache_pool_prune', string $cachePoolTag = 'cache.pool')
+    {
+        $this->cacheCommandServiceId = $cacheCommandServiceId;
+        $this->cachePoolTag = $cachePoolTag;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
-        if (!$container->hasDefinition('console.command.cache_pool_prune')) {
+        if (!$container->hasDefinition($this->cacheCommandServiceId)) {
             return;
         }
 
         $services = [];
 
-        foreach ($container->findTaggedServiceIds('cache.pool') as $id => $tags) {
+        foreach ($container->findTaggedServiceIds($this->cachePoolTag) as $id => $tags) {
             $class = $container->getParameterBag()->resolveValue($container->getDefinition($id)->getClass());
 
             if (!$reflection = $container->getReflectionClass($class)) {
@@ -46,6 +55,6 @@ class CachePoolPrunerPass implements CompilerPassInterface
             }
         }
 
-        $container->getDefinition('console.command.cache_pool_prune')->replaceArgument(0, new IteratorArgument($services));
+        $container->getDefinition($this->cacheCommandServiceId)->replaceArgument(0, new IteratorArgument($services));
     }
 }

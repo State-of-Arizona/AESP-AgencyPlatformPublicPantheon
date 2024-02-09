@@ -19,24 +19,19 @@ namespace Symfony\Component\HttpFoundation\Session;
 final class SessionBagProxy implements SessionBagInterface
 {
     private $bag;
-    private array $data;
-    private ?int $usageIndex;
-    private ?\Closure $usageReporter;
+    private $data;
+    private $usageIndex;
 
-    public function __construct(SessionBagInterface $bag, array &$data, ?int &$usageIndex, ?callable $usageReporter)
+    public function __construct(SessionBagInterface $bag, array &$data, ?int &$usageIndex)
     {
         $this->bag = $bag;
         $this->data = &$data;
         $this->usageIndex = &$usageIndex;
-        $this->usageReporter = $usageReporter instanceof \Closure || !\is_callable($usageReporter) ? $usageReporter : \Closure::fromCallable($usageReporter);
     }
 
     public function getBag(): SessionBagInterface
     {
         ++$this->usageIndex;
-        if ($this->usageReporter && 0 <= $this->usageIndex) {
-            ($this->usageReporter)();
-        }
 
         return $this->bag;
     }
@@ -47,9 +42,6 @@ final class SessionBagProxy implements SessionBagInterface
             return true;
         }
         ++$this->usageIndex;
-        if ($this->usageReporter && 0 <= $this->usageIndex) {
-            ($this->usageReporter)();
-        }
 
         return empty($this->data[$this->bag->getStorageKey()]);
     }
@@ -68,10 +60,6 @@ final class SessionBagProxy implements SessionBagInterface
     public function initialize(array &$array): void
     {
         ++$this->usageIndex;
-        if ($this->usageReporter && 0 <= $this->usageIndex) {
-            ($this->usageReporter)();
-        }
-
         $this->data[$this->bag->getStorageKey()] = &$array;
 
         $this->bag->initialize($array);
@@ -88,7 +76,7 @@ final class SessionBagProxy implements SessionBagInterface
     /**
      * {@inheritdoc}
      */
-    public function clear(): mixed
+    public function clear()
     {
         return $this->bag->clear();
     }

@@ -21,8 +21,8 @@ use Symfony\Component\Console\Exception\InvalidArgumentException;
  */
 class OutputFormatter implements WrappableOutputFormatterInterface
 {
-    private bool $decorated;
-    private array $styles = [];
+    private $decorated;
+    private $styles = [];
     private $styleStack;
 
     public function __clone()
@@ -35,8 +35,12 @@ class OutputFormatter implements WrappableOutputFormatterInterface
 
     /**
      * Escapes "<" and ">" special chars in given text.
+     *
+     * @param string $text Text to escape
+     *
+     * @return string Escaped text
      */
-    public static function escape(string $text): string
+    public static function escape($text)
     {
         $text = preg_replace('/([^\\\\]|^)([<>])/', '$1\\\\$2', $text);
 
@@ -84,15 +88,15 @@ class OutputFormatter implements WrappableOutputFormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function setDecorated(bool $decorated)
+    public function setDecorated($decorated)
     {
-        $this->decorated = $decorated;
+        $this->decorated = (bool) $decorated;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function isDecorated(): bool
+    public function isDecorated()
     {
         return $this->decorated;
     }
@@ -100,7 +104,7 @@ class OutputFormatter implements WrappableOutputFormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function setStyle(string $name, OutputFormatterStyleInterface $style)
+    public function setStyle($name, OutputFormatterStyleInterface $style)
     {
         $this->styles[strtolower($name)] = $style;
     }
@@ -108,7 +112,7 @@ class OutputFormatter implements WrappableOutputFormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function hasStyle(string $name): bool
+    public function hasStyle($name)
     {
         return isset($this->styles[strtolower($name)]);
     }
@@ -116,7 +120,7 @@ class OutputFormatter implements WrappableOutputFormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function getStyle(string $name): OutputFormatterStyleInterface
+    public function getStyle($name)
     {
         if (!$this->hasStyle($name)) {
             throw new InvalidArgumentException(sprintf('Undefined style: "%s".', $name));
@@ -128,20 +132,16 @@ class OutputFormatter implements WrappableOutputFormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function format(?string $message): ?string
+    public function format($message)
     {
-        return $this->formatAndWrap($message, 0);
+        return $this->formatAndWrap((string) $message, 0);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function formatAndWrap(?string $message, int $width)
+    public function formatAndWrap(string $message, int $width)
     {
-        if (null === $message) {
-            return '';
-        }
-
         $offset = 0;
         $output = '';
         $openTagRegex = '[a-z](?:[^\\\\<>]*+ | \\\\.)*';
@@ -184,7 +184,10 @@ class OutputFormatter implements WrappableOutputFormatterInterface
         return strtr($output, ["\0" => '\\', '\\<' => '<', '\\>' => '>']);
     }
 
-    public function getStyleStack(): OutputFormatterStyleStack
+    /**
+     * @return OutputFormatterStyleStack
+     */
+    public function getStyleStack()
     {
         return $this->styleStack;
     }

@@ -15,68 +15,69 @@ namespace Symfony\Component\Routing\Annotation;
  * Annotation class for @Route().
  *
  * @Annotation
- * @NamedArgumentConstructor
  * @Target({"CLASS", "METHOD"})
  *
  * @author Fabien Potencier <fabien@symfony.com>
- * @author Alexander M. Turek <me@derrabus.de>
  */
-#[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Route
 {
-    private ?string $path = null;
-    private array $localizedPaths = [];
-    private array $methods;
-    private array $schemes;
+    private $path;
+    private $localizedPaths = [];
+    private $name;
+    private $requirements = [];
+    private $options = [];
+    private $defaults = [];
+    private $host;
+    private $methods = [];
+    private $schemes = [];
+    private $condition;
 
     /**
-     * @param string[]        $requirements
-     * @param string[]|string $methods
-     * @param string[]|string $schemes
+     * @param array $data An array of key/value parameters
+     *
+     * @throws \BadMethodCallException
      */
-    public function __construct(
-        string|array $path = null,
-        private ?string $name = null,
-        private array $requirements = [],
-        private array $options = [],
-        private array $defaults = [],
-        private ?string $host = null,
-        array|string $methods = [],
-        array|string $schemes = [],
-        private ?string $condition = null,
-        private ?int $priority = null,
-        string $locale = null,
-        string $format = null,
-        bool $utf8 = null,
-        bool $stateless = null,
-        private ?string $env = null
-    ) {
-        if (\is_array($path)) {
-            $this->localizedPaths = $path;
-        } else {
-            $this->path = $path;
-        }
-        $this->setMethods($methods);
-        $this->setSchemes($schemes);
-
-        if (null !== $locale) {
-            $this->defaults['_locale'] = $locale;
+    public function __construct(array $data)
+    {
+        if (isset($data['localized_paths'])) {
+            throw new \BadMethodCallException(sprintf('Unknown property "localized_paths" on annotation "%s".', static::class));
         }
 
-        if (null !== $format) {
-            $this->defaults['_format'] = $format;
+        if (isset($data['value'])) {
+            $data[\is_array($data['value']) ? 'localized_paths' : 'path'] = $data['value'];
+            unset($data['value']);
         }
 
-        if (null !== $utf8) {
-            $this->options['utf8'] = $utf8;
+        if (isset($data['path']) && \is_array($data['path'])) {
+            $data['localized_paths'] = $data['path'];
+            unset($data['path']);
         }
 
-        if (null !== $stateless) {
-            $this->defaults['_stateless'] = $stateless;
+        if (isset($data['locale'])) {
+            $data['defaults']['_locale'] = $data['locale'];
+            unset($data['locale']);
+        }
+
+        if (isset($data['format'])) {
+            $data['defaults']['_format'] = $data['format'];
+            unset($data['format']);
+        }
+
+        if (isset($data['utf8'])) {
+            $data['options']['utf8'] = filter_var($data['utf8'], \FILTER_VALIDATE_BOOLEAN) ?: false;
+            unset($data['utf8']);
+        }
+
+        foreach ($data as $key => $value) {
+            $method = 'set'.str_replace('_', '', $key);
+            if (!method_exists($this, $method)) {
+                throw new \BadMethodCallException(sprintf('Unknown property "%s" on annotation "%s".', $key, static::class));
+            }
+            $this->$method($value);
         }
     }
 
-    public function setPath(string $path)
+    public function setPath($path)
     {
         $this->path = $path;
     }
@@ -96,7 +97,7 @@ class Route
         return $this->localizedPaths;
     }
 
-    public function setHost(string $pattern)
+    public function setHost($pattern)
     {
         $this->host = $pattern;
     }
@@ -106,7 +107,7 @@ class Route
         return $this->host;
     }
 
-    public function setName(string $name)
+    public function setName($name)
     {
         $this->name = $name;
     }
@@ -116,7 +117,7 @@ class Route
         return $this->name;
     }
 
-    public function setRequirements(array $requirements)
+    public function setRequirements($requirements)
     {
         $this->requirements = $requirements;
     }
@@ -126,7 +127,7 @@ class Route
         return $this->requirements;
     }
 
-    public function setOptions(array $options)
+    public function setOptions($options)
     {
         $this->options = $options;
     }
@@ -136,7 +137,7 @@ class Route
         return $this->options;
     }
 
-    public function setDefaults(array $defaults)
+    public function setDefaults($defaults)
     {
         $this->defaults = $defaults;
     }
@@ -146,9 +147,9 @@ class Route
         return $this->defaults;
     }
 
-    public function setSchemes(array|string $schemes)
+    public function setSchemes($schemes)
     {
-        $this->schemes = (array) $schemes;
+        $this->schemes = \is_array($schemes) ? $schemes : [$schemes];
     }
 
     public function getSchemes()
@@ -156,9 +157,9 @@ class Route
         return $this->schemes;
     }
 
-    public function setMethods(array|string $methods)
+    public function setMethods($methods)
     {
-        $this->methods = (array) $methods;
+        $this->methods = \is_array($methods) ? $methods : [$methods];
     }
 
     public function getMethods()
@@ -166,7 +167,7 @@ class Route
         return $this->methods;
     }
 
-    public function setCondition(?string $condition)
+    public function setCondition($condition)
     {
         $this->condition = $condition;
     }
@@ -174,25 +175,5 @@ class Route
     public function getCondition()
     {
         return $this->condition;
-    }
-
-    public function setPriority(int $priority): void
-    {
-        $this->priority = $priority;
-    }
-
-    public function getPriority(): ?int
-    {
-        return $this->priority;
-    }
-
-    public function setEnv(?string $env): void
-    {
-        $this->env = $env;
-    }
-
-    public function getEnv(): ?string
-    {
-        return $this->env;
     }
 }

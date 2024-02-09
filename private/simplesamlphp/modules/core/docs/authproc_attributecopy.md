@@ -1,25 +1,26 @@
 `core:AttributeCopy`
-====================
+===================
 
 Filter that copies attributes.
+
 
 Examples
 --------
 
 Copy a single attribute (user's `uid` will be copied to the user's `username`):
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeCopy',
             'uid' => 'username',
-        ],
-    ],
+        ),
+    ),
 
-Copy a single attribute to more than one attribute (user's `uid` will be copied to the user's `username` and to `urn:mace:dir:attribute-def:uid`)
+Copy a single attribute to more then one attribute (user's `uid` will be copied to the user's `username` and to `urn:mace:dir:attribute-def:uid`)
 
-    'authproc' => [
-        50 => [
+    'authproc' => array(
+        50 => array(
             'class' => 'core:AttributeCopy',
-            'uid' => ['username', 'urn:mace:dir:attribute-def:uid'],
-        ],
-    ],
+            'uid' => array('username', 'urn:mace:dir:attribute-def:uid'),
+        ),
+    ),

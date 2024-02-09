@@ -103,7 +103,7 @@ function simplesamlphp_auth_loginpage() {
   }
 
   // Do some sanity checking before attempting anything.
-  $config = \SimpleSAML\Configuration::getInstance();
+  $config = SimpleSAML\Configuration::getInstance();
   $configStoreType = $config->getValue('store.type');
 
   // Make sure phpsession is NOT being used.
@@ -210,11 +210,11 @@ function simplesamlphp_auth_init() {
 
   require_once($basedir . '/lib/_autoload.php');
 
-  $_simplesamlphp_auth_saml_config = \SimpleSAML\Configuration::getInstance();
+  $_simplesamlphp_auth_saml_config = SimpleSAML\Configuration::getInstance();
   $_simplesamlphp_auth_saml_version = $_simplesamlphp_auth_saml_config->getVersion();
 
   // Load simpleSAMLphp, configuration and metadata.
-  $_simplesamlphp_auth_as = new \SimpleSAML\Auth\Simple(variable_get('simplesamlphp_auth_authsource', 'default-sp'));
+  $_simplesamlphp_auth_as = new SimpleSAML\Auth\Simple(variable_get('simplesamlphp_auth_authsource', 'default-sp'));
   $_simplesamlphp_auth_saml_attributes = $_simplesamlphp_auth_as->getAttributes();
 
   if ($user->uid == 0) {
@@ -435,7 +435,7 @@ function simplesamlphp_auth_user_logout($account) {
 
   if (!empty($_simplesamlphp_auth_saml_attributes)) {
 
-    $config = \SimpleSAML\Configuration::getInstance();
+    $config = SimpleSAML\Configuration::getInstance();
 
     // :KLUDGE: for some reason Drupal is not killing the session, even if I were to call drupal_session_destroy_uid() here.
     session_destroy();

@@ -25,29 +25,29 @@ class Parser
 {
     public const TAG_PATTERN = '(?P<tag>![\w!.\/:-]+)';
     public const BLOCK_SCALAR_HEADER_PATTERN = '(?P<separator>\||>)(?P<modifiers>\+|\-|\d+|\+\d+|\-\d+|\d+\+|\d+\-)?(?P<comments> +#.*)?';
+    public const REFERENCE_PATTERN = '#^&(?P<ref>[^ ]++) *+(?P<value>.*)#u';
 
-    private $filename;
-    private $offset = 0;
-    private $totalNumberOfLines;
-    private $lines = [];
-    private $currentLineNb = -1;
-    private $currentLine = '';
-    private $refs = [];
-    private $skippedLineNumbers = [];
-    private $locallySkippedLineNumbers = [];
-    private $refsBeingParsed = [];
+    private ?string $filename = null;
+    private int $offset = 0;
+    private int $numberOfParsedLines = 0;
+    private ?int $totalNumberOfLines = null;
+    private array $lines = [];
+    private int $currentLineNb = -1;
+    private string $currentLine = '';
+    private array $refs = [];
+    private array $skippedLineNumbers = [];
+    private array $locallySkippedLineNumbers = [];
+    private array $refsBeingParsed = [];
 
     /**
      * Parses a YAML file into a PHP value.
      *
      * @param string $filename The path to the YAML file to be parsed
-     * @param int    $flags    A bit field of PARSE_* constants to customize the YAML parser behavior
-     *
-     * @return mixed The YAML converted to a PHP value
+     * @param int    $flags    A bit field of Yaml::PARSE_* constants to customize the YAML parser behavior
      *
      * @throws ParseException If the file could not be read or the YAML is not valid
      */
-    public function parseFile(string $filename, int $flags = 0)
+    public function parseFile(string $filename, int $flags = 0): mixed
     {
         if (!is_file($filename)) {
             throw new ParseException(sprintf('File "%s" does not exist.', $filename));
@@ -70,13 +70,11 @@ class Parser
      * Parses a YAML string to a PHP value.
      *
      * @param string $value A YAML string
-     * @param int    $flags A bit field of PARSE_* constants to customize the YAML parser behavior
-     *
-     * @return mixed A PHP value
+     * @param int    $flags A bit field of Yaml::PARSE_* constants to customize the YAML parser behavior
      *
      * @throws ParseException If the YAML is not valid
      */
-    public function parse(string $value, int $flags = 0)
+    public function parse(string $value, int $flags = 0): mixed
     {
         if (false === preg_match('//u', $value)) {
             throw new ParseException('The YAML value does not appear to be valid UTF-8.', -1, null, $this->filename);
@@ -84,21 +82,14 @@ class Parser
 
         $this->refs = [];
 
-        $mbEncoding = null;
-
-        if (2 /* MB_OVERLOAD_STRING */ & (int) ini_get('mbstring.func_overload')) {
-            $mbEncoding = mb_internal_encoding();
-            mb_internal_encoding('UTF-8');
-        }
-
         try {
             $data = $this->doParse($value, $flags);
         } finally {
-            if (null !== $mbEncoding) {
-                mb_internal_encoding($mbEncoding);
-            }
+            $this->refsBeingParsed = [];
+            $this->offset = 0;
             $this->lines = [];
             $this->currentLine = '';
+            $this->numberOfParsedLines = 0;
             $this->refs = [];
             $this->skippedLineNumbers = [];
             $this->locallySkippedLineNumbers = [];
@@ -114,10 +105,11 @@ class Parser
         $this->currentLine = '';
         $value = $this->cleanup($value);
         $this->lines = explode("\n", $value);
+        $this->numberOfParsedLines = \count($this->lines);
         $this->locallySkippedLineNumbers = [];
 
         if (null === $this->totalNumberOfLines) {
-            $this->totalNumberOfLines = \count($this->lines);
+            $this->totalNumberOfLines = $this->numberOfParsedLines;
         }
 
         if (!$this->moveToNextLine()) {
@@ -158,7 +150,7 @@ class Parser
                 }
                 $context = 'sequence';
 
-                if (isset($values['value']) && '&' === $values['value'][0] && self::preg_match('#^&(?P<ref>[^ ]+) *(?P<value>.*)#u', $values['value'], $matches)) {
+                if (isset($values['value']) && '&' === $values['value'][0] && self::preg_match(self::REFERENCE_PATTERN, $values['value'], $matches)) {
                     $isRef = $matches['ref'];
                     $this->refsBeingParsed[] = $isRef;
                     $values['value'] = $matches['value'];
@@ -169,7 +161,16 @@ class Parser
                 }
 
                 // array
-                if (!isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#')) {
+                if (isset($values['value']) && 0 === strpos(ltrim($values['value'], ' '), '-')) {
+                    // Inline first child
+                    $currentLineNumber = $this->getRealCurrentLineNb();
+
+                    $sequenceIndentation = \strlen($values['leadspaces']) + 1;
+                    $sequenceYaml = substr($this->currentLine, $sequenceIndentation);
+                    $sequenceYaml .= "\n".$this->getNextEmbedBlock($sequenceIndentation, true);
+
+                    $data[] = $this->parseBlock($currentLineNumber, rtrim($sequenceYaml), $flags);
+                } elseif (!isset($values['value']) || '' == trim($values['value'], ' ') || 0 === strpos(ltrim($values['value'], ' '), '#')) {
                     $data[] = $this->parseBlock($this->getRealCurrentLineNb() + 1, $this->getNextEmbedBlock(null, true) ?? '', $flags);
                 } elseif (null !== $subTag = $this->getLineTag(ltrim($values['value'], ' '), $flags)) {
                     $data[] = new TaggedValue(
@@ -200,7 +201,7 @@ class Parser
                     array_pop($this->refsBeingParsed);
                 }
             } elseif (
-                self::preg_match('#^(?P<key>(?:![^\s]++\s++)?(?:'.Inline::REGEX_QUOTED_STRING.'|(?:!?!php/const:)?[^ \'"\[\{!].*?)) *\:( ++(?P<value>.+))?$#u', rtrim($this->currentLine), $values)
+                self::preg_match('#^(?P<key>(?:![^\s]++\s++)?(?:'.Inline::REGEX_QUOTED_STRING.'|(?:!?!php/const:)?[^ \'"\[\{!].*?)) *\:(( |\t)++(?P<value>.+))?$#u', rtrim($this->currentLine), $values)
                 && (false === strpos($values['key'], ' #') || \in_array($values['key'][0], ['"', "'"]))
             ) {
                 if ($context && 'sequence' == $context) {
@@ -218,7 +219,7 @@ class Parser
                 }
 
                 if (!\is_string($key) && !\is_int($key)) {
-                    throw new ParseException(sprintf('%s keys are not supported. Quote your evaluable mapping keys instead.', is_numeric($key) ? 'Numeric' : 'Non-string'), $this->getRealCurrentLineNb() + 1, $this->currentLine);
+                    throw new ParseException((is_numeric($key) ? 'Numeric' : 'Non-string').' keys are not supported. Quote your evaluable mapping keys instead.', $this->getRealCurrentLineNb() + 1, $this->currentLine);
                 }
 
                 // Convert float keys to strings, to avoid being converted to integers by PHP
@@ -233,7 +234,7 @@ class Parser
                         $refName = substr(rtrim($values['value']), 1);
                         if (!\array_key_exists($refName, $this->refs)) {
                             if (false !== $pos = array_search($refName, $this->refsBeingParsed, true)) {
-                                throw new ParseException(sprintf('Circular reference [%s, %s] detected for reference "%s".', implode(', ', \array_slice($this->refsBeingParsed, $pos)), $refName, $refName), $this->currentLineNb + 1, $this->currentLine, $this->filename);
+                                throw new ParseException(sprintf('Circular reference [%s] detected for reference "%s".', implode(', ', array_merge(\array_slice($this->refsBeingParsed, $pos), [$refName])), $refName), $this->currentLineNb + 1, $this->currentLine, $this->filename);
                             }
 
                             throw new ParseException(sprintf('Reference "%s" does not exist.', $refName), $this->getRealCurrentLineNb() + 1, $this->currentLine, $this->filename);
@@ -287,7 +288,7 @@ class Parser
                             $data += $parsed; // array union
                         }
                     }
-                } elseif ('<<' !== $key && isset($values['value']) && '&' === $values['value'][0] && self::preg_match('#^&(?P<ref>[^ ]++) *+(?P<value>.*)#u', $values['value'], $matches)) {
+                } elseif ('<<' !== $key && isset($values['value']) && '&' === $values['value'][0] && self::preg_match(self::REFERENCE_PATTERN, $values['value'], $matches)) {
                     $isRef = $matches['ref'];
                     $this->refsBeingParsed[] = $isRef;
                     $values['value'] = $matches['value'];
@@ -435,7 +436,8 @@ class Parser
                     $value = '';
 
                     foreach ($this->lines as $line) {
-                        if ('' !== ltrim($line) && '#' === ltrim($line)[0]) {
+                        $trimmedLine = trim($line);
+                        if ('#' === ($trimmedLine[0] ?? '')) {
                             continue;
                         }
                         // If the indentation is not consistent at offset 0, it is to be considered as a ParseError
@@ -444,22 +446,22 @@ class Parser
                         }
 
                         if (false !== strpos($line, ': ')) {
-                            @trigger_error('Support for mapping keys in multi-line blocks is deprecated since Symfony 4.3 and will throw a ParseException in 5.0.', \E_USER_DEPRECATED);
+                            throw new ParseException('Mapping values are not allowed in multi-line blocks.', $this->getRealCurrentLineNb() + 1, $this->currentLine, $this->filename);
                         }
 
-                        if ('' === trim($line)) {
+                        if ('' === $trimmedLine) {
                             $value .= "\n";
                         } elseif (!$previousLineWasNewline && !$previousLineWasTerminatedWithBackslash) {
                             $value .= ' ';
                         }
 
-                        if ('' !== trim($line) && '\\' === substr($line, -1)) {
+                        if ('' !== $trimmedLine && '\\' === substr($line, -1)) {
                             $value .= ltrim(substr($line, 0, -1));
-                        } elseif ('' !== trim($line)) {
-                            $value .= trim($line);
+                        } elseif ('' !== $trimmedLine) {
+                            $value .= $trimmedLine;
                         }
 
-                        if ('' === trim($line)) {
+                        if ('' === $trimmedLine) {
                             $previousLineWasNewline = true;
                             $previousLineWasTerminatedWithBackslash = false;
                         } elseif ('\\' === substr($line, -1)) {
@@ -486,7 +488,7 @@ class Parser
             $data = new TaggedValue($tag, $data);
         }
 
-        if (Yaml::PARSE_OBJECT_FOR_MAP & $flags && !\is_object($data) && 'mapping' === $context) {
+        if (Yaml::PARSE_OBJECT_FOR_MAP & $flags && 'mapping' === $context && !\is_object($data)) {
             $object = new \stdClass();
 
             foreach ($data as $key => $value) {
@@ -525,8 +527,6 @@ class Parser
      * Returns the current line number (takes the offset into account).
      *
      * @internal
-     *
-     * @return int The current line number
      */
     public function getRealCurrentLineNb(): int
     {
@@ -543,13 +543,12 @@ class Parser
         return $realCurrentLineNumber;
     }
 
-    /**
-     * Returns the current line indentation.
-     *
-     * @return int The current line indentation
-     */
     private function getCurrentLineIndentation(): int
     {
+        if (' ' !== ($this->currentLine[0] ?? '')) {
+            return 0;
+        }
+
         return \strlen($this->currentLine) - \strlen(ltrim($this->currentLine, ' '));
     }
 
@@ -558,8 +557,6 @@ class Parser
      *
      * @param int|null $indentation The indent level at which the block is to be read, or null for default
      * @param bool     $inSequence  True if the enclosing data structure is a sequence
-     *
-     * @return string A YAML string
      *
      * @throws ParseException When indentation problem are detected
      */
@@ -604,8 +601,9 @@ class Parser
         }
 
         $data = [];
+
         if ($this->getCurrentLineIndentation() >= $newIndent) {
-            $data[] = substr($this->currentLine, $newIndent);
+            $data[] = substr($this->currentLine, $newIndent ?? 0);
         } elseif ($this->isCurrentLineEmpty() || $this->isCurrentLineComment()) {
             $data[] = $this->currentLine;
         } else {
@@ -669,7 +667,7 @@ class Parser
      */
     private function moveToNextLine(): bool
     {
-        if ($this->currentLineNb >= \count($this->lines) - 1) {
+        if ($this->currentLineNb >= $this->numberOfParsedLines - 1) {
             return false;
         }
 
@@ -696,14 +694,12 @@ class Parser
      * Parses a YAML value.
      *
      * @param string $value   A YAML value
-     * @param int    $flags   A bit field of PARSE_* constants to customize the YAML parser behavior
+     * @param int    $flags   A bit field of Yaml::PARSE_* constants to customize the YAML parser behavior
      * @param string $context The parser context (either sequence or mapping)
-     *
-     * @return mixed A PHP value
      *
      * @throws ParseException When reference does not exist
      */
-    private function parseValue(string $value, int $flags, string $context)
+    private function parseValue(string $value, int $flags, string $context): mixed
     {
         if (0 === strpos($value, '*')) {
             if (false !== $pos = strpos($value, '#')) {
@@ -714,7 +710,7 @@ class Parser
 
             if (!\array_key_exists($value, $this->refs)) {
                 if (false !== $pos = array_search($value, $this->refsBeingParsed, true)) {
-                    throw new ParseException(sprintf('Circular reference [%s, %s] detected for reference "%s".', implode(', ', \array_slice($this->refsBeingParsed, $pos)), $value, $value), $this->currentLineNb + 1, $this->currentLine, $this->filename);
+                    throw new ParseException(sprintf('Circular reference [%s] detected for reference "%s".', implode(', ', array_merge(\array_slice($this->refsBeingParsed, $pos), [$value])), $value), $this->currentLineNb + 1, $this->currentLine, $this->filename);
                 }
 
                 throw new ParseException(sprintf('Reference "%s" does not exist.', $value), $this->currentLineNb + 1, $this->currentLine, $this->filename);
@@ -919,8 +915,6 @@ class Parser
 
     /**
      * Returns true if the next line is indented.
-     *
-     * @return bool Returns true if the next line is indented, false otherwise
      */
     private function isNextLineIndented(): bool
     {
@@ -948,35 +942,20 @@ class Parser
         return $ret;
     }
 
-    /**
-     * Returns true if the current line is blank or if it is a comment line.
-     *
-     * @return bool Returns true if the current line is empty or if it is a comment line, false otherwise
-     */
     private function isCurrentLineEmpty(): bool
     {
         return $this->isCurrentLineBlank() || $this->isCurrentLineComment();
     }
 
-    /**
-     * Returns true if the current line is blank.
-     *
-     * @return bool Returns true if the current line is blank, false otherwise
-     */
     private function isCurrentLineBlank(): bool
     {
-        return '' == trim($this->currentLine, ' ');
+        return '' === $this->currentLine || '' === trim($this->currentLine, ' ');
     }
 
-    /**
-     * Returns true if the current line is a comment line.
-     *
-     * @return bool Returns true if the current line is a comment line, false otherwise
-     */
     private function isCurrentLineComment(): bool
     {
-        //checking explicitly the first char of the trim is faster than loops or strpos
-        $ltrimmedLine = ltrim($this->currentLine, ' ');
+        // checking explicitly the first char of the trim is faster than loops or strpos
+        $ltrimmedLine = '' !== $this->currentLine && ' ' === $this->currentLine[0] ? ltrim($this->currentLine, ' ') : $this->currentLine;
 
         return '' !== $ltrimmedLine && '#' === $ltrimmedLine[0];
     }
@@ -986,13 +965,6 @@ class Parser
         return ($this->offset + $this->currentLineNb) >= ($this->totalNumberOfLines - 1);
     }
 
-    /**
-     * Cleanups a YAML string to be parsed.
-     *
-     * @param string $value The input YAML string
-     *
-     * @return string A cleaned up YAML string
-     */
     private function cleanup(string $value): string
     {
         $value = str_replace(["\r\n", "\r"], "\n", $value);
@@ -1024,11 +996,6 @@ class Parser
         return $value;
     }
 
-    /**
-     * Returns true if the next line starts unindented collection.
-     *
-     * @return bool Returns true if the next line starts unindented collection, false otherwise
-     */
     private function isNextLineUnIndentedCollection(): bool
     {
         $currentIndentation = $this->getCurrentLineIndentation();
@@ -1055,11 +1022,6 @@ class Parser
         return $ret;
     }
 
-    /**
-     * Returns true if the string is un-indented collection item.
-     *
-     * @return bool Returns true if the string is un-indented collection item, false otherwise
-     */
     private function isStringUnIndentedCollectionItem(): bool
     {
         return '-' === rtrim($this->currentLine) || 0 === strpos($this->currentLine, '- ');
@@ -1207,13 +1169,17 @@ class Parser
             }
         } while ($this->moveToNextLine());
 
-        throw new ParseException('Malformed inline YAML string');
+        throw new ParseException('Malformed inline YAML string.');
     }
 
     private function lexUnquotedString(int &$cursor): string
     {
         $offset = $cursor;
         $cursor += strcspn($this->currentLine, '[]{},: ', $cursor);
+
+        if ($cursor === $offset) {
+            throw new ParseException('Malformed unquoted YAML string.');
+        }
 
         return substr($this->currentLine, $offset, $cursor - $offset);
     }
@@ -1274,7 +1240,7 @@ class Parser
             }
         } while ($this->moveToNextLine());
 
-        throw new ParseException('Malformed inline YAML string');
+        throw new ParseException('Malformed inline YAML string.');
     }
 
     private function consumeWhitespaces(int &$cursor): bool

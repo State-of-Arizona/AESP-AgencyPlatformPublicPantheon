@@ -23,13 +23,11 @@ use Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
 class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
 {
     private $bag;
-    private $resolveArrays;
-    private $throwOnResolveException;
 
-    public function __construct($resolveArrays = true, $throwOnResolveException = true)
-    {
-        $this->resolveArrays = $resolveArrays;
-        $this->throwOnResolveException = $throwOnResolveException;
+    public function __construct(
+        private bool $resolveArrays = true,
+        private bool $throwOnResolveException = true,
+    ) {
     }
 
     /**
@@ -57,10 +55,10 @@ class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
         }
 
         $this->bag->resolve();
-        $this->bag = null;
+        unset($this->bag);
     }
 
-    protected function processValue($value, $isRoot = false)
+    protected function processValue(mixed $value, bool $isRoot = false): mixed
     {
         if (\is_string($value)) {
             try {
@@ -84,6 +82,11 @@ class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
             }
             if (isset($changes['file'])) {
                 $value->setFile($this->bag->resolveValue($value->getFile()));
+            }
+            $tags = $value->getTags();
+            if (isset($tags['proxy'])) {
+                $tags['proxy'] = $this->bag->resolveValue($tags['proxy']);
+                $value->setTags($tags);
             }
         }
 

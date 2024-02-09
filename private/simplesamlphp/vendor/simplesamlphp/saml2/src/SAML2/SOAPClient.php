@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace SAML2;
 
 use DOMDocument;
+use Exception;
 use RobRichards\XMLSecLibs\XMLSecurityKey;
+use SAML2\Compat\ContainerSingleton;
+use SAML2\Exception\RuntimeException;
 use SAML2\Exception\InvalidArgumentException;
 use SAML2\Exception\UnparseableXmlException;
 use SimpleSAML\Configuration;
 use SimpleSAML\Utils\Config;
 use SimpleSAML\Utils\Crypto;
-
-use SAML2\Compat\ContainerSingleton;
-use SAML2\Exception\RuntimeException;
+//use SoapClient as BuiltinSoapClient;
+use SOAP_1_1;
 
 /**
  * Implementation of the SAML 2.0 SOAP binding.
@@ -56,7 +58,8 @@ class SOAPClient
         if ($srcMetadata->hasValue('saml.SOAPClient.certificate')) {
             $cert = $srcMetadata->getValue('saml.SOAPClient.certificate');
             if ($cert !== false) {
-                $ctxOpts['ssl']['local_cert'] = Config::getCertPath(
+                $configUtils = new Config();
+                $ctxOpts['ssl']['local_cert'] = $configUtils->getCertPath(
                     $srcMetadata->getString('saml.SOAPClient.certificate')
                 );
                 if ($srcMetadata->hasValue('saml.SOAPClient.privatekey_pass')) {
@@ -64,9 +67,11 @@ class SOAPClient
                 }
             }
         } else {
+            $cryptoUtils = new Crypto();
+
             /* Use the SP certificate and privatekey if it is configured. */
-            $privateKey = Crypto::loadPrivateKey($srcMetadata);
-            $publicKey = Crypto::loadPublicKey($srcMetadata);
+            $privateKey = $cryptoUtils->loadPrivateKey($srcMetadata);
+            $publicKey = $cryptoUtils->loadPublicKey($srcMetadata);
             if ($privateKey !== null && $publicKey !== null && isset($publicKey['PEM'])) {
                 $keyCertData = $privateKey['PEM'].$publicKey['PEM'];
                 $file = $container->getTempDir().'/'.sha1($keyCertData).'.pem';
@@ -131,16 +136,15 @@ class SOAPClient
         $container->debugMessage($request, 'out');
 
         $action = 'http://www.oasis-open.org/committees/security';
-        $version = SOAP_1_1;
         $destination = $msg->getDestination();
         if ($destination === null) {
-            throw new \Exception('Cannot send SOAP message, no destination set.');
+            throw new Exception('Cannot send SOAP message, no destination set.');
         }
 
         /* Perform SOAP Request over HTTP */
-        $soapresponsexml = $x->__doRequest($request, $destination, $action, $version);
+        $soapresponsexml = $x->__doRequest($request, $destination, $action, SOAP_1_1);
         if (empty($soapresponsexml)) {
-            throw new \Exception('Empty SOAP response, check peer certificate.');
+            throw new Exception('Empty SOAP response, check peer certificate.');
         }
 
         Utils::getContainer()->debugMessage($soapresponsexml, 'in');
@@ -149,17 +153,17 @@ class SOAPClient
         try {
             $dom = DOMDocumentFactory::fromString($soapresponsexml);
         } catch (InvalidArgumentException | UnparseableXmlException | RuntimeException $e) {
-            throw new \Exception($e->getMessage(), 0, $e);
+            throw new Exception($e->getMessage(), 0, $e);
         }
         $soapresponse = Utils::xpQuery($dom->firstChild, '/soap-env:Envelope/soap-env:Body/*[1]');
         if (empty($soapresponse)) {
-            throw new \Exception('Not a SOAP response', 0);
+            throw new Exception('Not a SOAP response', 0);
         }
         $container->debugMessage($dom->documentElement, 'in');
 
         $soapfault = $this->getSOAPFault($dom);
         if (isset($soapfault)) {
-            throw new \Exception($soapfault);
+            throw new Exception($soapfault);
         }
         //Extract the message from the response
         /** @var \DOMElement[] $samlresponse */
@@ -228,11 +232,11 @@ class SOAPClient
         /** @psalm-suppress PossiblyNullArgument */
         $keyInfo = openssl_pkey_get_details($key->key);
         if ($keyInfo === false) {
-            throw new \Exception('Unable to get key details from XMLSecurityKey.');
+            throw new Exception('Unable to get key details from XMLSecurityKey.');
         }
 
         if (!isset($keyInfo['key'])) {
-            throw new \Exception('Missing key in public key details.');
+            throw new Exception('Missing key in public key details.');
         }
 
         if ($keyInfo['key'] !== $data) {

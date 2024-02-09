@@ -18,16 +18,16 @@ namespace Symfony\Component\Yaml\Exception;
  */
 class ParseException extends RuntimeException
 {
-    private $parsedFile;
-    private $parsedLine;
-    private $snippet;
-    private $rawMessage;
+    private ?string $parsedFile;
+    private int $parsedLine;
+    private ?string $snippet;
+    private string $rawMessage;
 
     /**
-     * @param string          $message    The error message
-     * @param int             $parsedLine The line where the error occurred
-     * @param string|null     $snippet    The snippet of code near the problem
-     * @param string|null     $parsedFile The file name where the error occurred
+     * @param string      $message    The error message
+     * @param int         $parsedLine The line where the error occurred
+     * @param string|null $snippet    The snippet of code near the problem
+     * @param string|null $parsedFile The file name where the error occurred
      */
     public function __construct(string $message, int $parsedLine = -1, string $snippet = null, string $parsedFile = null, \Throwable $previous = null)
     {
@@ -43,20 +43,16 @@ class ParseException extends RuntimeException
 
     /**
      * Gets the snippet of code near the error.
-     *
-     * @return string The snippet of code
      */
-    public function getSnippet()
+    public function getSnippet(): string
     {
         return $this->snippet;
     }
 
     /**
      * Sets the snippet of code near the error.
-     *
-     * @param string $snippet The code snippet
      */
-    public function setSnippet($snippet)
+    public function setSnippet(string $snippet)
     {
         $this->snippet = $snippet;
 
@@ -67,20 +63,16 @@ class ParseException extends RuntimeException
      * Gets the filename where the error occurred.
      *
      * This method returns null if a string is parsed.
-     *
-     * @return string The filename
      */
-    public function getParsedFile()
+    public function getParsedFile(): string
     {
         return $this->parsedFile;
     }
 
     /**
      * Sets the filename where the error occurred.
-     *
-     * @param string $parsedFile The filename
      */
-    public function setParsedFile($parsedFile)
+    public function setParsedFile(string $parsedFile)
     {
         $this->parsedFile = $parsedFile;
 
@@ -89,20 +81,16 @@ class ParseException extends RuntimeException
 
     /**
      * Gets the line where the error occurred.
-     *
-     * @return int The file line
      */
-    public function getParsedLine()
+    public function getParsedLine(): int
     {
         return $this->parsedLine;
     }
 
     /**
      * Sets the line where the error occurred.
-     *
-     * @param int $parsedLine The file line
      */
-    public function setParsedLine($parsedLine)
+    public function setParsedLine(int $parsedLine)
     {
         $this->parsedLine = $parsedLine;
 

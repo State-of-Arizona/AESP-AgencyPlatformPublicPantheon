@@ -59,8 +59,8 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
         'string' => true,
     ];
 
-    private $autoload;
-    private $skippedIds;
+    private bool $autoload;
+    private array $skippedIds;
 
     private $expressionLanguage;
 
@@ -78,7 +78,7 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
     /**
      * {@inheritdoc}
      */
-    protected function processValue($value, $isRoot = false)
+    protected function processValue(mixed $value, bool $isRoot = false): mixed
     {
         if (isset($this->skippedIds[$this->currentId])) {
             return $value;
@@ -88,8 +88,13 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
             return parent::processValue($value, $isRoot);
         }
 
-        if (!$this->autoload && !class_exists($class = $value->getClass(), false) && !interface_exists($class, false)) {
-            return parent::processValue($value, $isRoot);
+        if (!$this->autoload) {
+            if (!$class = $value->getClass()) {
+                return parent::processValue($value, $isRoot);
+            }
+            if (!class_exists($class, false) && !interface_exists($class, false)) {
+                return parent::processValue($value, $isRoot);
+            }
         }
 
         if (ServiceLocator::class === $value->getClass()) {
@@ -153,7 +158,7 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
     /**
      * @throws InvalidParameterTypeException When a parameter is not compatible with the declared type
      */
-    private function checkType(Definition $checkedDefinition, $value, \ReflectionParameter $parameter, ?string $envPlaceholderUniquePrefix, \ReflectionType $reflectionType = null): void
+    private function checkType(Definition $checkedDefinition, mixed $value, \ReflectionParameter $parameter, ?string $envPlaceholderUniquePrefix, \ReflectionType $reflectionType = null): void
     {
         $reflectionType = $reflectionType ?? $parameter->getType();
 
@@ -168,6 +173,13 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
             }
 
             throw new InvalidParameterTypeException($this->currentId, $e->getCode(), $parameter);
+        }
+        if ($reflectionType instanceof \ReflectionIntersectionType) {
+            foreach ($reflectionType->getTypes() as $t) {
+                $this->checkType($checkedDefinition, $value, $parameter, $envPlaceholderUniquePrefix, $t);
+            }
+
+            return;
         }
         if (!$reflectionType instanceof \ReflectionNamedType) {
             return;
@@ -198,9 +210,13 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
         $class = null;
 
         if ($value instanceof Definition) {
+            if ($value->getFactory()) {
+                return;
+            }
+
             $class = $value->getClass();
 
-            if (isset(self::BUILTIN_TYPES[strtolower($class)])) {
+            if ($class && isset(self::BUILTIN_TYPES[strtolower($class)])) {
                 $class = strtolower($class);
             } elseif (!$class || (!$this->autoload && !class_exists($class, false) && !interface_exists($class, false))) {
                 return;
@@ -219,7 +235,7 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
                 $value = $this->container->getParameter(substr($value, 1, -1));
             }
 
-            if ($envPlaceholderUniquePrefix && \is_string($value) && false !== strpos($value, 'env_')) {
+            if ($envPlaceholderUniquePrefix && \is_string($value) && str_contains($value, 'env_')) {
                 // If the value is an env placeholder that is either mixed with a string or with another env placeholder, then its resolved value will always be a string, so we don't need to resolve it.
                 // We don't need to change the value because it is already a string.
                 if ('' === preg_replace('/'.$envPlaceholderUniquePrefix.'_\w+_[a-f0-9]{32}/U', '', $value, -1, $c) && 1 === $c) {
@@ -299,15 +315,11 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
             }
         }
 
-        throw new InvalidParameterTypeException($this->currentId, \is_object($value) ? $class : \gettype($value), $parameter);
+        throw new InvalidParameterTypeException($this->currentId, \is_object($value) ? $class : get_debug_type($value), $parameter);
     }
 
     private function getExpressionLanguage(): ExpressionLanguage
     {
-        if (null === $this->expressionLanguage) {
-            $this->expressionLanguage = new ExpressionLanguage(null, $this->container->getExpressionLanguageProviders());
-        }
-
-        return $this->expressionLanguage;
+        return $this->expressionLanguage ??= new ExpressionLanguage(null, $this->container->getExpressionLanguageProviders());
     }
 }

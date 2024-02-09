@@ -28,7 +28,7 @@ class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
     /**
      * {@inheritdoc}
      */
-    public function all()
+    public function all(): array
     {
         return $this->container->getParameterBag()->all();
     }
@@ -36,7 +36,7 @@ class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
     /**
      * {@inheritdoc}
      */
-    public function get($name)
+    public function get(string $name): array|bool|string|int|float|\UnitEnum|null
     {
         return $this->container->getParameter($name);
     }
@@ -44,7 +44,7 @@ class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
     /**
      * {@inheritdoc}
      */
-    public function has($name)
+    public function has(string $name): bool
     {
         return $this->container->hasParameter($name);
     }

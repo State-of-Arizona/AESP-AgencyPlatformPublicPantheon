@@ -8,7 +8,7 @@ use RobRichards\XMLSecLibs\XMLSecurityKey;
 use SimpleSAML\Configuration;
 use SimpleSAML\Metadata\MetaDataStorageHandler;
 use SimpleSAML\Module\saml\Message as MSG;
-use SimpleSAML\Store;
+use SimpleSAML\Store\StoreFactory;
 use SimpleSAML\Utils\HTTP;
 
 use SAML2\Utilities\Temporal;
@@ -38,7 +38,10 @@ class HTTPArtifact extends Binding
     public function getRedirectURL(Message $message) : string
     {
         /** @psalm-suppress UndefinedClass */
-        $store = Store::getInstance();
+        $config = Configuration::getInstance();
+
+        /** @psalm-suppress UndefinedClass */
+        $store = StoreFactory::getInstance($config->getString('store.type'));
         if ($store === false) {
             throw new \Exception('Unable to send artifact without a datastore configured.');
         }
@@ -66,8 +69,8 @@ class HTTPArtifact extends Binding
         if ($destination === null) {
             throw new \Exception('Cannot get redirect URL, no destination set in the message.');
         }
-        /** @psalm-suppress UndefinedClass */
-        return HTTP::addURLparameters($destination, $params);
+        $httpUtils = new HTTP();
+        return $httpUtils->addURLparameters($destination, $params);
     }
 
 
@@ -145,8 +148,8 @@ class HTTPArtifact extends Binding
         $soap = new SOAPClient();
 
         // Send message through SoapClient
-        /** @var \SAML2\ArtifactResponse $artifactResponse */
-        $artifactResponse = $soap->send($ar, $this->spMetadata);
+        /** @var \SimpleSAML\SAML2\XML\samlp\ArtifactResponse $artifactResponse */
+        $artifactResponse = $soap->send($ar, $this->spMetadata, $idpMetadata);
 
         if (!$artifactResponse->isSuccess()) {
             throw new \Exception('Received error from ArtifactResolutionService.');

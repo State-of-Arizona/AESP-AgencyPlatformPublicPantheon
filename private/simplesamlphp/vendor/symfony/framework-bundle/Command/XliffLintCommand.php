@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Translation\Command\XliffLintCommand as BaseLintCommand;
 
 /**
@@ -22,10 +23,9 @@ use Symfony\Component\Translation\Command\XliffLintCommand as BaseLintCommand;
  *
  * @final
  */
+#[AsCommand(name: 'lint:xliff', description: 'Lints an XLIFF file and outputs encountered errors')]
 class XliffLintCommand extends BaseLintCommand
 {
-    protected static $defaultName = 'lint:xliff';
-
     public function __construct()
     {
         $directoryIteratorProvider = function ($directory, $default) {
@@ -37,7 +37,7 @@ class XliffLintCommand extends BaseLintCommand
         };
 
         $isReadableProvider = function ($fileOrDirectory, $default) {
-            return 0 === strpos($fileOrDirectory, '@') || $default($fileOrDirectory);
+            return str_starts_with($fileOrDirectory, '@') || $default($fileOrDirectory);
         };
 
         parent::__construct(null, $directoryIteratorProvider, $isReadableProvider);
@@ -57,6 +57,6 @@ Or find all files in a bundle:
   <info>php %command.full_name% @AcmeDemoBundle</info>
 
 EOF
-            );
+        );
     }
 }

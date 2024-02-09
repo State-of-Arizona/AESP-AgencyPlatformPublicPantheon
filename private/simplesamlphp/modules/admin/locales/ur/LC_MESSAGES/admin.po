@@ -1,0 +1,4 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"X-Domain: admin\n"

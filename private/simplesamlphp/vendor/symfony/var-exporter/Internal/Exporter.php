@@ -31,11 +31,9 @@ class Exporter
      * @param int               &$objectsCount
      * @param bool              &$valuesAreStatic
      *
-     * @return array
-     *
      * @throws NotInstantiableTypeException When a value cannot be serialized
      */
-    public static function prepare($values, $objectsPool, &$refsPool, &$objectsCount, &$valuesAreStatic)
+    public static function prepare($values, $objectsPool, &$refsPool, &$objectsCount, &$valuesAreStatic): array
     {
         $refs = $values;
         foreach ($values as $k => $value) {
@@ -62,7 +60,7 @@ class Exporter
                     $value = self::prepare($value, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
                 }
                 goto handle_value;
-            } elseif (!\is_object($value) && !$value instanceof \__PHP_Incomplete_Class) {
+            } elseif (!\is_object($value) || $value instanceof \UnitEnum) {
                 goto handle_value;
             }
 
@@ -82,7 +80,7 @@ class Exporter
                 }
 
                 if (!\is_array($properties = $value->__serialize())) {
-                    throw new \Typerror($class.'::__serialize() must return an array');
+                    throw new \TypeError($class.'::__serialize() must return an array');
                 }
 
                 goto prepare_value;
@@ -90,13 +88,12 @@ class Exporter
 
             $properties = [];
             $sleep = null;
-            $arrayValue = (array) $value;
             $proto = Registry::$prototypes[$class];
 
             if (($value instanceof \ArrayIterator || $value instanceof \ArrayObject) && null !== $proto) {
                 // ArrayIterator and ArrayObject need special care because their "flags"
                 // option changes the behavior of the (array) casting operator.
-                $properties = self::getArrayObjectProperties($value, $arrayValue, $proto);
+                [$arrayValue, $properties] = self::getArrayObjectProperties($value, $proto);
 
                 // populates Registry::$prototypes[$class] with a new instance
                 Registry::getClassReflector($class, Registry::$instantiableWithoutConstructor[$class], Registry::$cloneable[$class]);
@@ -108,25 +105,26 @@ class Exporter
                     $properties[] = $value[$v];
                 }
                 $properties = ['SplObjectStorage' => ["\0" => $properties]];
-            } elseif ($value instanceof \Serializable || $value instanceof \__PHP_Incomplete_Class) {
+                $arrayValue = (array) $value;
+            } elseif ($value instanceof \Serializable
+                || $value instanceof \__PHP_Incomplete_Class
+                || \PHP_VERSION_ID < 80200 && $value instanceof \DatePeriod
+            ) {
                 ++$objectsCount;
                 $objectsPool[$value] = [$id = \count($objectsPool), serialize($value), [], 0];
                 $value = new Reference($id);
                 goto handle_value;
-            }
-
-            if (method_exists($class, '__sleep')) {
-                if (!\is_array($sleep = $value->__sleep())) {
-                    trigger_error('serialize(): __sleep should return an array only containing the names of instance-variables to serialize', \E_USER_NOTICE);
-                    $value = null;
-                    goto handle_value;
-                }
-                foreach ($sleep as $name) {
-                    if (property_exists($value, $name) && !$reflector->hasProperty($name)) {
-                        $arrayValue[$name] = $value->$name;
+            } else {
+                if (method_exists($class, '__sleep')) {
+                    if (!\is_array($sleep = $value->__sleep())) {
+                        trigger_error('serialize(): __sleep should return an array only containing the names of instance-variables to serialize', \E_USER_NOTICE);
+                        $value = null;
+                        goto handle_value;
                     }
+                    $sleep = array_flip($sleep);
                 }
-                $sleep = array_flip($sleep);
+
+                $arrayValue = (array) $value;
             }
 
             $proto = (array) $proto;
@@ -135,7 +133,7 @@ class Exporter
                 $i = 0;
                 $n = (string) $name;
                 if ('' === $n || "\0" !== $n[0]) {
-                    $c = 'stdClass';
+                    $c = \PHP_VERSION_ID >= 80100 && $reflector->hasProperty($n) && ($p = $reflector->getProperty($n))->isReadOnly() ? $p->class : 'stdClass';
                 } elseif ('*' === $n[1]) {
                     $n = substr($n, 3);
                     $c = $reflector->getProperty($n)->class;
@@ -151,6 +149,7 @@ class Exporter
                 }
                 if (null !== $sleep) {
                     if (!isset($sleep[$n]) || ($i && $c !== $class)) {
+                        unset($arrayValue[$name]);
                         continue;
                     }
                     $sleep[$n] = false;
@@ -165,6 +164,9 @@ class Exporter
                         trigger_error(sprintf('serialize(): "%s" returned as member variable from __sleep() but does not exist', $n), \E_USER_NOTICE);
                     }
                 }
+            }
+            if (method_exists($class, '__unserialize')) {
+                $properties = $arrayValue;
             }
 
             prepare_value:
@@ -187,7 +189,7 @@ class Exporter
         return $values;
     }
 
-    public static function export($value, $indent = '')
+    public static function export($value, string $indent = '')
     {
         switch (true) {
             case \is_int($value) || \is_float($value): return var_export($value, true);
@@ -196,6 +198,7 @@ class Exporter
             case true === $value: return 'true';
             case null === $value: return 'null';
             case '' === $value: return "''";
+            case $value instanceof \UnitEnum: return '\\'.ltrim(var_export($value, true), '\\');
         }
 
         if ($value instanceof Reference) {
@@ -214,10 +217,10 @@ class Exporter
         if (\is_string($value)) {
             $code = sprintf("'%s'", addcslashes($value, "'\\"));
 
-            $code = preg_replace_callback('/([\0\r\n]++)(.)/', function ($m) use ($subIndent) {
+            $code = preg_replace_callback("/((?:[\\0\\r\\n]|\u{202A}|\u{202B}|\u{202D}|\u{202E}|\u{2066}|\u{2067}|\u{2068}|\u{202C}|\u{2069})++)(.)/", function ($m) use ($subIndent) {
                 $m[1] = sprintf('\'."%s".\'', str_replace(
-                    ["\0", "\r", "\n", '\n\\'],
-                    ['\0', '\r', '\n', '\n"'."\n".$subIndent.'."\\'],
+                    ["\0", "\r", "\n", "\u{202A}", "\u{202B}", "\u{202D}", "\u{202E}", "\u{2066}", "\u{2067}", "\u{2068}", "\u{202C}", "\u{2069}", '\n\\'],
+                    ['\0', '\r', '\n', '\u{202A}', '\u{202B}', '\u{202D}', '\u{202E}', '\u{2066}', '\u{2067}', '\u{2068}', '\u{202C}', '\u{2069}', '\n"'."\n".$subIndent.'."\\'],
                     $m[1]
                 ));
 
@@ -232,7 +235,7 @@ class Exporter
                 return $m[1].$m[2];
             }, $code, -1, $count);
 
-            if ($count && 0 === strpos($code, "''.")) {
+            if ($count && str_starts_with($code, "''.")) {
                 $code = substr($code, 3);
             }
 
@@ -273,7 +276,7 @@ class Exporter
             return self::exportHydrator($value, $indent, $subIndent);
         }
 
-        throw new \UnexpectedValueException(sprintf('Cannot export value of type "%s".', \is_object($value) ? \get_class($value) : \gettype($value)));
+        throw new \UnexpectedValueException(sprintf('Cannot export value of type "%s".', get_debug_type($value)));
     }
 
     private static function exportRegistry(Registry $value, string $indent, string $subIndent): string
@@ -286,7 +289,7 @@ class Exporter
         $r = '\\'.Registry::class;
         $j = -1;
 
-        foreach ($value as $k => $class) {
+        foreach ($value->classes as $k => $class) {
             if (':' === ($class[1] ?? null)) {
                 $serializables[$k] = $class;
                 continue;
@@ -370,13 +373,13 @@ class Exporter
      * @param \ArrayIterator|\ArrayObject $value
      * @param \ArrayIterator|\ArrayObject $proto
      */
-    private static function getArrayObjectProperties($value, array &$arrayValue, $proto): array
+    private static function getArrayObjectProperties($value, $proto): array
     {
         $reflector = $value instanceof \ArrayIterator ? 'ArrayIterator' : 'ArrayObject';
         $reflector = Registry::$reflectors[$reflector] ?? Registry::getClassReflector($reflector);
 
         $properties = [
-            $arrayValue,
+            $arrayValue = (array) $value,
             $reflector->getMethod('getFlags')->invoke($value),
             $value instanceof \ArrayObject ? $reflector->getMethod('getIteratorClass')->invoke($value) : 'ArrayIterator',
         ];
@@ -402,6 +405,6 @@ class Exporter
             $properties = [$reflector->class => ["\0" => $properties]];
         }
 
-        return $properties;
+        return [$arrayValue, $properties];
     }
 }

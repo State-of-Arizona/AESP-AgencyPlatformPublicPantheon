@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
@@ -18,6 +19,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
 use Symfony\Component\Routing\Matcher\TraceableUrlMatcher;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -28,17 +30,21 @@ use Symfony\Component\Routing\RouterInterface;
  *
  * @final
  */
+#[AsCommand(name: 'router:match', description: 'Help debug routes by simulating a path info match')]
 class RouterMatchCommand extends Command
 {
-    protected static $defaultName = 'router:match';
-
     private $router;
+    private iterable $expressionLanguageProviders;
 
-    public function __construct(RouterInterface $router)
+    /**
+     * @param iterable<mixed, ExpressionFunctionProviderInterface> $expressionLanguageProviders
+     */
+    public function __construct(RouterInterface $router, iterable $expressionLanguageProviders = [])
     {
         parent::__construct();
 
         $this->router = $router;
+        $this->expressionLanguageProviders = $expressionLanguageProviders;
     }
 
     /**
@@ -49,11 +55,10 @@ class RouterMatchCommand extends Command
         $this
             ->setDefinition([
                 new InputArgument('path_info', InputArgument::REQUIRED, 'A path info'),
-                new InputOption('method', null, InputOption::VALUE_REQUIRED, 'Sets the HTTP method'),
-                new InputOption('scheme', null, InputOption::VALUE_REQUIRED, 'Sets the URI scheme (usually http or https)'),
-                new InputOption('host', null, InputOption::VALUE_REQUIRED, 'Sets the URI host'),
+                new InputOption('method', null, InputOption::VALUE_REQUIRED, 'Set the HTTP method'),
+                new InputOption('scheme', null, InputOption::VALUE_REQUIRED, 'Set the URI scheme (usually http or https)'),
+                new InputOption('host', null, InputOption::VALUE_REQUIRED, 'Set the URI host'),
             ])
-            ->setDescription('Helps debug routes by simulating a path info match')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> shows which routes match a given request and which don't and for what reason:
 
@@ -87,6 +92,9 @@ EOF
         }
 
         $matcher = new TraceableUrlMatcher($this->router->getRouteCollection(), $context);
+        foreach ($this->expressionLanguageProviders as $provider) {
+            $matcher->addExpressionLanguageProvider($provider);
+        }
 
         $traces = $matcher->getTraces($input->getArgument('path_info'));
 

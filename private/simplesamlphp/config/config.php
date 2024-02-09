@@ -61,7 +61,7 @@ $config = [
    * to SimpleSAMLphp's API.
    */
   //'baseURL' => 'https://example.com',
-],
+//],
 
     /*
      * The following settings are *filesystem paths* which define where

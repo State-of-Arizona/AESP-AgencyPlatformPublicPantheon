@@ -45,3 +45,7 @@ Thumbs.db
 # SASS #
 ##########
 .sass-cache
+
+# Lando #
+##########
+.lando.yml

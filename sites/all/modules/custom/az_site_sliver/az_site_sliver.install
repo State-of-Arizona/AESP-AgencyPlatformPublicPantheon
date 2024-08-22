@@ -1,25 +1,69 @@
 <?php
+
 /**
  * Implements hook_install().
  */
-function az_site_sliver_install() {
-  if (module_exists('az_gov_sliver')) {
-    module_disable(array('az_gov_sliver'));
-    drupal_uninstall_schema('az_gov_sliver');
-  }
-  if (module_exists('feature_sliver')) {
-    module_disable(array('feature_sliver'));
-    drupal_uninstall_schema('feature_sliver');
-  }
+function az_site_sliver_install()
+{
+    // Check if old sliver modules are installed, and uninstall them.
+    if (module_exists('az_gov_sliver')) {
+        module_disable(array('az_gov_sliver'));
+        drupal_uninstall_schema('az_gov_sliver');
+    }
+    if (module_exists('feature_sliver')) {
+        module_disable(array('feature_sliver'));
+        drupal_uninstall_schema('feature_sliver');
+    }
 
-  // Clear the cache after disabling and uninstalling the modules.
-  drupal_theme_rebuild();
+    // Drupal 7 Logo Corrections
+    // Define the path to the new image within your module.
+    $new_image_path = DRUPAL_ROOT . '/sites/all/modules/custom/az_site_sliver/images/logo.png';
+    // Define the base directory where the color folders are located.
+    $base_directory = DRUPAL_ROOT . '/sites/default/files/color';
+
+    // Check if the base directory exists.
+    if (is_dir($base_directory)) {
+        // Scan the base directory for subdirectories.
+        $directories = scandir($base_directory);
+        foreach ($directories as $directory) {
+            if ($directory != '.' && $directory != '..' && is_dir($base_directory . '/' . $directory)) {
+                // Define the destination path for logo.png in the current subdirectory.
+                $destination_path = $base_directory . '/' . $directory . '/logo.png';
+
+                // Replace the logo.png file if it exists.
+                if (file_exists($destination_path)) {
+                    if (file_exists($new_image_path)) {
+                        if (copy($new_image_path, $destination_path)) {
+                            // Log success.
+                            watchdog('az_site_sliver', 'Replaced the logo image in @destination.', array('@destination' => $destination_path), WATCHDOG_INFO);
+                        }
+                        else {
+                            // Log failure to copy.
+                            watchdog('az_site_sliver', 'Failed to copy the new logo to @destination.', array('@destination' => $destination_path), WATCHDOG_ERROR);
+                        }
+                    }
+                    else {
+                        // Log missing source file.
+                        watchdog('az_site_sliver', 'The new image file does not exist at @source.', array('@source' => $new_image_path), WATCHDOG_ERROR);
+                    }
+                }
+            }
+        }
+    }
+    else {
+        // Log that the base directory does not exist.
+        watchdog('az_site_sliver', 'The directory @directory does not exist, skipping image replacement.', array('@directory' => $base_directory), WATCHDOG_INFO);
+    }
+
+    // Clear the cache.
+    drupal_theme_rebuild();
 }
 
 /**
  * Implements hook_uninstall().
  */
-function az_site_sliver_uninstall() {
-  // Clear the cache when this module is uninstalled.
-  drupal_theme_rebuild();
+function az_site_sliver_uninstall()
+{
+    // Clear the cache when this module is uninstalled.
+    drupal_theme_rebuild();
 }

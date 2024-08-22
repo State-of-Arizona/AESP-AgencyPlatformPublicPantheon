@@ -1,0 +1,25 @@
+<?php
+/**
+ * Implements hook_install().
+ */
+function az_site_sliver_install() {
+  if (module_exists('az_gov_sliver')) {
+    module_disable(array('az_gov_sliver'));
+    drupal_uninstall_schema('az_gov_sliver');
+  }
+  if (module_exists('feature_sliver')) {
+    module_disable(array('feature_sliver'));
+    drupal_uninstall_schema('feature_sliver');
+  }
+
+  // Clear the cache after disabling and uninstalling the modules.
+  drupal_theme_rebuild();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function az_site_sliver_uninstall() {
+  // Clear the cache when this module is uninstalled.
+  drupal_theme_rebuild();
+}

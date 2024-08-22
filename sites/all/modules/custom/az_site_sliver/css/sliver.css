@@ -1,0 +1,175 @@
+@import url(https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap);
+
+.sliver {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 45px;
+  overflow: hidden;
+  background: #ffffff;
+  background: -webkit-linear-gradient(#ffffff 0%, #ffffff 60%, #dedede 100%);
+  background: -o-linear-gradient(#ffffff 0%, #ffffff 60%, #dedede 100%);
+  background: linear-gradient(#ffffff 0%, #ffffff 60%, #dedede 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dedede',GradientType=0 );
+}
+.sliver > .container {
+  max-width: unset;
+  width: unset;
+}
+nav.sliver-components {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+nav.sliver-components ul.sliver-nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+nav.sliver-components ul.sliver-nav li.sliver-item {
+  list-style: none;
+  position: relative;
+  margin: 0 15px;
+}
+nav.sliver-components ul.sliver-nav li.sliver-item:first-child {
+  margin-left: 0;
+}
+nav.sliver-components ul.sliver-nav li.sliver-item:first-child:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  height: 30px;
+  width: 2px;
+  background-color: #349992;
+  transform: translateY(-50%);
+}
+nav.sliver-components ul.sliver-nav li.state-logo {
+  padding-right: 30px;
+}
+nav.sliver-components ul.sliver-nav li a {
+  display: flex;
+  align-items: center;
+  color: #369992;
+  font-size: 1rem;
+  letter-spacing: .02rem;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  text-decoration: none;
+}
+nav.sliver-components ul.sliver-nav li.state-services a span.main-text {
+  max-width: 85px;
+  line-height: 1;
+}
+nav.sliver-components ul.sliver-nav li a:focus, nav.sliver-components ul.sliver-nav li a:hover {
+  color: #8a3a6d;
+}
+nav.sliver-components ul.sliver-nav li.state-logo a:before {
+  display: inline-block;
+  content: "";
+  background-image: url(../images/arizona-logo-color.svg);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+  width: 50px;
+  height: 45px;
+}
+nav.sliver-components ul.sliver-nav li.state-services a:before {
+  display: inline-block;
+  content: "";
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+  width: 30px;
+  height: 30px;
+  margin-right: 5px;
+}
+nav.sliver-components ul.sliver-nav li.openbooks a:before {
+  background-image: url(../images/openbooks.svg);
+}
+nav.sliver-components ul.sliver-nav li.ombudsman a:before {
+  background-image: url(../images/ombudsman.svg);
+}
+nav.sliver-components ul.sliver-nav li.vote a:before {
+  background-image: url(../images/vote.svg);
+}
+nav.sliver-components section.search-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  align-content: center;
+  width: auto;
+  height: 30px;
+}
+nav.sliver-components section.search-bar #searchinput {
+  border: 1px solid #cc6c20;
+  border-right: 0px;
+  width: 200px !important;
+  height: 30px !important;
+  border-radius: 5px 0 0 5px;
+  /* margin-top: 2px; */
+  display: block;
+  padding: 0 5px 0 5px;
+  font-size: 1em;
+  color: #7A7A7A;
+}
+nav.sliver-components section.search-bar #searchsubmit {
+  border: 1px solid #cc6c20;
+  border-left: 0px;
+  cursor: pointer;
+  height: 30px !important;
+  padding: 0px 0px;
+  /* margin-top: 2px; */
+  width: 34px !important;
+  background: url(../images/icon-search.png);
+  /* background-color: #349992; */
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+  text-indent: -9999px;
+  text-transform: capitalize;
+  font-size: 0;
+  display: block;
+  line-height: 0;
+  -moz-border-radius: 0 5px 5px 0;
+  -webkit-border-radius: 0 5px 5px 0;
+  border-radius: 0 5px 5px 0;
+
+}
+
+/* Mobile Friendly */
+@media (max-width: 586px) {
+  nav.sliver-components ul.sliver-nav li.sliver-item {
+    margin: 0;
+  }
+  nav.sliver-components ul.sliver-nav li.state-services {
+    border-left: 1px solid #369992;
+    padding: 0 7px;
+  }
+  nav.sliver-components ul.sliver-nav li.state-services:nth-child(2) {
+    border-left: 0;
+  }
+  nav.sliver-components ul.sliver-nav li.state-logo {
+    padding-right: 10px;
+  }
+  nav.sliver-components ul.sliver-nav li.state-services a:before {
+    display: none;
+  }
+  nav.sliver-components ul.sliver-nav li.state-services a span.main-text {
+    max-width: unset;
+    text-align: center;
+    font-size: 1rem;
+  }
+  nav.sliver-components section.search-bar #searchinput {
+    display: none;
+  }
+  nav.sliver-components section.search-bar #searchsubmit {
+    border: none;
+  }
+  nav.sliver-components .mobilehide {
+    display: none;
+  }
+}

@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function az_site_sliver_preprocess_page(&$variables) {
+  // Check if the current path is not an admin page.
+  $current_path = current_path();
+  $current_path_alias = drupal_get_path_alias($current_path);
+
+  $output = theme('sliver_template');
+
+  if (strpos($current_path_alias, 'admin') !== 0) {
+    if (isset($variables['page']['content'])) {
+      $variables['page']['user_first']['sliver_template'] = array(
+        '#markup' => $output,
+        '#weight' => -1000, // Ensures it appears at the top.
+      );
+    } else {
+      $variables['page']['user_first'] = array(
+        'sliver_template' => array(
+          '#markup' => $output,
+          '#weight' => -1000,
+        ),
+      );
+    }
+  }
+
+
+}
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function az_site_sliver_preprocess_html(&$variables) {
+  // Check if the current path is not an admin page.
+  $current_path = current_path();
+  $current_path_alias = drupal_get_path_alias($current_path);
+
+  if (strpos($current_path_alias, 'admin') !== 0) {
+    // Attach the CSS file only on non-admin pages.
+    drupal_add_css(drupal_get_path('module', 'az_site_sliver') . '/css/sliver.css');
+    drupal_add_css('https://slivrbackup-az-alt.pantheonsite.io/sliver/styles/sliver.css', array('type' => 'external'));
+    // and the js.
+    drupal_add_js(drupal_get_path('module', 'az_site_sliver') . '/js/sliver.js');
+    drupal_add_js('https://slivrbackup-az-alt.pantheonsite.io/sliver/js/sliver.js', array('type' => 'external'));
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function az_site_sliver_theme() {
+  return array(
+    'sliver_template' => array(
+      'variables' => array(),
+      'template' => 'sliver',
+      'path' => drupal_get_path('module', 'az_site_sliver') . '/template',
+    ),
+  );
+}

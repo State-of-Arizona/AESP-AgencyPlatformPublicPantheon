@@ -14,7 +14,7 @@
 }
 .sliver > .container {
   max-width: unset;
-  width: unset;
+  width: 100%;
 }
 nav.sliver-components {
   display: flex;

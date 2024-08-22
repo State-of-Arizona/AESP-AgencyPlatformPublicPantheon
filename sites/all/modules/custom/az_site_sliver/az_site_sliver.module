@@ -40,10 +40,10 @@ function az_site_sliver_preprocess_html(&$variables) {
   if (strpos($current_path_alias, 'admin') !== 0) {
     // Attach the CSS file only on non-admin pages.
     drupal_add_css(drupal_get_path('module', 'az_site_sliver') . '/css/sliver.css');
-    drupal_add_css('https://slivrbackup-az-alt.pantheonsite.io/sliver/styles/sliver.css', array('type' => 'external'));
+    drupal_add_css('https://static.az.gov/sliver/css/sliver.css', array('type' => 'external'));
     // and the js.
     drupal_add_js(drupal_get_path('module', 'az_site_sliver') . '/js/sliver.js');
-    drupal_add_js('https://slivrbackup-az-alt.pantheonsite.io/sliver/js/sliver.js', array('type' => 'external'));
+    drupal_add_js('https://static.az.gov/sliver/js/sliver.js', array('type' => 'external'));
   }
 }
 

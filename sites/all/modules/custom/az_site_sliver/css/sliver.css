@@ -35,6 +35,11 @@ nav.sliver-components ul.sliver-nav li.sliver-item {
   position: relative;
   margin: 0 15px;
 }
+/* Corrects if using Ext Link libraries*/
+nav.sliver-components ul.sliver-nav li.sliver-item > svg.ext {
+  display: none !important;
+}
+/* */
 nav.sliver-components ul.sliver-nav li.sliver-item:first-child {
   margin-left: 0;
 }

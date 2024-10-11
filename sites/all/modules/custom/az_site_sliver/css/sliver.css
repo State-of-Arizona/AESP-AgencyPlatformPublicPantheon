@@ -1,17 +1,20 @@
 @import url(https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap);
+@import url(https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap);
 
 .sliver {
   width: 100%;
   display: flex;
   align-items: center;
-  height: 45px;
+  height: 48px;
   overflow: hidden;
+  font-family: 'Archivo', 'Roboto', sans-serif;
   background: #ffffff;
   background: -webkit-linear-gradient(#ffffff 0%, #ffffff 60%, #dedede 100%);
   background: -o-linear-gradient(#ffffff 0%, #ffffff 60%, #dedede 100%);
   background: linear-gradient(#ffffff 0%, #ffffff 60%, #dedede 100%);
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dedede',GradientType=0 );
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 700;
 }
 .sliver > .container {
   max-width: unset;
@@ -60,15 +63,13 @@ nav.sliver-components ul.sliver-nav li a {
   display: flex;
   align-items: center;
   color: #369992;
-  font-size: 13px;
-  letter-spacing: .02rem;
-  font-family: 'Roboto', sans-serif;
-  font-weight: 400;
-  text-decoration: none;
+  font-size: 16px;
+  letter-spacing: .01rem;
+  font-family: 'Archivo', 'Roboto', sans-serif;
+  font-weight: 700;
 }
 nav.sliver-components ul.sliver-nav li.state-services a span.main-text {
-  max-width: 85px;
-  line-height: 1;
+  line-height: .95;
 }
 nav.sliver-components ul.sliver-nav li a:focus, nav.sliver-components ul.sliver-nav li a:hover {
   color: #8a3a6d;
@@ -130,8 +131,7 @@ nav.sliver-components section.search-bar #searchsubmit {
   padding: 0px 0px;
   /* margin-top: 2px; */
   width: 34px !important;
-  background: url(../images/icon-search.png);
-  /* background-color: #349992; */
+  background: url(../images/azsearch-small.svg);
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center center;
@@ -151,31 +151,52 @@ nav.sliver-components section.search-bar #searchsubmit {
   nav.sliver-components ul.sliver-nav li.sliver-item {
     margin: 0;
   }
+  nav.sliver-components ul.sliver-nav li.state-logo {
+    padding-right: 0.95em;
+  }
   nav.sliver-components ul.sliver-nav li.state-services {
     border-left: 1px solid #369992;
-    padding: 0 7px;
+    padding: 0 0.95em;
   }
   nav.sliver-components ul.sliver-nav li.state-services:nth-child(2) {
     border-left: 0;
   }
-  nav.sliver-components ul.sliver-nav li.state-logo {
-    padding-right: 10px;
+  nav.sliver-components ul.sliver-nav li.state-services:last-child {
+    padding-right: 0;
   }
   nav.sliver-components ul.sliver-nav li.state-services a:before {
     display: none;
   }
   nav.sliver-components ul.sliver-nav li.state-services a span.main-text {
-    max-width: unset;
     text-align: center;
-    font-size: 13px;
+    font-size: 16px;
   }
   nav.sliver-components section.search-bar #searchinput {
     display: none;
   }
   nav.sliver-components section.search-bar #searchsubmit {
-    border: none;
+    display: none !important;
   }
   nav.sliver-components .mobilehide {
     display: none;
+  }
+}
+
+@media (max-width: 390px) {
+  /* for older phones */
+  nav.sliver-components ul.sliver-nav li.state-services {
+    padding: 0 0.75em;
+  }
+  nav.sliver-components ul.sliver-nav li.state-logo {
+    padding-right: 0.9375em;
+  }
+}
+@media (max-width: 360px) {
+  /* for older phones */
+  nav.sliver-components ul.sliver-nav li.state-services {
+    padding: 0 0.395em;
+  }
+  nav.sliver-components ul.sliver-nav li.state-logo {
+    padding-right: 0.9375em;
   }
 }

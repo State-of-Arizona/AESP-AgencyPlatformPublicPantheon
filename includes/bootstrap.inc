@@ -3349,17 +3349,7 @@ function ip_address() {
   $ip_address = &drupal_static(__FUNCTION__);
 
   if (!isset($ip_address)) {
-
-    //Start of cloudflare fix
-    //Check to see if the CF-Connecting-IP header exists.
-    if(isset($_SERVER["HTTP_CF_CONNECTING_IP"])){
-      //If it does, assume that PHP app is behind Cloudflare.
-      $ip_address = $_SERVER["HTTP_CF_CONNECTING_IP"];
-    } else{
-      //Otherwise, use REMOTE_ADDR.
-      $ip_address = $_SERVER['REMOTE_ADDR'];
-    }
-    //end of cloudflare fix
+    $ip_address = $_SERVER['REMOTE_ADDR'];
 
     if (variable_get('reverse_proxy', 0)) {
       $reverse_proxy_header = variable_get('reverse_proxy_header', 'HTTP_X_FORWARDED_FOR');

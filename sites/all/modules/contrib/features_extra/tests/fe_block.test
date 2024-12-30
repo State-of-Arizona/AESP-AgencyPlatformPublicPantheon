@@ -7,11 +7,8 @@
 
 /**
  * Tests the functionality of FE Block.
- *
- * @codingStandardsIgnoreStart
  */
 class FeaturesExtraBlockTestCase extends FeaturesExtraTestCase {
-  // @codingStandardsIgnoreEnd
   // The installation profile that will be used to run the tests.
   protected $profile = 'testing';
 

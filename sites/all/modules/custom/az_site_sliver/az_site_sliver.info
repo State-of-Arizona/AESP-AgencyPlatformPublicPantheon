@@ -2,5 +2,5 @@ name = az.gov Sliver
 description = "Provides the template and styling of the State of Arizona mandated sliver menu."
 core = 7.x
 package = "State of Arizona"
-version = "7.x-1.5"
+version = "7.x-1.6"
 dependencies[] = libraries

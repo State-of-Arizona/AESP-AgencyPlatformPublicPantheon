@@ -1,8 +1,0 @@
-name = Sliver
-description = az.gov sliver integration for Drupal
-core = 7.x
-package = State of Arizona
-version = "7.x-0.1"
-
-files[] = az_gov_sliver.module
-files[] = az_gov_sliver.admin.inc

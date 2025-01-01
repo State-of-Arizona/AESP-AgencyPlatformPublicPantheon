@@ -56,7 +56,7 @@ class FileEntityTestHelper extends DrupalWebTestCase {
   protected function createFileEntity($settings = array()) {
     // Populate defaults array.
     $settings += array(
-      'filepath' => 'Файл для тестирования ' . $this->randomName(), // Prefix with non-latin characters to ensure that all file-related tests work with international filenames.
+      'filepath' => 'Файл для тестирования ' . $this->randomName() . '.txt', // Prefix with non-latin characters to ensure that all file-related tests work with international filenames.
       'filemime' => 'text/plain',
       'uid' => 1,
       'timestamp' => REQUEST_TIME,
@@ -136,7 +136,7 @@ class FileEntityFileTypeClassificationTestCase extends DrupalWebTestCase {
     return array(
       'name' => 'File entity classification',
       'description' => 'Test existing file entity classification functionality.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -206,7 +206,7 @@ class FileEntityUnitTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity unit tests',
       'description' => 'Test basic file entity functionality.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -311,7 +311,7 @@ class FileEntityEditTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity edit',
       'description' => 'Create a file and test file edit functionality.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -421,7 +421,7 @@ class FileEntityUploadWizardTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity upload wizard',
       'description' => 'Upload a file using the multi-step wizard.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
       'dependencies' => array('token'),
     );
   }
@@ -456,6 +456,50 @@ class FileEntityUploadWizardTestCase extends FileEntityTestHelper {
     // Check that the document file has been uploaded.
     $this->assertRaw(t('!type %name was uploaded.', array('!type' => 'Document', '%name' => $file->filename)), t('Document file uploaded.'));
   }
+
+
+  /**
+   * Test the file upload wizard when uploading a private file fails.
+   */
+  function testFileUploadWizardPrivateFailure() {
+    $test_file = $this->getTestFile('text');
+    // Record the last saved file ID.
+    $previous_last_fid = $this->getLastFileId();
+    // Enable the private file system.
+    variable_set('file_private_path', $this->private_files_directory);
+    // Step 1: Upload a basic document file.
+    $edit = array();
+    $edit['files[upload]'] = drupal_realpath($test_file->uri);
+    $this->drupalPost('file/add', $edit, t('Next'));
+    // After the file is uploaded but before the file is saved to its final
+    // location, update the private files directory to an non-writable location.
+    // The /root directory is the home directory of the root user, and should
+    // never be writable by the web user. As long as the directory either does
+    // not exist, or is not writable, this example should work.
+    $temp_private_location = '/root';
+    variable_set('file_private_path', $temp_private_location);
+    // Now the file is in a temporary location. Load its entity.
+    $new_fid = $this->getLastFileId();
+    $new_file = file_load($new_fid);
+    $this->assertTrue(file_exists($new_file->uri), 'File is temporarily uploaded.');
+    // Step 3: Scheme selection.
+    $edit = array();
+    $edit['scheme'] = 'private';
+    $this->drupalPost(NULL, $edit, t('Next'));
+    // Check that a message was printed indicating the file was not saved.
+    $this->assertRaw(t('@type %name was not saved.', array('@type' => 'Document', '%name' => $test_file->filename)), 'Failed private upload was deleted.');
+    // Check that the file is no longer on disk.
+    clearstatcache($new_file->uri);
+    $this->assertFalse(file_exists($new_file->uri), 'Temporary file on disk has been deleted.');
+    // Check that the file entity was deleted.
+    $last_fid = $this->getLastFileId();
+    $this->assertTrue($previous_last_fid == $last_fid, 'Latest file entity remains the same.');
+    $this->assertFalse($new_fid == $last_fid, 'New file entity was deleted when file fails to upload.');
+    // Reset the private file path so the testing framework doesn't try to
+    // clean up the non-writable directory.
+    variable_del('file_private_path');
+  }
+
 
   /**
    * Test the file upload wizard type step.
@@ -642,11 +686,17 @@ class FileEntityUploadWizardTestCase extends FileEntityTestHelper {
  * Test file administration page functionality.
  */
 class FileEntityAdminTestCase extends FileEntityTestHelper {
+  protected $admin_user = NULL;
+  protected $base_user_1 = NULL;
+  protected $base_user_2 = NULL;
+  protected $base_user_3 = NULL;
+  protected $base_user_4 = NULL;
+
   public static function getInfo() {
     return array(
       'name' => 'File administration',
       'description' => 'Test file administration page functionality.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -809,7 +859,7 @@ class FileEntityUsageTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity usage',
       'description' => 'Create a file and verify its usage.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -875,7 +925,7 @@ class FileEntityUsageTestCase extends FileEntityTestHelper {
 
     // Verify that the module name is used in place of a link to the entity.
     $this->assertNoLink('test_module');
-    $this->assertRaw('test_module', 'Module name used in place of link to the entity.');
+    $this->assertRaw('(entity not loaded)', '"(entity not loaded)" notice used in place of link to the entity.');
 
     // Verify that the entity type and use count information is also present.
     $expected_values = array(
@@ -896,7 +946,7 @@ class FileEntityAltTitleTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity alt and title text',
       'description' => 'Create an image file with alt and title text.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
       'dependencies' => array('token'),
     );
   }
@@ -987,7 +1037,7 @@ class FileEntityChangeSchemeTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'Changing file scheme',
       'description' => 'Test changing the scheme of a file.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -1025,7 +1075,7 @@ class FileEntityReplaceTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File replacement',
       'description' => 'Test file replace functionality.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -1081,6 +1131,16 @@ class FileEntityReplaceTestCase extends FileEntityTestHelper {
     $this->drupalPost('file/' . $file->fid . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The specified file %file could not be uploaded. Only files with the following extensions are allowed:', array('%file' => $image->filename)), 'File validation works, upload failed correctly.');
 
+    // Restrict allowed document filetypes to exclude plain text files.
+    variable_set('file_entity_default_allowed_extensions', 'doc docx pdf');
+
+    // Test that the file can't be replaced if there's a problem with the original file's extension.
+    $this->drupalGet('file/' . $file->fid . '/edit');
+    $this->assertRaw(t('This file cannot be replaced.'), 'File extension filter works, upload prevented correctly.');
+
+    // Clean up variable.
+    variable_del('file_entity_default_allowed_extensions');
+
     // Create a non-local file record.
     $file2 = new stdClass();
     $file2->uri = 'oembed://' . $this->randomName();
@@ -1109,7 +1169,7 @@ class FileEntityTokenTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity tokens',
       'description' => 'Test the file entity tokens.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -1167,7 +1227,7 @@ class FileEntityTypeTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity types',
       'description' => 'Test the file entity types.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -1296,7 +1356,7 @@ class FileEntityAccessTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity access',
       'description' => 'Test the access aspects of file entity.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 
@@ -1639,7 +1699,7 @@ class FileEntityAttributeOverrideTestCase extends FileEntityTestHelper {
     return array(
       'name' => 'File entity attribute override',
       'description' => 'Test overriding file entity attributes.',
-      'group' => 'File entity',
+      'group' => 'file_entity',
     );
   }
 

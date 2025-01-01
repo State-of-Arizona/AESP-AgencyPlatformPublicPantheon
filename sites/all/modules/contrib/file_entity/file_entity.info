@@ -25,15 +25,15 @@ files[] = views/views_handler_field_file_link_usage.inc
 files[] = views/views_plugin_row_file_rss.inc
 files[] = views/views_plugin_row_file_view.inc
 files[] = file_entity.test
-files[] = file_entity_views.test
+files[] = tests/file_entity_views.test
 
 configure = admin/config/media/file-settings
 
 ; We have to add a fake version so Git checkouts do not fail Media dependencies
 version = 7.x-2.x-dev
 
-; Information added by Drupal.org packaging script on 2018-11-09
-version = "7.x-2.25"
+; Information added by Drupal.org packaging script on 2024-09-21
+version = "7.x-2.40"
 core = "7.x"
 project = "file_entity"
-datestamp = "1541794687"
+datestamp = "1726891138"

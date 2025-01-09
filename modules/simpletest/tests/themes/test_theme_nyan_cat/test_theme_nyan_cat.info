@@ -3,3 +3,8 @@ description = Theme for testing the module-provided theme engines.
 core = 7.x
 hidden = TRUE
 engine = nyan_cat
+
+; Information added by Drupal.org packaging script on 2024-12-04
+version = "7.103"
+project = "drupal"
+datestamp = "1733324608"

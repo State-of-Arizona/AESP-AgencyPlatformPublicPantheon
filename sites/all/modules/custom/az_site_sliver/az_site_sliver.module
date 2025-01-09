@@ -10,7 +10,7 @@ function az_site_sliver_preprocess_page(&$variables) {
 
   $output = theme('sliver_template');
 
-  if (strpos($current_path_alias, 'admin') !== 0) {
+  if (!preg_match('#^/admin/#', $current_path_alias)) {
     if (isset($variables['page']['content'])) {
       $variables['page']['user_first']['sliver_template'] = array(
         '#markup' => $output,
@@ -37,7 +37,7 @@ function az_site_sliver_preprocess_html(&$variables) {
   $current_path = current_path();
   $current_path_alias = drupal_get_path_alias($current_path);
 
-  if (strpos($current_path_alias, 'admin') !== 0) {
+  if (!preg_match('#^/admin/#', $current_path_alias)) {
     // Attach the CSS file only on non-admin pages.
     drupal_add_css(drupal_get_path('module', 'az_site_sliver') . '/css/sliver.css', array('preprocess' => FALSE));
     drupal_add_css('https://static.az.gov/sliver/css/sliver.css', array('type' => 'external', 'preprocess' => FALSE));

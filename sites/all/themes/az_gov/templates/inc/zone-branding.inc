@@ -5,7 +5,7 @@
           <?php if ($logo): ?>
             <a class="logo" href="/">
               <img src="<?php echo $logo; ?>"
-                   alt="Arizona <?php echo $persistent_site_name; ?>">
+                   alt="Arizona <?php echo $persistent_site_name; ?> Logo">
             </a>
           <?php endif; ?>
 

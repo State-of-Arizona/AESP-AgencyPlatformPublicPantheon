@@ -127,19 +127,6 @@ Drupal.behaviors.adminMenuMarginTop = {
     if (!settings.admin_menu.suppress && settings.admin_menu.margin_top) {
       $('body:not(.admin-menu)', context).addClass('admin-menu');
     }
-    // Make the margin-top responsive.
-    $(window).load(setTopMargin);
-    $(window).resize(setTopMargin);
-    function setTopMargin() {
-     var height = Drupal.admin.height();
-     if (typeof height === 'number') {
-        var $body = $('body');
-        var style = $body.attr('style') || '';
-        var newStyle = style.replace(/margin-top: [0-9]*px !important;/, '');
-        newStyle += 'margin-top: ' + height + 'px !important;';
-        $body.attr('style', newStyle);
-     }
-    }
   }
 };
 

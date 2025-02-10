@@ -1,6 +1,6 @@
 CONTENTS OF THIS FILE
 ---------------------
-   
+
  * Introduction
  * Features
  * Requirements
@@ -28,6 +28,26 @@ overlay above the current page.
 
 * jQuery - http://jquery.com/
 * Colorbox - http://www.jacklmoore.com/colorbox/
+
+
+OPTIONAL HTML CAPTIONS
+----------------------
+Colorbox allows you to place a caption at the bottom of the lightbox.
+If you wish to use HTML in your captions, you must install the DOMPurify
+library. In your libraries folder, you will need DOMPurify/purify.min.js, i.e
+the full path should be: libraries/DOMPurify/purify.min.js
+
+You can download DOMPurify from:
+https://github.com/cure53/DOMPurify/releases?q=3.&expanded=true
+
+From the above link, you can download a zip or tar.gz archive file.
+To avoid security issues, please only install the purify.min.js file, and
+not any other files from the archive.
+
+Note: Only the 3.0.x releases have been tested.
+
+The DOMPurify library is optional. Without DOMPurify, the Colorbox module
+will convert all captions to plain text.
 
 
 FEATURES:
@@ -75,7 +95,10 @@ INSTALLATION
     Make sure the path to the plugin file becomes:
     "sites/all/libraries/colorbox/jquery.colorbox-min.js"
     Link: https://github.com/jackmoore/colorbox/archive/1.x.zip
-    Drush users can use the command "drush colorbox-plugin".
+    If you enable the colorbox module using drush, the plugin will be downloaded
+    automatically.
+    Or, if the colorbox module is enabled through the web interface, Drush users
+    can use the command "drush colorbox-plugin" to download the plugin.
 
  4. Go to "Administer" -> "Modules" and enable the Colorbox.
 
@@ -84,8 +107,8 @@ INSTALLATION
     further information.
 
     Note:
-    If you download the Colorbox plugin using the makefile included you should 
-    assurance that unzip command is available on your host.
+    If you download the Colorbox plugin using the makefile included you should
+    ensure the unzip command is available on your host.
 
 
 CONFIGURATION
@@ -162,6 +185,14 @@ It could e.g. look like this.
 </div>
 
 Other modules may activate this for easy Colorbox integration.
+
+
+Loading on demand:
+------------------
+Rather than forcing the Colorbox functionality to load on specific paths, that
+may not be known ahead of time, it may be loaded on demand by calling the
+following function:
+  _colorbox_doheader(TRUE);
 
 
 DRUSH

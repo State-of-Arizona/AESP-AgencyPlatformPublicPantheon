@@ -57,11 +57,8 @@ function workbench_email_features_export_render($module_name, $data) {
     list($from_name, $to_name) = explode(':', $transition);
     $transition_role = explode('::', $transition);
     $role = workbench_email_get_role_by_name($transition_role[1]);
-    // Message / Subject are not outputted. Since they are text values
-    // and could change once pushed to production environment. Meaning
-    // feature would remain in an overridden state.
     $item = db_select('workbench_emails', 'we')
-      ->fields('we', array('from_name', 'to_name', 'author', 'automatic'))
+      ->fields('we', array('from_name', 'to_name', 'author', 'automatic', 'subject', 'message'))
       ->condition('from_name', $from_name)
       ->condition('to_name', $to_name)
       ->condition('rid', $role->rid)
@@ -94,9 +91,13 @@ function workbench_email_features_revert($module) {
  */
 function workbench_email_features_rebuild($module) {
   $defaults = features_get_default('workbench_email', $module);
-  foreach ($defaults as $machine_name => $transition) {
-    $role = workbench_email_get_role_by_name($transition['role']);
-    workbench_email_save((object) $transition, $role->rid, NULL, NULL, $transition['author'], $transition['automatic']);
+  if (is_array($defaults)) {
+    foreach ($defaults as $machine_name => $transition) {
+      $role = workbench_email_get_role_by_name($transition['role']);
+      $subject = !empty($transition['subject']) ? $transition['subject'] : NULL;
+      $message = !empty($transition['message']) ? $transition['message'] : NULL;
+      workbench_email_save((object) $transition, $role->rid, $subject, $message, $transition['author'], $transition['automatic']);
+    }
   }
   drupal_static_reset('workbench_email');
 }

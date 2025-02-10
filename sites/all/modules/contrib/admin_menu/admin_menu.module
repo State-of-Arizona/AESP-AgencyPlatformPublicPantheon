@@ -287,7 +287,10 @@ function admin_menu_page_build(&$page) {
   // just generate the unique callback URL and a possible CSRF token.
   if ($cache_client_enabled && !empty($_COOKIE['has_js'])) {
     // Provide a URL for the client side JS to render admin_menu.
-    $settings['url'] = url("js/admin_menu/cache/$hash");
+    global $language;
+    $settings['url'] = url("js/admin_menu/cache/$hash", array(
+      'language' => $language,
+    ));
 
     // If the user is authenticated, generate a CSRF token.
     // Because a user may not have the JS module installed, admin_menu must

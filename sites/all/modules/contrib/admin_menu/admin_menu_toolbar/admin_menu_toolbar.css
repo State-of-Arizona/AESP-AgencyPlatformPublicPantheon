@@ -33,6 +33,7 @@ html body.admin-menu-with-shortcuts {
   box-shadow: 0 -10px 20px 13px #000;
   right: 0;
   width: auto;
+  height: 30px;
 }
 #admin-menu-wrapper {
   font-size: .846em;

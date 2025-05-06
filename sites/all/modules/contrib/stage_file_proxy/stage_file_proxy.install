@@ -14,5 +14,13 @@ function stage_file_proxy_uninstall() {
   variable_del('stage_file_proxy_hotlink');
   variable_del('stage_file_proxy_origin_dir');
   variable_del('stage_file_proxy_sslversion');
+  variable_del('stage_file_proxy_sslverify');
   variable_del('stage_file_proxy_excluded_extensions');
+}
+
+/**
+ * Set verify option.
+ */
+function stage_file_proxy_update_7001() {
+  variable_set('stage_file_proxy_sslverify', TRUE);
 }

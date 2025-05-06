@@ -1,0 +1,6 @@
+Colorbox 7.x-2.x, xxxx-xx-xx (development version)
+-----------------------
+
+Colorbox 7.x-2.20, 2025-04-23
+-----------------------
+- Backport SA-CONTRIB-2025-041

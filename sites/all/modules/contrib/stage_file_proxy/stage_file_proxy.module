@@ -193,6 +193,14 @@ function stage_file_proxy_admin() {
     '#required' => FALSE,
   );
 
+  $form['stage_file_proxy_sslverify'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Verify SSL.'),
+    '#default_value' => variable_get('stage_file_proxy_sslverify', TRUE),
+    '#description' => t('If this is true (default) then the request will be done by doing the SSL verification if the origin is using https.'),
+    '#required' => FALSE,
+  );
+
   $form['stage_file_proxy_headers'] = array(
     '#type' => 'textarea',
     '#title' => t('HTTP headers.'),
@@ -274,7 +282,8 @@ function stage_file_proxy_get_file_remote_url($relative_path, array $options = a
 
   if (!isset($base_url)) {
     $base_url = FALSE;
-    $server = rtrim(variable_get('stage_file_proxy_origin'), '/');
+    $origin_dir = variable_get('stage_file_proxy_origin') ?? '/';
+    $server = rtrim($origin_dir, " \n\r\t\v\0/");
 
     // Quit if we are the origin. Ignore http(s) in the origin comparison.
     if (preg_replace('#^[a-z]*://#', '', $server) == preg_replace('#^[a-z]*://#', '', $GLOBALS['base_url'])) {
@@ -329,7 +338,7 @@ function stage_file_proxy_fetch_file($relative_path, array $options = array()) {
   $excluded_extensions = array_map('trim', explode(',', variable_get('stage_file_proxy_excluded_extensions', '')));
 
   $path_info = pathinfo($relative_path);
-  $ext = $path_info['extension'];
+  $ext = $path_info['extension'] ?? '';
 
   if (in_array($ext, $excluded_extensions)) {
     return FALSE;
@@ -342,7 +351,13 @@ function stage_file_proxy_fetch_file($relative_path, array $options = array()) {
   }
 
   $headers = _stage_file_proxy_create_headers_array(variable_get('stage_file_proxy_headers', ''));
-  $result = drupal_http_request($url, array('headers' => $headers));
+  $request_options = array('headers' => $headers);
+
+  if (variable_get('stage_file_proxy_sslverify') == FALSE) {
+    $request_options['context'] = stream_context_create(array('ssl' => array('verify_peer' => FALSE, 'verify_peer_name' => FALSE)));
+  }
+
+  $result = drupal_http_request($url, $request_options);
   if ($result->code != 200) {
     watchdog('stage_file_proxy', 'HTTP error @errorcode occurred when trying to fetch @remote.', array('@errorcode' => $result->code, '@remote' => $url), WATCHDOG_ERROR);
     $failures[$url] = TRUE;

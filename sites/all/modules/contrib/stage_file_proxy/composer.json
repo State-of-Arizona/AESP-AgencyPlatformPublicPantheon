@@ -1,0 +1,26 @@
+{
+    "name": "drupal/stage_file_proxy",
+    "type": "drupal-module",
+    "description": "Proxies files from production server so you don't have to transfer them manually",
+    "keywords": [
+        "Drupal"
+    ],
+    "license": "GPL-2.0+",
+    "authors": [],
+    "support": {},
+    "require": {
+      "php": ">=7.0"
+    },
+    "require-dev": {},
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/7"
+        }
+    ]
+}

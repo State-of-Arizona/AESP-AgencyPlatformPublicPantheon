@@ -1,0 +1,6 @@
+Stage File Proxy 7.x-1.x, xxxx-xx-xx (development version)
+-----------------------
+
+Stage File Proxy 7.x-1.11, 2025-04-23
+-----------------------
+- Backport SA-CONTRIB-2025-035

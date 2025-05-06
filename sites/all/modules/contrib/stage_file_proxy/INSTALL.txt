@@ -63,6 +63,13 @@ properly it can lead to getting an empty file and a 0 status code. The default
 is 3 which seems relatively common, but if you get 0 byte files you can try
 changing it to 2.
 
+$conf['stage_file_proxy_sslverify'] = TRUE;
+
+Default is TRUE.
+
+If this is true (default) then the request will be done by doing the SSL
+verification if the origin is using https.
+
 DRUSH USERS
 ===========
 

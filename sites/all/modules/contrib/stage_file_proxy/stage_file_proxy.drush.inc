@@ -36,6 +36,9 @@ function drush_stage_file_proxy_dl() {
 
   foreach ($results as $uri) {
     if (stage_file_proxy_process_file_uri($uri)) {
+      if (drush_get_option('verbose', FALSE)) {
+        drush_print(dt('Downloaded @file.', array('@file' => $uri)));
+      }
       $got_files_number++;
     }
   }
